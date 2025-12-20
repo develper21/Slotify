@@ -10,6 +10,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/Tabs'
 import UsersManagement from '@/components/admin/UsersManagement'
 import OrganizersManagement from '@/components/admin/OrganizersManagement'
 
+export const dynamic = 'force-dynamic'
+
 async function SystemStats() {
     const stats = await getSystemStats()
 
