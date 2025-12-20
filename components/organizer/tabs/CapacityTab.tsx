@@ -54,14 +54,20 @@ export default function CapacityTab({ appointment }: { appointment: any }) {
                     </label>
 
                     {formData.capacity_enabled && (
-                        <Input
-                            label="Maximum Capacity per Slot"
-                            type="number"
-                            min="1"
-                            value={formData.max_capacity}
-                            onChange={(e) => setFormData(prev => ({ ...prev, max_capacity: parseInt(e.target.value) || 1 }))}
-                            helperText="How many people can book the same time slot"
-                        />
+                        <div className="space-y-2">
+                            <Input
+                                label="Maximum Capacity per Slot"
+                                type="number"
+                                min="1"
+                                value={formData.max_capacity}
+                                onChange={(e) =>
+                                    setFormData(prev => ({ ...prev, max_capacity: parseInt(e.target.value) || 1 }))
+                                }
+                            />
+                            <p className="text-sm text-neutral-500">
+                                How many people can book the same time slot
+                            </p>
+                        </div>
                     )}
 
                     <div className="flex justify-end">
