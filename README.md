@@ -292,6 +292,14 @@ All components follow these principles:
 5. Add email notifications
 6. Deploy to Vercel
 
+## 🚢 Deployment Checklist
+
+- [ ] Configure environment variables on Vercel (Supabase keys, Stripe, Resend)
+- [ ] Link Supabase project and run migrations via SQL editor
+- [ ] Set up OAuth redirect URLs inside Supabase settings
+- [ ] Enable custom domain (optional) and verify DNS before going live
+- [ ] Review middleware redirects for any new routes added post-launch
+
 ## 📞 Support
 
 For issues or questions:
