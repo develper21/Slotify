@@ -49,14 +49,14 @@ export default async function CapacitySelectionPage({
     const minCapacity = settings?.min_capacity || 1
 
     return (
-        <div className="min-h-screen bg-neutral-50 py-12">
+        <div className="min-h-screen bg-mongodb-black py-12">
             <div className="container mx-auto px-4 max-w-2xl">
                 {/* Header */}
                 <div className="mb-8">
-                    <h1 className="text-3xl font-display font-bold text-neutral-900 mb-2">
+                    <h1 className="text-3xl font-display font-bold text-white mb-2">
                         Select Capacity
                     </h1>
-                    <p className="text-neutral-600">
+                    <p className="text-neutral-400">
                         How many spots would you like to book?
                     </p>
                 </div>
@@ -67,44 +67,44 @@ export default async function CapacitySelectionPage({
                         <div className="w-8 h-8 rounded-full bg-green-500 text-white flex items-center justify-center text-sm font-semibold">
                             ✓
                         </div>
-                        <span className="text-sm text-neutral-500">Resource</span>
+                        <span className="text-sm text-neutral-400">Resource</span>
                     </div>
                     <div className="flex-1 h-0.5 bg-green-500" />
                     <div className="flex items-center gap-2">
                         <div className="w-8 h-8 rounded-full bg-green-500 text-white flex items-center justify-center text-sm font-semibold">
                             ✓
                         </div>
-                        <span className="text-sm text-neutral-500">Date</span>
+                        <span className="text-sm text-neutral-400">Date</span>
                     </div>
                     <div className="flex-1 h-0.5 bg-green-500" />
                     <div className="flex items-center gap-2">
                         <div className="w-8 h-8 rounded-full bg-green-500 text-white flex items-center justify-center text-sm font-semibold">
                             ✓
                         </div>
-                        <span className="text-sm text-neutral-500">Time</span>
+                        <span className="text-sm text-neutral-400">Time</span>
                     </div>
-                    <div className="flex-1 h-0.5 bg-primary" />
+                    <div className="flex-1 h-0.5 bg-mongodb-spring" />
                     <div className="flex items-center gap-2">
-                        <div className="w-8 h-8 rounded-full bg-primary text-white flex items-center justify-center text-sm font-semibold">
+                        <div className="w-8 h-8 rounded-full bg-mongodb-spring text-mongodb-black flex items-center justify-center text-sm font-bold">
                             4
                         </div>
-                        <span className="text-sm font-medium text-primary">Capacity</span>
+                        <span className="text-sm font-medium text-mongodb-spring">Capacity</span>
                     </div>
                 </div>
 
                 {/* Capacity Selection Card */}
-                <Card className="mb-6">
+                <Card className="mb-6 bg-mongodb-slate/50 border-neutral-800">
                     <CardContent className="p-8">
                         <div className="flex flex-col items-center gap-6">
-                            <div className="w-20 h-20 rounded-full bg-primary/10 flex items-center justify-center">
-                                <Users className="w-10 h-10 text-primary" />
+                            <div className="w-20 h-20 rounded-full bg-mongodb-spring/10 flex items-center justify-center">
+                                <Users className="w-10 h-10 text-mongodb-spring" />
                             </div>
 
                             <div className="text-center">
-                                <h3 className="text-lg font-semibold text-neutral-900 mb-2">
+                                <h3 className="text-lg font-semibold text-white mb-2">
                                     Number of Spots
                                 </h3>
-                                <p className="text-sm text-neutral-600">
+                                <p className="text-sm text-neutral-400">
                                     Available: {maxCapacity} spots
                                 </p>
                             </div>
@@ -124,7 +124,7 @@ export default async function CapacitySelectionPage({
 
                 {/* Back Button */}
                 <Link href={`/book/${params.id}/time?${new URLSearchParams(searchParams as any).toString()}`}>
-                    <Button variant="ghost" className="w-full">
+                    <Button variant="ghost" className="w-full text-neutral-400 hover:text-white">
                         ← Back to Time Selection
                     </Button>
                 </Link>
