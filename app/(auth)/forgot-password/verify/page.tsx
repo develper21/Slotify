@@ -5,9 +5,10 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import { Button } from '@/components/ui/Button'
 import { OTPInput } from '@/components/auth/OTPInput'
 import { toast } from 'sonner'
-import { Mail, ShieldCheck } from 'lucide-react'
+import { Mail, ShieldCheck, ArrowLeft, ArrowRight } from 'lucide-react'
 import { verifyOTPAction } from '@/lib/actions/otp'
 import { Suspense } from 'react'
+import Link from 'next/link'
 
 function VerifyRecoveryContent() {
     const router = useRouter()
@@ -34,20 +35,15 @@ function VerifyRecoveryContent() {
         setHasError(false)
 
         try {
-            // Use Server Action for verification
             const result = await verifyOTPAction(sanitizedEmail, otp, 'password_reset')
 
             if (result.valid) {
                 toast.success('Verification successful!')
-                // Pass the verified OTP to the reset page
                 router.push(`/reset-password?email=${encodeURIComponent(sanitizedEmail)}&code=${encodeURIComponent(otp)}`)
             } else {
                 setHasError(true)
                 const errorMessage = result.error || 'Invalid verification code'
-                const attemptsMsg = result.attemptsRemaining
-                    ? ` (${result.attemptsRemaining} attempts remaining)`
-                    : ''
-                toast.error(errorMessage + attemptsMsg)
+                toast.error(errorMessage)
                 setIsLoading(false)
             }
         } catch (error) {
@@ -57,40 +53,36 @@ function VerifyRecoveryContent() {
         }
     }
 
-    const handleResend = () => {
-        router.push(`/forgot-password?email=${encodeURIComponent(email)}`)
-    }
-
     return (
-        <div className="min-h-screen flex items-center justify-center bg-gradient-primary p-4">
-            <div className="w-full max-w-md">
-                <div className="text-center mb-8">
-                    <div className="inline-flex items-center justify-center w-16 h-16 bg-white rounded-full mb-4">
-                        <ShieldCheck className="w-8 h-8 text-primary-600" />
-                    </div>
-                    <h1 className="text-3xl font-display font-bold text-white mb-2">Verify Code</h1>
-                    <p className="text-white/80">Enter the 6-digit code sent to your email.</p>
+        <div className="space-y-8">
+            <div className="space-y-2">
+                <div className="w-12 h-12 bg-mongodb-spring/10 rounded-xl flex items-center justify-center mb-6">
+                    <ShieldCheck className="w-6 h-6 text-mongodb-spring" />
+                </div>
+                <h1 className="text-4xl font-display font-bold text-white tracking-tight">Security Check</h1>
+                <p className="text-neutral-500 text-lg">Enter the verification code to reset your password.</p>
+            </div>
+
+            <div className="space-y-6">
+                <div className="space-y-2 group">
+                    <label className="text-sm font-bold text-neutral-400 ml-1 uppercase tracking-widest flex items-center gap-2">
+                        <Mail className="w-4 h-4 text-neutral-600 group-focus-within:text-mongodb-spring transition-colors" />
+                        Verify Email
+                    </label>
+                    <input
+                        type="email"
+                        value={email}
+                        onChange={event => setEmail(event.target.value)}
+                        placeholder="john@example.com"
+                        className="w-full px-6 py-4 rounded-2xl bg-mongodb-black border border-neutral-800 text-white placeholder:text-neutral-600 focus:outline-none focus:border-mongodb-spring focus:ring-4 focus:ring-mongodb-spring/10 transition-all font-medium"
+                    />
                 </div>
 
-                <div className="bg-white rounded-2xl shadow-xl p-8 animate-scale-in space-y-6">
-                    <div>
-                        <label className="block text-sm font-medium text-neutral-700 mb-2">Email Address</label>
-                        <div className="relative">
-                            <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-neutral-400" />
-                            <input
-                                type="email"
-                                value={email}
-                                onChange={event => setEmail(event.target.value)}
-                                placeholder="your@email.com"
-                                className="w-full pl-11 pr-4 py-3 rounded-lg border border-neutral-300 focus:border-primary-500 focus:ring-2 focus:ring-primary-200 transition-all outline-none"
-                            />
-                        </div>
-                    </div>
-
-                    <div>
-                        <label className="block text-sm font-medium text-neutral-700 mb-4 text-center">
-                            Verification Code
-                        </label>
+                <div className="space-y-4">
+                    <label className="text-sm font-bold text-neutral-400 ml-1 uppercase tracking-widest block text-center">
+                        6-Digit OTP Code
+                    </label>
+                    <div className="flex justify-center">
                         <OTPInput
                             length={6}
                             onComplete={handleVerifyOTP}
@@ -98,24 +90,35 @@ function VerifyRecoveryContent() {
                             error={hasError}
                         />
                     </div>
+                </div>
 
-                    <p className="text-center text-sm text-neutral-600">
-                        Didn't receive the code?{' '}
-                        <button
-                            type="button"
-                            onClick={handleResend}
-                            className="text-primary-600 hover:text-primary-700 font-medium"
-                            disabled={isLoading}
-                        >
-                            Resend
-                        </button>
-                    </p>
-
-                    <p className="text-center text-xs text-neutral-500">
+                <div className="pt-2">
+                    <p className="text-center text-neutral-500 font-medium pb-4">
                         Code expires in 10 minutes
                     </p>
+                    <Button
+                        onClick={() => { }}
+                        size="xl"
+                        className="w-full group shadow-[0_10px_30px_rgba(0,237,100,0.15)] rounded-2xl h-16 opacity-50 cursor-not-allowed"
+                        disabled
+                    >
+                        Auto-verifying Code...
+                        <ArrowRight className="w-5 h-5 ml-2 animate-pulse" />
+                    </Button>
                 </div>
+
+                <p className="text-center text-neutral-500 font-medium">
+                    Didn't receive it?{' '}
+                    <Link href={`/forgot-password?email=${encodeURIComponent(email)}`} className="text-mongodb-spring font-bold hover:underline">
+                        Resend
+                    </Link>
+                </p>
             </div>
+
+            <Link href="/login" className="flex items-center justify-center gap-2 text-neutral-600 hover:text-white transition-colors text-sm font-bold uppercase tracking-widest">
+                <ArrowLeft className="w-4 h-4" />
+                Back to login
+            </Link>
         </div>
     )
 }
@@ -123,12 +126,9 @@ function VerifyRecoveryContent() {
 export default function VerifyRecoveryPage() {
     return (
         <Suspense fallback={
-            <div className="min-h-screen flex items-center justify-center bg-gradient-primary p-4">
-                <div className="w-full max-w-md">
-                    <div className="bg-white rounded-2xl shadow-xl p-8 text-center">
-                        <div className="animate-pulse">Loading...</div>
-                    </div>
-                </div>
+            <div className="flex flex-col items-center gap-4 py-20">
+                <div className="w-12 h-12 border-4 border-mongodb-spring/20 border-t-mongodb-spring rounded-full animate-spin" />
+                <p className="text-neutral-500 animate-pulse font-display font-medium tracking-widest uppercase text-xs">Loading Security...</p>
             </div>
         }>
             <VerifyRecoveryContent />
