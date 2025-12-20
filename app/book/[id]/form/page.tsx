@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { ChevronLeft } from 'lucide-react'
 import { getBookingQuestions, createBooking } from '@/lib/actions/appointments'
+import { createCheckoutSession } from '@/lib/actions/payments'
 import { createClient } from '@/lib/supabase/client'
 import { toast } from 'sonner'
 
@@ -133,6 +134,21 @@ export default function BookingFormPage({ params }: BookingFormPageProps) {
 
             if (!result.success) {
                 toast.error(result.message || 'Failed to create booking')
+            } else if (result.requiresPayment && result.price) {
+                // REDIRECT TO STRIPE
+                toast.info('Redirecting to secure payment...')
+                const checkout = await createCheckoutSession({
+                    appointmentId: params.id,
+                    bookingId: result.bookingId,
+                    price: result.price,
+                    title: result.title || 'Professional Appointment'
+                })
+
+                if (checkout.url) {
+                    window.location.href = checkout.url
+                } else {
+                    toast.error('Payment initialization failed')
+                }
             } else {
                 toast.success('Booking created successfully!')
                 router.push(`/book/${params.id}/confirmation?booking=${result.bookingId}`)
