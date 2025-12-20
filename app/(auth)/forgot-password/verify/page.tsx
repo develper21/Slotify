@@ -3,17 +3,18 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { Button } from '@/components/ui/Button'
+import { OTPInput } from '@/components/auth/OTPInput'
 import { toast } from 'sonner'
 import { Mail, ShieldCheck } from 'lucide-react'
-import { createClient } from '@/lib/supabase/client'
+import { verifyOTPAction } from '@/lib/actions/otp'
 
 export default function VerifyRecoveryPage() {
     const router = useRouter()
     const searchParams = useSearchParams()
     const initialEmail = useMemo(() => searchParams.get('email') || '', [searchParams])
     const [email, setEmail] = useState(initialEmail)
-    const [otp, setOtp] = useState(Array(6).fill(''))
     const [isLoading, setIsLoading] = useState(false)
+    const [hasError, setHasError] = useState(false)
 
     useEffect(() => {
         if (!email) {
@@ -21,49 +22,42 @@ export default function VerifyRecoveryPage() {
         }
     }, [initialEmail, email])
 
-    const handleOtpChange = (index: number, value: string) => {
-        if (value.length > 1) return
-
-        const next = [...otp]
-        next[index] = value
-        setOtp(next)
-
-        if (value && index < otp.length - 1) {
-            const nextInput = document.getElementById(`otp-${index + 1}`)
-            nextInput?.focus()
-        }
-    }
-
-    const handleVerify = async () => {
-        const supabase = createClient()
+    const handleVerifyOTP = async (otp: string) => {
         const sanitizedEmail = email.trim()
         if (!sanitizedEmail) {
             toast.error('Please enter your email')
             return
         }
 
-        if (otp.some(digit => !digit)) {
-            toast.error('Please enter the complete verification code')
-            return
-        }
-
-        const token = otp.join('')
-
         setIsLoading(true)
-        const { error } = await supabase.auth.verifyOtp({
-            email: sanitizedEmail,
-            token,
-            type: 'recovery',
-        })
+        setHasError(false)
 
-        if (error) {
-            toast.error(error.message || 'Verification failed. Please try again.')
+        try {
+            // Use Server Action for verification
+            const result = await verifyOTPAction(sanitizedEmail, otp, 'password_reset')
+
+            if (result.valid) {
+                toast.success('Verification successful!')
+                // Pass the verified OTP to the reset page
+                router.push(`/reset-password?email=${encodeURIComponent(sanitizedEmail)}&code=${encodeURIComponent(otp)}`)
+            } else {
+                setHasError(true)
+                const errorMessage = result.error || 'Invalid verification code'
+                const attemptsMsg = result.attemptsRemaining
+                    ? ` (${result.attemptsRemaining} attempts remaining)`
+                    : ''
+                toast.error(errorMessage + attemptsMsg)
+                setIsLoading(false)
+            }
+        } catch (error) {
+            setHasError(true)
+            toast.error('Verification failed. Please try again.')
             setIsLoading(false)
-            return
         }
+    }
 
-        toast.success('Verification successful!')
-        router.push(`/reset-password?email=${encodeURIComponent(sanitizedEmail)}`)
+    const handleResend = () => {
+        router.push(`/forgot-password?email=${encodeURIComponent(email)}`)
     }
 
     return (
@@ -74,7 +68,7 @@ export default function VerifyRecoveryPage() {
                         <ShieldCheck className="w-8 h-8 text-primary-600" />
                     </div>
                     <h1 className="text-3xl font-display font-bold text-white mb-2">Verify Code</h1>
-                    <p className="text-white/80">Enter the verification code sent to your email.</p>
+                    <p className="text-white/80">Enter the 6-digit code sent to your email.</p>
                 </div>
 
                 <div className="bg-white rounded-2xl shadow-xl p-8 animate-scale-in space-y-6">
@@ -93,35 +87,31 @@ export default function VerifyRecoveryPage() {
                     </div>
 
                     <div>
-                        <label className="block text-sm font-medium text-neutral-700 mb-2">Verification Code</label>
-                        <div className="flex gap-2 justify-center">
-                            {otp.map((digit, index) => (
-                                <input
-                                    key={index}
-                                    id={`otp-${index}`}
-                                    type="text"
-                                    maxLength={1}
-                                    value={digit}
-                                    onChange={event => handleOtpChange(index, event.target.value)}
-                                    className="w-12 h-12 text-center text-xl font-semibold rounded-lg border-2 border-neutral-300 focus:border-primary-500 focus:ring-2 focus:ring-primary-200 transition-all outline-none"
-                                />
-                            ))}
-                        </div>
+                        <label className="block text-sm font-medium text-neutral-700 mb-4 text-center">
+                            Verification Code
+                        </label>
+                        <OTPInput
+                            length={6}
+                            onComplete={handleVerifyOTP}
+                            disabled={isLoading}
+                            error={hasError}
+                        />
                     </div>
-
-                    <Button onClick={handleVerify} className="w-full" isLoading={isLoading}>
-                        Verify Code
-                    </Button>
 
                     <p className="text-center text-sm text-neutral-600">
                         Didn't receive the code?{' '}
                         <button
                             type="button"
-                            onClick={() => router.push(`/forgot-password?email=${encodeURIComponent(email)}`)}
+                            onClick={handleResend}
                             className="text-primary-600 hover:text-primary-700 font-medium"
+                            disabled={isLoading}
                         >
                             Resend
                         </button>
+                    </p>
+
+                    <p className="text-center text-xs text-neutral-500">
+                        Code expires in 10 minutes
                     </p>
                 </div>
             </div>
