@@ -29,7 +29,7 @@ export default async function EditAppointmentPage({
         redirect('/dashboard')
     }
 
-    const appointment = await getAppointmentForEdit(params.id)
+    const appointment: any = await getAppointmentForEdit(params.id)
 
     if (!appointment) {
         notFound()
