@@ -1,6 +1,5 @@
-import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
-import { Database } from '@/types/database.types'
+import { createMockClient } from './mock-client'
 
 export const createClient = () => {
-    return createClientComponentClient<Database>()
+    return createMockClient()
 }
