@@ -34,7 +34,11 @@ export default function SignupPage() {
         if (!full_name) newErrors.full_name = 'Full name is required'
         if (!email) newErrors.email = 'Email is required'
         if (!password) newErrors.password = 'Password is required'
-        if (password.length < 6) newErrors.password = 'Password must be at least 6 characters'
+        if (password.length < 8) newErrors.password = 'Password must be at least 8 characters'
+        if (!/[A-Z]/.test(password)) newErrors.password = 'Password must include at least one uppercase letter'
+        if (!/[a-z]/.test(password)) newErrors.password = 'Password must include at least one lowercase letter'
+        if (!/\d/.test(password)) newErrors.password = 'Password must include at least one number'
+        if (!/[^A-Za-z0-9]/.test(password)) newErrors.password = 'Password must include at least one special character'
         if (password !== confirm_password) newErrors.confirm_password = 'Passwords do not match'
 
         if (Object.keys(newErrors).length > 0) {
@@ -117,6 +121,11 @@ export default function SignupPage() {
                             </div>
                             {errors.password && (
                                 <p className="mt-1 text-sm text-red-500">{errors.password}</p>
+                            )}
+                            {!errors.password && (
+                                <p className="mt-1 text-sm text-neutral-500">
+                                    Password must be at least 8 characters and include uppercase, lowercase, number, and special character.
+                                </p>
                             )}
                         </div>
 
