@@ -1,7 +1,7 @@
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { getOrganizerId, getOrganizerAppointments } from '@/lib/actions/organizer'
-import { getOrganizerBookings } from '@/lib/actions/bookings'
+import { getOrganizerBookings, getCustomerBookings } from '@/lib/actions/bookings'
 import { Card, CardContent } from '@/components/ui/Card'
 import { Calendar, Clock } from 'lucide-react'
 import { BookingFilters, ExportButton } from '@/components/bookings/BookingActions'
@@ -22,20 +22,46 @@ export default async function BookingsPage({
         redirect('/login')
     }
 
-    // Get organizer ID
-    const organizerId = await getOrganizerId(session.user.id)
-    if (!organizerId) {
+    // Check User Role
+    const { data: userData } = await supabase
+        .from('users')
+        .select('role')
+        .eq('id', session.user.id)
+        .single()
+
+    const userRole = userData?.role || 'customer'
+
+    let bookings: any[] = []
+    let appointments: any[] = []
+    let organizerId = null
+
+    if (userRole === 'organizer') {
+        // Get organizer ID
+        organizerId = await getOrganizerId(session.user.id)
+        if (!organizerId) {
+            // If organizer user but no organizer record, maybe redirect to profile setup?
+            // For now, redirect dashboard
+            redirect('/dashboard')
+        }
+
+        // Get appointments for filter
+        appointments = await getOrganizerAppointments(organizerId)
+
+        // Get bookings with filters
+        bookings = await getOrganizerBookings(organizerId, {
+            status: searchParams.status,
+            appointmentId: searchParams.appointment,
+        })
+    } else if (userRole === 'customer') {
+        bookings = await getCustomerBookings(session.user.id)
+        // Check for client-side filtering if needed, or implement filter support in getCustomerBookings
+        if (searchParams.status) {
+            bookings = bookings.filter((b: any) => b.status === searchParams.status)
+        }
+    } else {
+        // generic fallback or redirect
         redirect('/dashboard')
     }
-
-    // Get appointments for filter
-    const appointments = await getOrganizerAppointments(organizerId)
-
-    // Get bookings with filters
-    const bookings = await getOrganizerBookings(organizerId, {
-        status: searchParams.status,
-        appointmentId: searchParams.appointment,
-    })
 
     // Calculate stats
     const stats = {
@@ -50,10 +76,13 @@ export default async function BookingsPage({
             {/* Header */}
             <div>
                 <h1 className="text-3xl font-display font-bold text-white mb-2">
-                    Bookings Management
+                    {userRole === 'organizer' ? 'Bookings Management' : 'My Bookings'}
                 </h1>
                 <p className="text-neutral-400">
-                    View and manage all your appointment bookings
+                    {userRole === 'organizer'
+                        ? 'View and manage all your appointment bookings'
+                        : 'View and track your appointment history'
+                    }
                 </p>
             </div>
 
@@ -108,19 +137,39 @@ export default async function BookingsPage({
                 </Card>
             </div>
 
-            {/* Filters */}
-            <Card className="mb-6">
+            {/* Filters & List */}
+            <Card className="mb-6 bg-mongodb-slate/50 border-neutral-800">
                 <CardContent className="p-6">
-                    <div className="flex items-center gap-4">
-                        <div className="flex-1">
-                            <BookingFilters
-                                appointments={appointments}
-                                currentStatus={searchParams.status}
-                                currentAppointment={searchParams.appointment}
-                            />
+                    {userRole === 'organizer' ? (
+                        <div className="flex items-center gap-4">
+                            <div className="flex-1">
+                                <BookingFilters
+                                    appointments={appointments}
+                                    currentStatus={searchParams.status}
+                                    currentAppointment={searchParams.appointment}
+                                />
+                            </div>
+                            <ExportButton organizerId={organizerId!} />
                         </div>
-                        <ExportButton organizerId={organizerId} />
-                    </div>
+                    ) : (
+                        // Customer specific filters? Just status for now
+                        <div className="flex items-center gap-4">
+                            <div className="flex bg-mongodb-black p-1 rounded-lg border border-neutral-800">
+                                {['all', 'confirmed', 'pending', 'cancelled'].map((status) => (
+                                    <a
+                                        key={status}
+                                        href={status === 'all' ? '/dashboard/bookings' : `/dashboard/bookings?status=${status}`}
+                                        className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${(status === 'all' && !searchParams.status) || searchParams.status === status
+                                            ? 'bg-neutral-800 text-white'
+                                            : 'text-neutral-400 hover:text-white'
+                                            }`}
+                                    >
+                                        {status.charAt(0).toUpperCase() + status.slice(1)}
+                                    </a>
+                                ))}
+                            </div>
+                        </div>
+                    )}
                 </CardContent>
                 <BookingsList bookings={bookings} />
             </Card>

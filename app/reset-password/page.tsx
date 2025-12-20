@@ -63,16 +63,16 @@ function ResetPasswordContent() {
 
     if (success) {
         return (
-            <div className="min-h-screen bg-neutral-50 flex items-center justify-center p-4">
-                <Card className="w-full max-w-md">
+            <div className="min-h-screen bg-mongodb-black flex items-center justify-center p-4">
+                <Card className="w-full max-w-md bg-mongodb-slate/50 border-neutral-800">
                     <CardContent className="py-12 text-center">
-                        <div className="w-16 h-16 rounded-full bg-green-100 flex items-center justify-center mx-auto mb-4">
-                            <CheckCircle className="w-8 h-8 text-green-600" />
+                        <div className="w-16 h-16 rounded-full bg-mongodb-spring/10 flex items-center justify-center mx-auto mb-4">
+                            <CheckCircle className="w-8 h-8 text-mongodb-spring" />
                         </div>
-                        <h2 className="text-2xl font-bold text-neutral-900 mb-2">
+                        <h2 className="text-2xl font-bold text-white mb-2">
                             Password Updated!
                         </h2>
-                        <p className="text-neutral-600 mb-6">
+                        <p className="text-neutral-400 mb-6">
                             Your password has been successfully updated. Redirecting to login...
                         </p>
                     </CardContent>
@@ -82,14 +82,14 @@ function ResetPasswordContent() {
     }
 
     return (
-        <div className="min-h-screen bg-neutral-50 flex items-center justify-center p-4">
-            <Card className="w-full max-w-md">
+        <div className="min-h-screen bg-mongodb-black flex items-center justify-center p-4">
+            <Card className="w-full max-w-md bg-mongodb-slate/50 border-neutral-800">
                 <CardHeader className="text-center">
-                    <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-4">
-                        <Lock className="w-8 h-8 text-primary" />
+                    <div className="w-16 h-16 rounded-full bg-mongodb-spring/10 flex items-center justify-center mx-auto mb-4">
+                        <Lock className="w-8 h-8 text-mongodb-spring" />
                     </div>
-                    <CardTitle className="text-2xl">Reset Password</CardTitle>
-                    <p className="text-neutral-600 mt-2">
+                    <CardTitle className="text-2xl text-white">Reset Password</CardTitle>
+                    <p className="text-neutral-400 mt-2">
                         Set a new password for {email}
                     </p>
                 </CardHeader>
@@ -104,6 +104,8 @@ function ResetPasswordContent() {
                             placeholder="Enter new password"
                             required
                             minLength={8}
+                            className="bg-mongodb-black border-neutral-700 text-white focus:border-mongodb-spring"
+                            labelClassName="text-neutral-300"
                         />
 
                         <Input
@@ -114,10 +116,12 @@ function ResetPasswordContent() {
                             placeholder="Confirm new password"
                             required
                             minLength={8}
+                            className="bg-mongodb-black border-neutral-700 text-white focus:border-mongodb-spring"
+                            labelClassName="text-neutral-300"
                         />
 
-                        <div className="text-sm text-neutral-600 bg-neutral-50 p-3 rounded-lg">
-                            <p className="font-medium mb-1">Password requirements:</p>
+                        <div className="text-sm text-neutral-400 bg-mongodb-black border border-neutral-700 p-3 rounded-lg">
+                            <p className="font-medium mb-1 text-white">Password requirements:</p>
                             <ul className="list-disc list-inside space-y-1 text-xs">
                                 <li>At least 8 characters long</li>
                                 <li>Includes uppercase and lowercase letters</li>
@@ -131,6 +135,7 @@ function ResetPasswordContent() {
                             className="w-full"
                             isLoading={isLoading}
                             disabled={!password || !confirmPassword}
+                            variant="primary"
                         >
                             Update Password
                         </Button>
@@ -144,10 +149,10 @@ function ResetPasswordContent() {
 export default function ResetPasswordPage() {
     return (
         <Suspense fallback={
-            <div className="min-h-screen bg-neutral-50 flex items-center justify-center p-4">
-                <Card className="w-full max-w-md">
+            <div className="min-h-screen bg-mongodb-black flex items-center justify-center p-4">
+                <Card className="w-full max-w-md bg-mongodb-slate/50 border-neutral-800">
                     <CardContent className="py-12 text-center">
-                        <div className="animate-pulse">Loading...</div>
+                        <div className="animate-pulse text-white">Loading...</div>
                     </CardContent>
                 </Card>
             </div>
