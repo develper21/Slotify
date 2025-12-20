@@ -1,4 +1,4 @@
-'use client'
+        'use client'
 
 import { useState } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card'
@@ -43,9 +43,9 @@ export default function BookTab({ appointment }: { appointment: any }) {
         <form onSubmit={handleSubmit}>
             <div className="space-y-6">
                 {/* Booking Settings */}
-                <Card>
+                <Card className="bg-mongodb-slate/50 border-neutral-800">
                     <CardHeader>
-                        <CardTitle>Booking Settings</CardTitle>
+                        <CardTitle className="text-white">Booking Settings</CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-4">
                         <label className="flex items-center gap-3 cursor-pointer">
@@ -53,11 +53,11 @@ export default function BookTab({ appointment }: { appointment: any }) {
                                 type="checkbox"
                                 checked={formData.manual_confirmation}
                                 onChange={(e) => setFormData(prev => ({ ...prev, manual_confirmation: e.target.checked }))}
-                                className="w-5 h-5 rounded border-neutral-300 text-primary-600 focus:ring-primary-500"
+                                className="w-5 h-5 rounded border-neutral-700 bg-mongodb-black text-mongodb-spring focus:ring-mongodb-spring"
                             />
                             <div>
-                                <p className="font-medium text-neutral-900">Manual Confirmation</p>
-                                <p className="text-sm text-neutral-600">Require manual approval for bookings</p>
+                                <p className="font-medium text-white">Manual Confirmation</p>
+                                <p className="text-sm text-neutral-400">Require manual approval for bookings</p>
                             </div>
                         </label>
 
@@ -66,11 +66,11 @@ export default function BookTab({ appointment }: { appointment: any }) {
                                 type="checkbox"
                                 checked={formData.paid_booking}
                                 onChange={(e) => setFormData(prev => ({ ...prev, paid_booking: e.target.checked }))}
-                                className="w-5 h-5 rounded border-neutral-300 text-primary-600 focus:ring-primary-500"
+                                className="w-5 h-5 rounded border-neutral-700 bg-mongodb-black text-mongodb-spring focus:ring-mongodb-spring"
                             />
                             <div>
-                                <p className="font-medium text-neutral-900">Paid Booking</p>
-                                <p className="text-sm text-neutral-600">Require payment for this appointment</p>
+                                <p className="font-medium text-white">Paid Booking</p>
+                                <p className="text-sm text-neutral-400">Require payment for this appointment</p>
                             </div>
                         </label>
 
@@ -82,39 +82,41 @@ export default function BookTab({ appointment }: { appointment: any }) {
                                 step="0.01"
                                 value={formData.price}
                                 onChange={(e) => setFormData(prev => ({ ...prev, price: parseFloat(e.target.value) || 0 }))}
+                                className="bg-mongodb-black border-neutral-700 text-white placeholder:text-neutral-500 focus:border-mongodb-spring"
+                                labelClassName="text-neutral-400"
                             />
                         )}
                     </CardContent>
                 </Card>
 
                 {/* Messages */}
-                <Card>
+                <Card className="bg-mongodb-slate/50 border-neutral-800">
                     <CardHeader>
-                        <CardTitle>Messages</CardTitle>
+                        <CardTitle className="text-white">Messages</CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-4">
                         <div>
-                            <label className="block text-sm font-medium text-neutral-700 mb-2">
+                            <label className="block text-sm font-medium text-neutral-400 mb-2">
                                 Introduction Message
                             </label>
                             <textarea
                                 value={formData.introduction_message}
                                 onChange={(e) => setFormData(prev => ({ ...prev, introduction_message: e.target.value }))}
                                 rows={3}
-                                className="w-full px-4 py-3 rounded-lg border border-neutral-300 focus:border-primary-500 focus:ring-2 focus:ring-primary-200 transition-all outline-none resize-none"
+                                className="w-full px-4 py-3 rounded-lg border border-neutral-700 bg-mongodb-black text-white focus:border-mongodb-spring focus:ring-1 focus:ring-mongodb-spring transition-all outline-none resize-none placeholder:text-neutral-500"
                                 placeholder="Message shown before booking..."
                             />
                         </div>
 
                         <div>
-                            <label className="block text-sm font-medium text-neutral-700 mb-2">
+                            <label className="block text-sm font-medium text-neutral-400 mb-2">
                                 Confirmation Message
                             </label>
                             <textarea
                                 value={formData.confirmation_message}
                                 onChange={(e) => setFormData(prev => ({ ...prev, confirmation_message: e.target.value }))}
                                 rows={3}
-                                className="w-full px-4 py-3 rounded-lg border border-neutral-300 focus:border-primary-500 focus:ring-2 focus:ring-primary-200 transition-all outline-none resize-none"
+                                className="w-full px-4 py-3 rounded-lg border border-neutral-700 bg-mongodb-black text-white focus:border-mongodb-spring focus:ring-1 focus:ring-mongodb-spring transition-all outline-none resize-none placeholder:text-neutral-500"
                                 placeholder="Message shown after booking..."
                             />
                         </div>
@@ -122,19 +124,19 @@ export default function BookTab({ appointment }: { appointment: any }) {
                 </Card>
 
                 {/* Meeting Details */}
-                <Card>
+                <Card className="bg-mongodb-slate/50 border-neutral-800">
                     <CardHeader>
-                        <CardTitle>Meeting Details</CardTitle>
+                        <CardTitle className="text-white">Meeting Details</CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-4">
                         <div>
-                            <label className="block text-sm font-medium text-neutral-700 mb-2">
+                            <label className="block text-sm font-medium text-neutral-400 mb-2">
                                 Meeting Type
                             </label>
                             <select
                                 value={formData.meeting_type}
                                 onChange={(e) => setFormData(prev => ({ ...prev, meeting_type: e.target.value }))}
-                                className="w-full px-4 py-3 rounded-lg border border-neutral-300 focus:border-primary-500 focus:ring-2 focus:ring-primary-200 transition-all outline-none"
+                                className="w-full px-4 py-3 rounded-lg border border-neutral-700 bg-mongodb-black text-white focus:border-mongodb-spring focus:ring-1 focus:ring-mongodb-spring transition-all outline-none"
                             >
                                 <option value="online">Online</option>
                                 <option value="offline">In-Person</option>
@@ -142,28 +144,28 @@ export default function BookTab({ appointment }: { appointment: any }) {
                         </div>
 
                         <div>
-                            <label className="block text-sm font-medium text-neutral-700 mb-2">
+                            <label className="block text-sm font-medium text-neutral-400 mb-2">
                                 Meeting Instructions
                             </label>
                             <textarea
                                 value={formData.meeting_instructions}
                                 onChange={(e) => setFormData(prev => ({ ...prev, meeting_instructions: e.target.value }))}
                                 rows={3}
-                                className="w-full px-4 py-3 rounded-lg border border-neutral-300 focus:border-primary-500 focus:ring-2 focus:ring-primary-200 transition-all outline-none resize-none"
+                                className="w-full px-4 py-3 rounded-lg border border-neutral-700 bg-mongodb-black text-white focus:border-mongodb-spring focus:ring-1 focus:ring-mongodb-spring transition-all outline-none resize-none placeholder:text-neutral-500"
                                 placeholder={formData.meeting_type === 'online' ? 'e.g., Zoom link will be sent after booking' : 'e.g., Please arrive 5 minutes early'}
                             />
                         </div>
 
                         {formData.meeting_type === 'offline' && (
                             <div>
-                                <label className="block text-sm font-medium text-neutral-700 mb-2">
+                                <label className="block text-sm font-medium text-neutral-400 mb-2">
                                     Venue Details
                                 </label>
                                 <textarea
                                     value={formData.venue_details}
                                     onChange={(e) => setFormData(prev => ({ ...prev, venue_details: e.target.value }))}
                                     rows={3}
-                                    className="w-full px-4 py-3 rounded-lg border border-neutral-300 focus:border-primary-500 focus:ring-2 focus:ring-primary-200 transition-all outline-none resize-none"
+                                    className="w-full px-4 py-3 rounded-lg border border-neutral-700 bg-mongodb-black text-white focus:border-mongodb-spring focus:ring-1 focus:ring-mongodb-spring transition-all outline-none resize-none placeholder:text-neutral-500"
                                     placeholder="Full address and directions..."
                                 />
                             </div>
@@ -172,7 +174,7 @@ export default function BookTab({ appointment }: { appointment: any }) {
                 </Card>
 
                 <div className="flex justify-end">
-                    <Button type="submit" isLoading={isSubmitting}>
+                    <Button type="submit" isLoading={isSubmitting} className="bg-mongodb-spring text-mongodb-black hover:bg-mongodb-spring/90">
                         Save Settings
                     </Button>
                 </div>

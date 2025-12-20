@@ -47,36 +47,36 @@ export function CapacitySelector({
         <div className="w-full max-w-md space-y-6">
             <div className="flex items-center justify-center gap-6">
                 <Button
-                    variant="secondary"
+                    variant="outline"
                     size="lg"
                     onClick={handleDecrease}
                     disabled={capacity <= minCapacity}
-                    className="!w-14 !h-14 !p-0 rounded-full"
+                    className="!w-14 !h-14 !p-0 rounded-full border-neutral-700 bg-neutral-900 text-white hover:bg-neutral-800"
                 >
                     <Minus className="w-6 h-6" />
                 </Button>
 
                 <div className="text-center min-w-[100px]">
-                    <div className="text-5xl font-bold text-primary">
+                    <div className="text-5xl font-bold text-white">
                         {capacity}
                     </div>
-                    <div className="text-sm text-neutral-600 mt-1">
+                    <div className="text-sm text-neutral-400 mt-1">
                         {capacity === 1 ? 'spot' : 'spots'}
                     </div>
                 </div>
 
                 <Button
-                    variant="secondary"
+                    variant="outline"
                     size="lg"
                     onClick={handleIncrease}
                     disabled={capacity >= maxCapacity}
-                    className="!w-14 !h-14 !p-0 rounded-full"
+                    className="!w-14 !h-14 !p-0 rounded-full border-neutral-700 bg-neutral-900 text-white hover:bg-neutral-800"
                 >
                     <Plus className="w-6 h-6" />
                 </Button>
             </div>
 
-            <Button onClick={handleContinue} className="w-full" size="lg">
+            <Button onClick={handleContinue} className="w-full bg-mongodb-spring text-mongodb-black hover:bg-mongodb-spring/90" size="lg">
                 Continue to Booking Form
             </Button>
         </div>
