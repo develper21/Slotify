@@ -25,18 +25,23 @@ export async function middleware(req: NextRequest) {
 
     const path = req.nextUrl.pathname
 
-    // Public routes
-    const publicRoutes = ['/', '/login', '/signup', '/verify-email', '/forgot-password']
+    // Public routes (no authentication required)
+    const publicRoutes = ['/login', '/signup', '/verify-email', '/forgot-password', '/reset-password']
     const isPublicRoute = publicRoutes.some(route => path.startsWith(route))
 
-    // Auth routes
-    const authRoutes = ['/login', '/signup', '/verify-email', '/forgot-password']
+    // Allow public access to home page and appointment details (for browsing)
+    const isHomePage = path === '/'
+    const isAppointmentDetail = path.match(/^\/appointments\/[^\/]+$/) // /appointments/[id] only
+    const isPubliclyAccessible = isPublicRoute || isHomePage || isAppointmentDetail
+
+    // Auth routes (redirect if already logged in)
+    const authRoutes = ['/login', '/signup', '/verify-email', '/forgot-password', '/reset-password']
     const isAuthRoute = authRoutes.some(route => path.startsWith(route))
 
-    // Protected routes
+    // Protected routes by role
     const customerRoutes = ['/book', '/profile']
-    const organizerRoutes = ['/dashboard', '/appointments', '/schedule', '/questions', '/misc', '/settings', '/reports']
-    const adminRoutes = ['/admin', '/users', '/organizers', '/system-settings']
+    const organizerRoutes = ['/dashboard', '/appointments', '/schedule', '/questions', '/misc', '/settings', '/reports', '/bookings']
+    const adminRoutes = ['/admin']
 
     // Redirect authenticated users away from auth pages
     if (session && isAuthRoute) {
@@ -49,8 +54,8 @@ export async function middleware(req: NextRequest) {
         }
     }
 
-    // Redirect unauthenticated users to login
-    if (!session && !isPublicRoute) {
+    // Redirect unauthenticated users to login (except for publicly accessible pages)
+    if (!session && !isPubliclyAccessible) {
         return NextResponse.redirect(new URL('/login', req.url))
     }
 
