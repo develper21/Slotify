@@ -185,8 +185,67 @@ export async function upsertBookingQuestions(appointmentId: string, questions: a
 }
 
 /**
+ * CREATE BOOKING QUESTION
+ */
+export async function createBookingQuestion(appointmentId: string, data: any) {
+    const supabase = createClient()
+
+    const { error } = await supabase
+        .from('booking_questions')
+        .insert({
+            appointment_id: appointmentId,
+            ...data
+        })
+
+    if (error) return { error: error.message }
+
+    revalidatePath(`/dashboard/appointments/${appointmentId}/questions`)
+    return { success: true }
+}
+
+/**
+ * UPDATE BOOKING QUESTION
+ */
+export async function updateBookingQuestion(questionId: string, data: any) {
+    const supabase = createClient()
+
+    const { error } = await supabase
+        .from('booking_questions')
+        .update(data)
+        .eq('id', questionId)
+
+    if (error) return { error: error.message }
+
+    revalidatePath('/dashboard/appointments')
+    return { success: true }
+}
+
+/**
+ * DELETE BOOKING QUESTION
+ */
+export async function deleteBookingQuestion(questionId: string) {
+    const supabase = createClient()
+
+    const { error } = await supabase
+        .from('booking_questions')
+        .delete()
+        .eq('id', questionId)
+
+    if (error) return { error: error.message }
+
+    revalidatePath('/dashboard/appointments')
+    return { success: true }
+}
+
+/**
+ * UPDATE APPOINTMENT SETTINGS (Alias for updateAppointment)
+ */
+export async function updateAppointmentSettings(appointmentId: string, data: any) {
+    return updateAppointment(appointmentId, data)
+}
+
+/**
  * GET ORGANIZER STATISTICS
- * Calculated directly from consolidated tables.
  */
 export async function getOrganizerStats(organizerId: string) {
     const supabase = createClient()
@@ -204,11 +263,15 @@ export async function getOrganizerStats(organizerId: string) {
         .eq('organizer_id', organizerId)
         .eq('is_active', true)
 
-    // Total bookings (using join-less query where possible or single join)
+    // Total bookings 
     const { data: bookingsData } = await supabase
         .from('bookings')
-        .select('id, start_time')
-        .eq('appointment.organizer_id', organizerId)
+        .select(`
+            id, 
+            start_time,
+            appointment:appointments!inner(organizer_id)
+        `)
+        .eq('appointments.organizer_id', organizerId)
 
     const now = new Date().toISOString()
     const upcomingCount = bookingsData?.filter((b: any) => b.start_time >= now).length || 0
