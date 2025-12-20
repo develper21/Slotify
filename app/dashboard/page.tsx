@@ -149,10 +149,10 @@ async function CustomerRecentBookings({ userId }: { userId: string }) {
                                 </div>
                                 <div>
                                     <h3 className="text-lg font-semibold text-white">
-                                        {booking.appointments?.title || 'Appointment'}
+                                        {booking.appointment?.title || 'Appointment'}
                                     </h3>
                                     <p className="text-sm text-neutral-400">
-                                        {formatDate(booking.time_slots?.slot_date || booking.created_at)}
+                                        {formatDate(booking.start_time)}
                                     </p>
                                 </div>
                             </div>
@@ -186,8 +186,8 @@ export default async function DashboardPage({
         redirect('/login')
     }
 
-    const { data: userData }: { data: { role?: string } | null } = await supabase
-        .from('users')
+    const { data: userData } = await supabase
+        .from('profiles')
         .select('role')
         .eq('id', user.id)
         .single()
