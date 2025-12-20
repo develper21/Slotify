@@ -1,5 +1,5 @@
 import type { Metadata } from 'next'
-import { Inter, Outfit } from 'next/font/google'
+import { Inter, Space_Grotesk, Plus_Jakarta_Sans } from 'next/font/google'
 import './globals.css'
 import { Toaster } from 'sonner'
 
@@ -9,9 +9,15 @@ const inter = Inter({
     display: 'swap',
 })
 
-const outfit = Outfit({
+const spaceGrotesk = Space_Grotesk({
     subsets: ['latin'],
-    variable: '--font-outfit',
+    variable: '--font-space-grotesk',
+    display: 'swap',
+})
+
+const jakarta = Plus_Jakarta_Sans({
+    subsets: ['latin'],
+    variable: '--font-jakarta',
     display: 'swap',
 })
 
@@ -27,10 +33,14 @@ export default function RootLayout({
     children: React.ReactNode
 }) {
     return (
-        <html lang="en" className={`${inter.variable} ${outfit.variable}`}>
-            <body>
+        <html lang="en" className={`${inter.variable} ${spaceGrotesk.variable} ${jakarta.variable} dark`}>
+            <body className="bg-mongodb-black text-mongodb-light min-h-screen">
                 {children}
-                <Toaster position="top-right" richColors />
+                <Toaster
+                    position="top-right"
+                    richColors
+                    theme="dark"
+                />
             </body>
         </html>
     )
