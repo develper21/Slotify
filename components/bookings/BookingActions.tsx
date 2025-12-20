@@ -26,7 +26,7 @@ export function BookingFilters({
         } else {
             params.delete('status')
         }
-        router.push(`/bookings?${params.toString()}`)
+        router.push(`/dashboard/bookings?${params.toString()}`)
     }
 
     const handleAppointmentChange = (appointmentId: string) => {
@@ -36,7 +36,7 @@ export function BookingFilters({
         } else {
             params.delete('appointment')
         }
-        router.push(`/bookings?${params.toString()}`)
+        router.push(`/dashboard/bookings?${params.toString()}`)
     }
 
     return (
@@ -81,8 +81,8 @@ export function StatusUpdateButton({
         setLoading(true)
         const result = await updateBookingStatus(bookingId, newStatus)
 
-        if (result.error) {
-            toast.error(result.error)
+        if (!result.success) {
+            toast.error(result.message || 'Failed to update status')
         } else {
             toast.success('Booking status updated')
             window.location.reload()
@@ -110,24 +110,24 @@ export function ExportButton({ organizerId }: { organizerId: string }) {
 
     const handleExport = async () => {
         setLoading(true)
-        const result: any = await exportBookingsToCSV(organizerId)
+        try {
+            const csv = await exportBookingsToCSV(organizerId)
 
-        if (result?.error) {
-            toast.error(result.error)
-        } else if (result?.csv) {
-            // Create download link
-            const blob = new Blob([result.csv], { type: 'text/csv' })
-            const url = window.URL.createObjectURL(blob)
-            const a = document.createElement('a')
-            a.href = url
-            a.download = `bookings-${new Date().toISOString().split('T')[0]}.csv`
-            document.body.appendChild(a)
-            a.click()
-            document.body.removeChild(a)
-            window.URL.revokeObjectURL(url)
-            toast.success('Bookings exported successfully')
+            if (csv) {
+                const blob = new Blob([csv], { type: 'text/csv' })
+                const url = window.URL.createObjectURL(blob)
+                const a = document.createElement('a')
+                a.href = url
+                a.download = `bookings-${new Date().toISOString().split('T')[0]}.csv`
+                document.body.appendChild(a)
+                a.click()
+                document.body.removeChild(a)
+                window.URL.revokeObjectURL(url)
+                toast.success('Bookings exported successfully')
+            }
+        } catch (error) {
+            toast.error('Failed to export bookings')
         }
-
         setLoading(false)
     }
 
