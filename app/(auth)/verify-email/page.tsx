@@ -25,8 +25,8 @@ export default function VerifyEmailPage() {
 
         try {
             const result = await verifyOTP(email, token)
-            if (result?.error) {
-                toast.error(result.error)
+            if (!(result as any).success) {
+                toast.error((result as any).message || 'Verification failed')
             } else {
                 toast.success('Email verified successfully!')
                 router.push('/login')
