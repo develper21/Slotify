@@ -23,13 +23,13 @@ export default async function BookingsPage({
     }
 
     // Check User Role
-    const { data: userData } = await supabase
-        .from('users')
+    const { data: profile } = await supabase
+        .from('profiles')
         .select('role')
         .eq('id', session.user.id)
         .single()
 
-    const userRole = userData?.role || 'customer'
+    const userRole = profile?.role || 'customer'
 
     let bookings: any[] = []
     let appointments: any[] = []
