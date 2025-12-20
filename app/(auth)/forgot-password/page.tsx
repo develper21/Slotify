@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { resetPassword } from '@/lib/actions/auth'
@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/Button'
 import { toast } from 'sonner'
 import { KeyRound, Mail, ArrowLeft, ArrowRight } from 'lucide-react'
 
-export default function ForgotPasswordPage() {
+function ForgotPasswordContent() {
     const router = useRouter()
     const searchParams = useSearchParams()
     const [isLoading, setIsLoading] = useState(false)
@@ -99,5 +99,18 @@ export default function ForgotPasswordPage() {
                 Back to main site
             </Link>
         </div>
+    )
+}
+
+export default function ForgotPasswordPage() {
+    return (
+        <Suspense fallback={
+            <div className="flex flex-col items-center gap-4 py-20">
+                <div className="w-12 h-12 border-4 border-mongodb-spring/20 border-t-mongodb-spring rounded-full animate-spin" />
+                <p className="text-neutral-500 animate-pulse font-display font-medium tracking-widest uppercase text-xs">Loading Recovery...</p>
+            </div>
+        }>
+            <ForgotPasswordContent />
+        </Suspense>
     )
 }
