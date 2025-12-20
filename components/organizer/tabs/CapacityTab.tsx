@@ -35,21 +35,21 @@ export default function CapacityTab({ appointment }: { appointment: any }) {
 
     return (
         <form onSubmit={handleSubmit}>
-            <Card>
+            <Card className="bg-mongodb-slate/50 border-neutral-800">
                 <CardHeader>
-                    <CardTitle>Capacity Management</CardTitle>
+                    <CardTitle className="text-white">Capacity Management</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-6">
-                    <label className="flex items-center gap-3 cursor-pointer">
+                    <label className="flex items-center gap-3 cursor-pointer group">
                         <input
                             type="checkbox"
                             checked={formData.capacity_enabled}
                             onChange={(e) => setFormData(prev => ({ ...prev, capacity_enabled: e.target.checked }))}
-                            className="w-5 h-5 rounded border-neutral-300 text-primary-600 focus:ring-primary-500"
+                            className="w-5 h-5 rounded border-neutral-600 bg-mongodb-black text-mongodb-spring focus:ring-mongodb-spring"
                         />
                         <div>
-                            <p className="font-medium text-neutral-900">Enable Group Booking</p>
-                            <p className="text-sm text-neutral-600">Allow multiple people to book the same time slot</p>
+                            <p className="font-medium text-white group-hover:text-mongodb-spring transition-colors">Enable Group Booking</p>
+                            <p className="text-sm text-neutral-400">Allow multiple people to book the same time slot</p>
                         </div>
                     </label>
 
@@ -63,6 +63,8 @@ export default function CapacityTab({ appointment }: { appointment: any }) {
                                 onChange={(e) =>
                                     setFormData(prev => ({ ...prev, max_capacity: parseInt(e.target.value) || 1 }))
                                 }
+                                className="bg-mongodb-black border-neutral-700 text-white focus:border-mongodb-spring"
+                                labelClassName="text-neutral-300"
                             />
                             <p className="text-sm text-neutral-500">
                                 How many people can book the same time slot
@@ -71,7 +73,7 @@ export default function CapacityTab({ appointment }: { appointment: any }) {
                     )}
 
                     <div className="flex justify-end">
-                        <Button type="submit" isLoading={isSubmitting}>
+                        <Button type="submit" isLoading={isSubmitting} className="bg-mongodb-spring text-mongodb-black hover:bg-mongodb-spring/90">
                             Save Capacity Settings
                         </Button>
                     </div>
