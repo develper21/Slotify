@@ -9,6 +9,8 @@ import Link from 'next/link'
 import BookingsChart from '@/components/organizer/BookingsChart'
 import RecentBookings from '@/components/organizer/RecentBookings'
 
+export const dynamic = 'force-dynamic'
+
 async function ReportingStats({ organizerId }: { organizerId: string }) {
     const supabase = createClient()
 
