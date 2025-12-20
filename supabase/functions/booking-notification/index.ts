@@ -6,33 +6,33 @@ import { Resend } from "npm:resend"
 
 const resend = new Resend(Deno.env.get("RESEND_API_KEY"))
 
-serve(async (req) => {
-    try {
-        const { record, type } = await req.json()
+serve(async (req: Request) => {
+  try {
+    const { record, type } = await req.json()
 
-        // We only care about new bookings
-        if (type !== 'INSERT' || !record) {
-            return new Response(JSON.stringify({ message: 'Skipping' }), { status: 200 })
-        }
+    // We only care about new bookings
+    if (type !== 'INSERT' || !record) {
+      return new Response(JSON.stringify({ message: 'Skipping' }), { status: 200 })
+    }
 
-        // Fetch dynamic data from database for the email (Edge Runtime)
-        // You'll need to use service role key for this to bypass RLS
-        // For now, let's assume we pass enough data or fetch it here.
+    // Fetch dynamic data from database for the email (Edge Runtime)
+    // You'll need to use service role key for this to bypass RLS
+    // For now, let's assume we pass enough data or fetch it here.
 
-        // TEMPLATE: Premium Booking Confirmation
-        const bookingId = record.id
-        const startTime = new Date(record.start_time).toLocaleString('en-US', {
-            weekday: 'long',
-            month: 'long',
-            day: 'numeric',
-            year: 'numeric',
-            hour: 'numeric',
-            minute: '2-digit',
-            hour12: true
-        })
+    // TEMPLATE: Premium Booking Confirmation
+    const bookingId = record.id
+    const startTime = new Date(record.start_time).toLocaleString('en-US', {
+      weekday: 'long',
+      month: 'long',
+      day: 'numeric',
+      year: 'numeric',
+      hour: 'numeric',
+      minute: '2-digit',
+      hour12: true
+    })
 
-        // HTML Template based on Wireframe preferences
-        const htmlContent = `
+    // HTML Template based on Wireframe preferences
+    const htmlContent = `
     <!DOCTYPE html>
     <html>
     <head>
@@ -87,20 +87,20 @@ serve(async (req) => {
     </html>
     `
 
-        // In a real scenario, you'd fetch the customer's email from the `profiles` table
-        // For this demonstration, we use the record's data if available or a placeholder
-        const { data, error } = await resend.emails.send({
-            from: 'Slotify <no-reply@updates.slotify.com>',
-            to: ['customer-placeholder@example.com'], // In prod: customer_email
-            subject: '✓ Booking Confirmed: Your Session with Slotify',
-            html: htmlContent,
-        })
+    // In a real scenario, you'd fetch the customer's email from the `profiles` table
+    // For this demonstration, we use the record's data if available or a placeholder
+    const { data, error } = await resend.emails.send({
+      from: 'Slotify <no-reply@updates.slotify.com>',
+      to: ['customer-placeholder@example.com'], // In prod: customer_email
+      subject: '✓ Booking Confirmed: Your Session with Slotify',
+      html: htmlContent,
+    })
 
-        if (error) throw error
+    if (error) throw error
 
-        return new Response(JSON.stringify(data), { status: 200 })
+    return new Response(JSON.stringify(data), { status: 200 })
 
-    } catch (err) {
-        return new Response(JSON.stringify({ error: err.message }), { status: 500 })
-    }
+  } catch (err: any) {
+    return new Response(JSON.stringify({ error: err.message }), { status: 500 })
+  }
 })
