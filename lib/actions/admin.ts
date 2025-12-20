@@ -34,7 +34,7 @@ export async function updateUserRole(userId: string, role: 'customer' | 'organiz
         .eq('id', userId)
 
     if (error) {
-        return { success: false, message: error.message }
+        return { success: false, error: error.message }
     }
 
     revalidatePath('/admin')
@@ -62,8 +62,67 @@ export async function getAllOrganizers() {
 }
 
 /**
+ * UPDATE USER STATUS
+ */
+export async function updateUserStatus(userId: string, status: 'active' | 'suspended') {
+    const supabase = createClient()
+
+    const { error } = await supabase
+        .from('profiles')
+        .update({ status })
+        .eq('id', userId)
+
+    if (error) {
+        return { success: false, error: error.message }
+    }
+
+    revalidatePath('/dashboard/admin')
+    return { success: true }
+}
+
+/**
+ * APPROVE ORGANIZER
+ */
+export async function approveOrganizer(userId: string) {
+    const supabase = createClient()
+
+    const { error } = await supabase
+        .from('profiles')
+        .update({
+            role: 'organizer',
+            status: 'active'
+        })
+        .eq('id', userId)
+
+    if (error) {
+        return { success: false, error: error.message }
+    }
+
+    revalidatePath('/dashboard/admin')
+    return { success: true }
+}
+
+/**
+ * DISABLE ORGANIZER
+ */
+export async function disableOrganizer(userId: string) {
+    const supabase = createClient()
+
+    const { error } = await supabase
+        .from('profiles')
+        .update({ status: 'suspended' })
+        .eq('id', userId)
+
+    if (error) {
+        return { success: false, error: error.message }
+    }
+
+    revalidatePath('/dashboard/admin')
+    return { success: true }
+}
+
+/**
  * GET SYSTEM STATISTICS
- * Consolidates data from profiles, appointments, and bookings.
  */
 export async function getSystemStats() {
     const supabase = createClient()
@@ -89,10 +148,25 @@ export async function getSystemStats() {
         .from('bookings')
         .select('*', { count: 'exact', head: true })
 
+    // Extended Stats for Mockup
+    const { count: activeUsers } = await supabase
+        .from('profiles')
+        .select('*', { count: 'exact', head: true })
+        .eq('status', 'active')
+
+    const { count: confirmedBookings } = await supabase
+        .from('bookings')
+        .select('*', { count: 'exact', head: true })
+        .eq('status', 'confirmed')
+
     return {
         totalUsers: totalUsers || 0,
         totalOrganizers: totalOrganizers || 0,
         totalAppointments: totalAppointments || 0,
         totalBookings: totalBookings || 0,
+        activeUsers: activeUsers || 0,
+        approvedOrganizers: totalOrganizers || 0,
+        publishedAppointments: totalAppointments || 0,
+        confirmedBookings: confirmedBookings || 0,
     }
 }
