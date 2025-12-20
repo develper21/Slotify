@@ -169,9 +169,10 @@ export async function getAvailableSlots(appointmentId: string, date: string) {
     return slots
 }
 
+import { redis } from '@/lib/redis'
+
 /**
  * CREATES A NEW BOOKING
- * Answers are stored as JSONB directly in the booking record.
  */
 export async function createBooking(bookingData: {
     appointmentId: string
@@ -181,41 +182,90 @@ export async function createBooking(bookingData: {
 }) {
     const supabase = createClient()
 
-    // 1. Fetch appointment details for duration and price
-    const { data: appointment, error: aptError } = await supabase
-        .from('appointments')
-        .select('duration, price')
-        .eq('id', bookingData.appointmentId)
-        .single()
+    // 1. Concurrency Control: Try to acquire a lock for this specific slot
+    const lockKey = `lock:booking:${bookingData.appointmentId}:${bookingData.slotId}`
+    let lockAcquired = false
 
-    if (aptError || !appointment) {
-        return { success: false, message: 'Appointment not found' }
+    try {
+        // Only attempt redis if configured
+        if (process.env.UPSTASH_REDIS_REST_URL) {
+            const result = await redis.set(lockKey, 'locked', { nx: true, ex: 15 })
+            if (!result) {
+                return { success: false, message: 'Slot is currently being booked by another user. Please try again in a few seconds.' }
+            }
+            lockAcquired = true
+        }
+
+        // 2. Double-Check Availability in Supabase (inside the lock)
+        const { data: appointment, error: aptError } = await supabase
+            .from('appointments')
+            .select('title, duration, price, max_capacity')
+            .eq('id', bookingData.appointmentId)
+            .single()
+
+        if (aptError || !appointment) {
+            return { success: false, message: 'Appointment not found' }
+        }
+
+        const startTime = new Date(bookingData.slotId)
+        const endTime = new Date(startTime.getTime() + (appointment.duration || 60) * 60000)
+
+        // Count existing confirmed bookings for this exact slot
+        const { count: existingCount, error: countError } = await supabase
+            .from('bookings')
+            .select('*', { count: 'exact', head: true })
+            .eq('appointment_id', bookingData.appointmentId)
+            .eq('start_time', startTime.toISOString())
+            .neq('status', 'cancelled')
+
+        if (countError) throw countError
+
+        if ((existingCount || 0) >= (appointment.max_capacity || 1)) {
+            return { success: false, message: 'Sorry, this slot just got fully booked.' }
+        }
+
+        // 3. Perform the Booking
+        const isPaid = (appointment.price || 0) > 0
+        const initialStatus = isPaid ? 'pending_payment' : 'confirmed'
+
+        const { data, error } = await supabase
+            .from('bookings')
+            .insert({
+                appointment_id: bookingData.appointmentId,
+                customer_id: bookingData.userId,
+                start_time: startTime.toISOString(),
+                end_time: endTime.toISOString(),
+                answers: bookingData.answers,
+                total_price: appointment.price || 0,
+                status: initialStatus
+            })
+            .select()
+            .single()
+
+        if (error) {
+            console.error('Booking creation error:', error)
+            return { success: false, message: error.message }
+        }
+
+        revalidatePath('/dashboard/bookings')
+
+        return {
+            success: true,
+            bookingId: data.id,
+            requiresPayment: isPaid,
+            price: appointment.price,
+            title: appointment.title
+        }
+
+    } catch (err: any) {
+        console.error('Race condition check failed:', err)
+        return { success: false, message: 'An error occurred during booking. Please try again.' }
+    } finally {
+        // 4. Release lock
+        if (lockAcquired) {
+            await redis.del(lockKey)
+        }
     }
-
-    const startTime = new Date(bookingData.slotId)
-    const endTime = new Date(startTime.getTime() + (appointment.duration || 60) * 60000)
-
-    const { data, error } = await supabase
-        .from('bookings')
-        .insert({
-            appointment_id: bookingData.appointmentId,
-            customer_id: bookingData.userId,
-            start_time: startTime.toISOString(),
-            end_time: endTime.toISOString(),
-            answers: bookingData.answers,
-            total_price: appointment.price || 0,
-            status: 'confirmed'
-        })
-        .select()
-        .single()
-
-    if (error) {
-        console.error('Booking creation error:', error)
-        return { success: false, message: error.message }
-    }
-
-    revalidatePath('/dashboard/bookings')
-    return { success: true, bookingId: data.id }
 }
 
 /**
