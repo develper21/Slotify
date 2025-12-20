@@ -87,7 +87,7 @@ export default async function AdminDashboard() {
     }
 
     // Check if user is admin
-    const { data: userData } = await supabase
+    const { data: userData }: { data: { role?: string } | null } = await supabase
         .from('users')
         .select('role')
         .eq('id', user.id)
