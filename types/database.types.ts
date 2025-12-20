@@ -1,9 +1,3 @@
 // Database types will be generated from Supabase
-// For now, we'll use a placeholder type
-export type Database = {
-    public: {
-        Tables: {
-            [key: string]: any
-        }
-    }
-}
+// Using a loose placeholder to keep TypeScript satisfied during development
+export type Database = any
