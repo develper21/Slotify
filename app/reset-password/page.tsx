@@ -9,8 +9,9 @@ import { completePasswordReset } from '@/lib/actions/auth'
 import { toast } from 'sonner'
 import { Lock, CheckCircle, Mail } from 'lucide-react'
 import { getPasswordValidationError } from '@/lib/utils'
+import { Suspense } from 'react'
 
-export default function ResetPasswordPage() {
+function ResetPasswordContent() {
     const router = useRouter()
     const searchParams = useSearchParams()
 
@@ -137,5 +138,21 @@ export default function ResetPasswordPage() {
                 </CardContent>
             </Card>
         </div>
+    )
+}
+
+export default function ResetPasswordPage() {
+    return (
+        <Suspense fallback={
+            <div className="min-h-screen bg-neutral-50 flex items-center justify-center p-4">
+                <Card className="w-full max-w-md">
+                    <CardContent className="py-12 text-center">
+                        <div className="animate-pulse">Loading...</div>
+                    </CardContent>
+                </Card>
+            </div>
+        }>
+            <ResetPasswordContent />
+        </Suspense>
     )
 }
