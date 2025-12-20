@@ -1,6 +1,7 @@
 'use server'
 
 import { createClient } from '@/lib/supabase/server'
+import { getPasswordValidationError } from '@/lib/utils'
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 
@@ -98,6 +99,22 @@ export async function verifyOTP(email: string, token: string) {
     return { success: true }
 }
 
+export async function verifyRecoveryOtp(email: string, token: string) {
+    const supabase = createClient()
+
+    const { error } = await supabase.auth.verifyOtp({
+        email,
+        token,
+        type: 'recovery',
+    })
+
+    if (error) {
+        return { error: error.message }
+    }
+
+    return { success: true }
+}
+
 export async function resetPassword(email: string) {
     const supabase = createClient()
 
@@ -114,6 +131,11 @@ export async function resetPassword(email: string) {
 
 export async function updatePassword(newPassword: string) {
     const supabase = createClient()
+
+    const validationError = getPasswordValidationError(newPassword)
+    if (validationError) {
+        return { error: validationError }
+    }
 
     const { error } = await supabase.auth.updateUser({
         password: newPassword,

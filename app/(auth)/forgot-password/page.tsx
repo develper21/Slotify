@@ -1,7 +1,7 @@
 'use client'
 
-import { useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { useEffect, useState } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { resetPassword } from '@/lib/actions/auth'
 import { Button } from '@/components/ui/Button'
@@ -10,9 +10,16 @@ import { KeyRound, Mail } from 'lucide-react'
 
 export default function ForgotPasswordPage() {
     const router = useRouter()
+    const searchParams = useSearchParams()
     const [isLoading, setIsLoading] = useState(false)
     const [email, setEmail] = useState('')
-    const [sent, setSent] = useState(false)
+
+    useEffect(() => {
+        const prefilledEmail = searchParams.get('email')
+        if (prefilledEmail) {
+            setEmail(prefilledEmail)
+        }
+    }, [searchParams])
 
     async function handleSubmit(e: React.FormEvent) {
         e.preventDefault()
@@ -29,35 +36,14 @@ export default function ForgotPasswordPage() {
             if (result?.error) {
                 toast.error(result.error)
             } else {
-                toast.success('Password reset link sent to your email!')
-                setSent(true)
+                toast.success('Verification code sent to your email')
+                router.push(`/forgot-password/verify?email=${encodeURIComponent(email)}`)
             }
         } catch (error) {
             toast.error('An error occurred. Please try again.')
         } finally {
             setIsLoading(false)
         }
-    }
-
-    if (sent) {
-        return (
-            <div className="min-h-screen flex items-center justify-center bg-gradient-primary p-4">
-                <div className="w-full max-w-md">
-                    <div className="bg-white rounded-2xl shadow-xl p-8 text-center animate-scale-in">
-                        <div className="inline-flex items-center justify-center w-16 h-16 bg-green-100 rounded-full mb-4">
-                            <Mail className="w-8 h-8 text-green-600" />
-                        </div>
-                        <h2 className="text-2xl font-display font-semibold mb-2">Check Your Email</h2>
-                        <p className="text-neutral-600 mb-6">
-                            We've sent a password reset link to <strong>{email}</strong>
-                        </p>
-                        <Link href="/login">
-                            <Button className="w-full">Back to Login</Button>
-                        </Link>
-                    </div>
-                </div>
-            </div>
-        )
     }
 
     return (
