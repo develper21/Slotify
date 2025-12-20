@@ -247,6 +247,38 @@ export async function updateAppointmentSettings(appointmentId: string, data: any
 /**
  * GET ORGANIZER STATISTICS
  */
+/**
+ * UPSERT SCHEDULE 
+ * Updates the availability configuration for an appointment.
+ */
+export async function upsertSchedule(appointmentId: string, schedules: any[]) {
+    const supabase = createClient()
+
+    // First, delete existing schedules for this appointment
+    const { error: deleteError } = await supabase
+        .from('schedules')
+        .delete()
+        .eq('appointment_id', appointmentId)
+
+    if (deleteError) return { success: false, error: deleteError.message }
+
+    // Then insert the new ones
+    const { error: insertError } = await supabase
+        .from('schedules')
+        .insert(schedules.map(s => ({
+            appointment_id: appointmentId,
+            day_of_week: s.day_of_week,
+            is_working_day: s.is_working_day,
+            start_time: s.start_time,
+            end_time: s.end_time
+        })))
+
+    if (insertError) return { success: false, error: insertError.message }
+
+    revalidatePath(`/dashboard/appointments/${appointmentId}/schedule`)
+    return { success: true }
+}
+
 export async function getOrganizerStats(organizerId: string) {
     const supabase = createClient()
 
