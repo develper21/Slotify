@@ -24,7 +24,9 @@ async function AppointmentsList({ searchQuery }: { searchQuery?: string }) {
     return (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {appointments.map((appointment: any) => {
-                const primaryImage = appointment.appointment_images?.find((img: any) => img.is_primary)
+                // Get primary image from JSONB array
+                const images = appointment.images || []
+                const primaryImage = images.find((img: any) => img.is_primary) || images[0]
                 const organizerName = appointment.organizers?.users?.full_name || appointment.organizers?.business_name
 
                 return (
@@ -32,7 +34,7 @@ async function AppointmentsList({ searchQuery }: { searchQuery?: string }) {
                         {primaryImage && (
                             <div className="h-48 bg-gradient-primary relative overflow-hidden">
                                 <img
-                                    src={primaryImage.image_url}
+                                    src={primaryImage.url}
                                     alt={appointment.title}
                                     className="w-full h-full object-cover"
                                 />

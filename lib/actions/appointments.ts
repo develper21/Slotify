@@ -15,10 +15,6 @@ export async function getPublishedAppointments(searchQuery?: string) {
         users (
           full_name
         )
-      ),
-      appointment_images (
-        image_url,
-        is_primary
       )
     `)
         .eq('published', true)
@@ -52,10 +48,6 @@ export async function getAppointmentById(id: string) {
           full_name,
           email
         )
-      ),
-      appointment_images (
-        image_url,
-        is_primary
       ),
       appointment_settings (*)
     `)
