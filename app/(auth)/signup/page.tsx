@@ -20,6 +20,7 @@ export default function SignupPage() {
 
     async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
         e.preventDefault()
+        console.log('Form submitted')
         setIsLoading(true)
         setErrors({})
 
@@ -42,20 +43,26 @@ export default function SignupPage() {
         if (password !== confirm_password) newErrors.confirm_password = 'Passwords do not match'
 
         if (Object.keys(newErrors).length > 0) {
+            console.log('Validation failed', newErrors)
             setErrors(newErrors)
             setIsLoading(false)
             return
         }
 
         try {
+            console.log('Calling signUp server action')
             const result = await signUp(formData)
-            if (result?.error) {
-                toast.error(result.error)
+            console.log('SignUp result:', result)
+            if (!result.success) {
+                console.error('SignUp error:', result.message)
+                toast.error(result.message)
             } else {
+                console.log('SignUp success')
                 toast.success('Account created! Please check your email for verification.')
                 router.push('/verify-email')
             }
         } catch (error) {
+            console.error('SignUp process exception:', error)
             toast.error('An error occurred. Please try again.')
         } finally {
             setIsLoading(false)
@@ -63,30 +70,34 @@ export default function SignupPage() {
     }
 
     return (
-        <div className="min-h-screen flex items-center justify-center bg-gradient-primary p-4">
-            <div className="w-full max-w-md">
+        <div className="min-h-screen bg-mongodb-black flex items-center justify-center p-4 relative overflow-hidden">
+            {/* Background Decorations */}
+            <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-mongodb-spring/5 blur-[120px] rounded-full -mr-64 -mt-64" />
+            <div className="absolute bottom-0 left-0 w-[500px] h-[500px] bg-mongodb-forest/10 blur-[120px] rounded-full -ml-64 -mb-64" />
+
+            <div className="w-full max-w-md relative z-10 animate-scale-in">
                 {/* Logo/Brand */}
                 <div className="text-center mb-8">
                     <h1 className="text-4xl font-display font-bold text-white mb-2">Slotify</h1>
-                    <p className="text-white/80">Create your account to get started.</p>
+                    <p className="text-neutral-400">Create your account to get started.</p>
                 </div>
 
                 {/* Signup Card */}
-                <div className="bg-white rounded-2xl shadow-xl p-8 animate-scale-in">
+                <div className="bg-mongodb-slate/50 backdrop-blur-xl border border-neutral-800 rounded-2xl shadow-xl p-8">
                     <div className="flex items-center gap-2 mb-6">
-                        <UserPlus className="w-6 h-6 text-primary-600" />
-                        <h2 className="text-2xl font-display font-semibold">Sign Up</h2>
+                        <UserPlus className="w-6 h-6 text-mongodb-spring" />
+                        <h2 className="text-2xl font-display font-semibold text-white">Sign Up</h2>
                     </div>
 
                     <form onSubmit={handleSubmit} className="space-y-4">
                         <div>
-                            <div className="relative">
-                                <User className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-neutral-400" />
+                            <div className="relative group">
+                                <User className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-neutral-500 group-focus-within:text-mongodb-spring transition-colors" />
                                 <input
                                     type="text"
                                     name="full_name"
                                     placeholder="Full name"
-                                    className="w-full pl-11 pr-4 py-3 rounded-lg border border-neutral-300 focus:border-primary-500 focus:ring-2 focus:ring-primary-200 transition-all outline-none"
+                                    className="w-full pl-11 pr-4 py-3 rounded-lg bg-mongodb-black border border-neutral-800 text-white placeholder:text-neutral-500 focus:border-mongodb-spring focus:ring-1 focus:ring-mongodb-spring transition-all outline-none"
                                 />
                             </div>
                             {errors.full_name && (
@@ -95,13 +106,13 @@ export default function SignupPage() {
                         </div>
 
                         <div>
-                            <div className="relative">
-                                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-neutral-400" />
+                            <div className="relative group">
+                                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-neutral-500 group-focus-within:text-mongodb-spring transition-colors" />
                                 <input
                                     type="email"
                                     name="email"
                                     placeholder="Email address"
-                                    className="w-full pl-11 pr-4 py-3 rounded-lg border border-neutral-300 focus:border-primary-500 focus:ring-2 focus:ring-primary-200 transition-all outline-none"
+                                    className="w-full pl-11 pr-4 py-3 rounded-lg bg-mongodb-black border border-neutral-800 text-white placeholder:text-neutral-500 focus:border-mongodb-spring focus:ring-1 focus:ring-mongodb-spring transition-all outline-none"
                                 />
                             </div>
                             {errors.email && (
@@ -110,33 +121,33 @@ export default function SignupPage() {
                         </div>
 
                         <div>
-                            <div className="relative">
-                                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-neutral-400" />
+                            <div className="relative group">
+                                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-neutral-500 group-focus-within:text-mongodb-spring transition-colors" />
                                 <input
                                     type="password"
                                     name="password"
                                     placeholder="Password"
-                                    className="w-full pl-11 pr-4 py-3 rounded-lg border border-neutral-300 focus:border-primary-500 focus:ring-2 focus:ring-primary-200 transition-all outline-none"
+                                    className="w-full pl-11 pr-4 py-3 rounded-lg bg-mongodb-black border border-neutral-800 text-white placeholder:text-neutral-500 focus:border-mongodb-spring focus:ring-1 focus:ring-mongodb-spring transition-all outline-none"
                                 />
                             </div>
                             {errors.password && (
                                 <p className="mt-1 text-sm text-red-500">{errors.password}</p>
                             )}
                             {!errors.password && (
-                                <p className="mt-1 text-sm text-neutral-500">
-                                    Password must be at least 8 characters and include uppercase, lowercase, number, and special character.
+                                <p className="mt-1 text-xs text-neutral-500">
+                                    Min 8 chars, uppercase, lowercase, number, special char.
                                 </p>
                             )}
                         </div>
 
                         <div>
-                            <div className="relative">
-                                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-neutral-400" />
+                            <div className="relative group">
+                                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-neutral-500 group-focus-within:text-mongodb-spring transition-colors" />
                                 <input
                                     type="password"
                                     name="confirm_password"
                                     placeholder="Confirm password"
-                                    className="w-full pl-11 pr-4 py-3 rounded-lg border border-neutral-300 focus:border-primary-500 focus:ring-2 focus:ring-primary-200 transition-all outline-none"
+                                    className="w-full pl-11 pr-4 py-3 rounded-lg bg-mongodb-black border border-neutral-800 text-white placeholder:text-neutral-500 focus:border-mongodb-spring focus:ring-1 focus:ring-mongodb-spring transition-all outline-none"
                                 />
                             </div>
                             {errors.confirm_password && (
@@ -144,14 +155,14 @@ export default function SignupPage() {
                             )}
                         </div>
 
-                        <Button type="submit" className="w-full" isLoading={isLoading}>
+                        <Button type="submit" className="w-full bg-mongodb-spring text-mongodb-black hover:bg-mongodb-spring/90" isLoading={isLoading}>
                             Create Account
                         </Button>
                     </form>
 
-                    <div className="mt-6 text-center text-sm text-neutral-600">
+                    <div className="mt-6 text-center text-sm text-neutral-400">
                         Already have an account?{' '}
-                        <Link href="/login" className="text-primary-600 hover:text-primary-700 font-medium">
+                        <Link href="/login" className="text-mongodb-spring hover:underline font-medium">
                             Login
                         </Link>
                     </div>

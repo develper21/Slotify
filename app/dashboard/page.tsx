@@ -2,105 +2,78 @@ import { Suspense } from 'react'
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { getOrganizerId, getOrganizerAppointments, getOrganizerStats } from '@/lib/actions/organizer'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card'
+import { getSystemStats } from '@/lib/actions/admin'
+import { getCustomerBookings } from '@/lib/actions/bookings'
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { Badge } from '@/components/ui/Badge'
 import { Skeleton } from '@/components/ui/Skeleton'
-import { Plus, Search, Calendar, Users, TrendingUp, Clock } from 'lucide-react'
+import { Plus, Search, Calendar, Users, TrendingUp, Clock, ArrowUpRight, Filter, Shield, Activity, User } from 'lucide-react'
 import Link from 'next/link'
 import AppointmentCard from '@/components/organizer/AppointmentCard'
+import { formatDate } from '@/lib/utils'
 
-async function DashboardStats({ organizerId }: { organizerId: string }) {
+// --- Organizer Components ---
+async function OrganizerStats({ organizerId }: { organizerId: string }) {
     const stats = await getOrganizerStats(organizerId)
+    const statCards = [
+        { label: 'Total Appointments', value: stats.totalAppointments, icon: Calendar, color: 'text-mongodb-spring', bg: 'bg-mongodb-spring/10' },
+        { label: 'Published Slots', value: stats.publishedAppointments, icon: TrendingUp, color: 'text-blue-400', bg: 'bg-blue-400/10' },
+        { label: 'Total Bookings', value: stats.totalBookings, icon: Users, color: 'text-purple-400', bg: 'bg-purple-400/10' },
+        { label: 'Upcoming', value: stats.upcomingBookings, icon: Clock, color: 'text-yellow-400', bg: 'bg-yellow-400/10' },
+    ]
 
     return (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-            <Card>
-                <CardContent className="py-6">
-                    <div className="flex items-center justify-between">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
+            {statCards.map((stat) => (
+                <Card key={stat.label} hover={false} className="relative overflow-hidden group bg-mongodb-slate/50 border-neutral-800">
+                    <div className={`absolute top-0 right-0 w-24 h-24 ${stat.bg} blur-3xl -mr-12 -mt-12 transition-transform group-hover:scale-150`} />
+                    <CardContent className="p-6 relative z-10">
+                        <div className="flex items-center justify-between mb-4">
+                            <div className={`p-2.5 rounded-mongodb ${stat.bg}`}>
+                                <stat.icon className={`w-5 h-5 ${stat.color}`} />
+                            </div>
+                            <span className="text-[10px] font-bold text-neutral-500 uppercase tracking-widest flex items-center gap-1">
+                                <ArrowUpRight className="w-3 h-3" />
+                                +12%
+                            </span>
+                        </div>
                         <div>
-                            <p className="text-sm font-medium text-neutral-500">Total Appointments</p>
-                            <p className="text-3xl font-bold text-neutral-900 mt-2">{stats.totalAppointments}</p>
+                            <p className="text-sm font-medium text-neutral-400">{stat.label}</p>
+                            <p className="text-3xl font-display font-bold text-white mt-1">{stat.value}</p>
                         </div>
-                        <div className="w-12 h-12 rounded-full bg-primary-100 flex items-center justify-center">
-                            <Calendar className="w-6 h-6 text-primary-600" />
-                        </div>
-                    </div>
-                </CardContent>
-            </Card>
-
-            <Card>
-                <CardContent className="py-6">
-                    <div className="flex items-center justify-between">
-                        <div>
-                            <p className="text-sm font-medium text-neutral-500">Published</p>
-                            <p className="text-3xl font-bold text-neutral-900 mt-2">{stats.publishedAppointments}</p>
-                        </div>
-                        <div className="w-12 h-12 rounded-full bg-green-100 flex items-center justify-center">
-                            <TrendingUp className="w-6 h-6 text-green-600" />
-                        </div>
-                    </div>
-                </CardContent>
-            </Card>
-
-            <Card>
-                <CardContent className="py-6">
-                    <div className="flex items-center justify-between">
-                        <div>
-                            <p className="text-sm font-medium text-neutral-500">Total Bookings</p>
-                            <p className="text-3xl font-bold text-neutral-900 mt-2">{stats.totalBookings}</p>
-                        </div>
-                        <div className="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center">
-                            <Users className="w-6 h-6 text-blue-600" />
-                        </div>
-                    </div>
-                </CardContent>
-            </Card>
-
-            <Card>
-                <CardContent className="py-6">
-                    <div className="flex items-center justify-between">
-                        <div>
-                            <p className="text-sm font-medium text-neutral-500">Upcoming</p>
-                            <p className="text-3xl font-bold text-neutral-900 mt-2">{stats.upcomingBookings}</p>
-                        </div>
-                        <div className="w-12 h-12 rounded-full bg-purple-100 flex items-center justify-center">
-                            <Clock className="w-6 h-6 text-purple-600" />
-                        </div>
-                    </div>
-                </CardContent>
-            </Card>
+                    </CardContent>
+                </Card>
+            ))}
         </div>
     )
 }
 
-async function AppointmentsList({ organizerId, searchQuery }: { organizerId: string; searchQuery?: string }) {
+async function OrganizerAppointmentsList({ organizerId, searchQuery }: { organizerId: string; searchQuery?: string }) {
     const appointments = await getOrganizerAppointments(organizerId, searchQuery)
 
     if (appointments.length === 0) {
         return (
-            <Card>
-                <CardContent className="py-12 text-center">
-                    <Calendar className="w-16 h-16 mx-auto text-neutral-300 mb-4" />
-                    <h3 className="text-xl font-semibold text-neutral-700 mb-2">
-                        No Appointments Yet
-                    </h3>
-                    <p className="text-neutral-500 mb-6">
-                        Create your first appointment to start accepting bookings
-                    </p>
-                    <Link href="/appointments/new">
-                        <Button>
-                            <Plus className="w-5 h-5 mr-2" />
-                            Create Appointment
-                        </Button>
-                    </Link>
-                </CardContent>
-            </Card>
+            <div className="text-center py-20 bg-mongodb-slate/20 border border-dashed border-neutral-700/50 rounded-mongodb">
+                <Calendar className="w-16 h-16 mx-auto text-neutral-700 mb-4 opacity-30" />
+                <h3 className="text-xl font-display font-bold text-white mb-2">
+                    No Appointments Yet
+                </h3>
+                <p className="text-neutral-400 mb-8 max-w-sm mx-auto">
+                    Launch your professional booking experience by creating your first appointment slot.
+                </p>
+                <Link href="/appointments/new">
+                    <Button variant="primary" size="lg" className="bg-mongodb-spring text-mongodb-black hover:bg-mongodb-spring/90">
+                        <Plus className="w-5 h-5 mr-2" />
+                        Create Appointment
+                    </Button>
+                </Link>
+            </div>
         )
     }
 
     return (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {appointments.map((appointment: any) => (
                 <AppointmentCard key={appointment.id} appointment={appointment} />
             ))}
@@ -108,7 +81,100 @@ async function AppointmentsList({ organizerId, searchQuery }: { organizerId: str
     )
 }
 
-export default async function OrganizerDashboard({
+// --- Admin Components ---
+async function AdminStats() {
+    const stats = await getSystemStats()
+    const statCards = [
+        { label: 'Total Users', value: stats.totalUsers, icon: Users, color: 'text-mongodb-spring', bg: 'bg-mongodb-spring/10' },
+        { label: 'Organizers', value: stats.totalOrganizers, icon: Shield, color: 'text-blue-400', bg: 'bg-blue-400/10' },
+        { label: 'Total Bookings', value: stats.totalBookings, icon: Activity, color: 'text-purple-400', bg: 'bg-purple-400/10' },
+        { label: 'Appointments', value: stats.totalAppointments, icon: Calendar, color: 'text-yellow-400', bg: 'bg-yellow-400/10' },
+    ]
+
+    return (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
+            {statCards.map((stat) => (
+                <Card key={stat.label} hover={false} className="relative overflow-hidden group bg-mongodb-slate/50 border-neutral-800">
+                    <div className={`absolute top-0 right-0 w-24 h-24 ${stat.bg} blur-3xl -mr-12 -mt-12 transition-transform group-hover:scale-150`} />
+                    <CardContent className="p-6 relative z-10">
+                        <div className="flex items-center justify-between mb-4">
+                            <div className={`p-2.5 rounded-mongodb ${stat.bg}`}>
+                                <stat.icon className={`w-5 h-5 ${stat.color}`} />
+                            </div>
+                        </div>
+                        <div>
+                            <p className="text-sm font-medium text-neutral-400">{stat.label}</p>
+                            <p className="text-3xl font-display font-bold text-white mt-1">{stat.value}</p>
+                        </div>
+                    </CardContent>
+                </Card>
+            ))}
+        </div>
+    )
+}
+
+// --- Customer Components ---
+async function CustomerRecentBookings({ userId }: { userId: string }) {
+    const bookings = await getCustomerBookings(userId)
+
+    if (bookings.length === 0) {
+        return (
+            <div className="text-center py-20 bg-mongodb-slate/20 border border-dashed border-neutral-700/50 rounded-mongodb">
+                <Calendar className="w-16 h-16 mx-auto text-neutral-700 mb-4 opacity-30" />
+                <h3 className="text-xl font-display font-bold text-white mb-2">
+                    No Bookings Yet
+                </h3>
+                <p className="text-neutral-400 mb-6 max-w-sm mx-auto">
+                    You haven't made any bookings yet.
+                </p>
+                <Link href="/">
+                    <Button variant="primary" className="bg-mongodb-spring text-mongodb-black hover:bg-mongodb-spring/90">
+                        Find Appointments
+                    </Button>
+                </Link>
+            </div>
+        )
+    }
+
+    return (
+        <div className="space-y-4">
+            <h2 className="text-xl font-bold text-white mb-4">Recent Bookings</h2>
+            <div className="grid grid-cols-1 gap-4">
+                {bookings.slice(0, 5).map((booking: any) => (
+                    <Card key={booking.id} className="bg-mongodb-slate/50 border-neutral-800 hover:border-neutral-700 transition-colors">
+                        <CardContent className="p-4 flex items-center justify-between">
+                            <div className="flex items-center gap-4">
+                                <div className="w-12 h-12 rounded-full bg-mongodb-spring/10 flex items-center justify-center">
+                                    <Calendar className="w-6 h-6 text-mongodb-spring" />
+                                </div>
+                                <div>
+                                    <h3 className="text-lg font-semibold text-white">
+                                        {booking.appointments?.title || 'Appointment'}
+                                    </h3>
+                                    <p className="text-sm text-neutral-400">
+                                        {formatDate(booking.time_slots?.slot_date || booking.created_at)}
+                                    </p>
+                                </div>
+                            </div>
+                            <Badge variant={booking.status === 'confirmed' ? 'success' : 'info'}>
+                                {booking.status}
+                            </Badge>
+                        </CardContent>
+                    </Card>
+                ))}
+            </div>
+            <div className="mt-4">
+                <Link href="/dashboard/bookings">
+                    <Button variant="outline" className="w-full border-neutral-700 text-neutral-300 hover:bg-neutral-800">
+                        View All Bookings
+                    </Button>
+                </Link>
+            </div>
+        </div>
+    )
+}
+
+export default async function DashboardPage({
     searchParams,
 }: {
     searchParams: { search?: string }
@@ -120,116 +186,188 @@ export default async function OrganizerDashboard({
         redirect('/login')
     }
 
-    // Check if user has organizer role
     const { data: userData }: { data: { role?: string } | null } = await supabase
         .from('users')
         .select('role')
         .eq('id', user.id)
         .single()
 
-    if (userData?.role !== 'organizer') {
-        redirect('/')
+    const role = userData?.role || 'customer'
+
+    if (role === 'admin') {
+        return (
+            <div className="container mx-auto px-4 py-8">
+                <header className="mb-8">
+                    <h1 className="text-3xl font-display font-bold text-white">
+                        Admin Dashboard
+                    </h1>
+                    <p className="text-neutral-400 mt-1">
+                        System overview and management.
+                    </p>
+                </header>
+                <Suspense fallback={<div className="text-white">Loading stats...</div>}>
+                    <AdminStats />
+                </Suspense>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <Card className="bg-mongodb-slate/50 border-neutral-800 p-6">
+                        <h2 className="text-xl font-bold text-white mb-4">Quick Links</h2>
+                        <div className="space-y-3">
+                            <Link href="/dashboard/admin/users" className="block">
+                                <Button variant="outline" className="w-full justify-start border-neutral-700 text-neutral-300 hover:bg-neutral-800">
+                                    <Users className="w-4 h-4 mr-2" /> Manage Users
+                                </Button>
+                            </Link>
+                            <Link href="/dashboard/admin/organizers" className="block">
+                                <Button variant="outline" className="w-full justify-start border-neutral-700 text-neutral-300 hover:bg-neutral-800">
+                                    <Shield className="w-4 h-4 mr-2" /> Manage Organizers
+                                </Button>
+                            </Link>
+                        </div>
+                    </Card>
+                </div>
+            </div>
+        )
     }
 
+    if (role === 'customer') {
+        return (
+            <div className="container mx-auto px-4 py-8">
+                <header className="mb-8">
+                    <h1 className="text-3xl font-display font-bold text-white">
+                        Welcome back, Customer
+                    </h1>
+                    <p className="text-neutral-400 mt-1">
+                        Manage your appointments and profile.
+                    </p>
+                </header>
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                    <div className="lg:col-span-2">
+                        <Suspense fallback={<div className="text-white">Loading bookings...</div>}>
+                            <CustomerRecentBookings userId={user.id} />
+                        </Suspense>
+                    </div>
+                    <div>
+                        <Card className="bg-mongodb-slate/50 border-neutral-800">
+                            <CardHeader>
+                                <CardTitle className="text-white">Quick Actions</CardTitle>
+                            </CardHeader>
+                            <CardContent className="space-y-3">
+                                <Link href="/">
+                                    <Button className="w-full bg-mongodb-spring text-mongodb-black hover:bg-mongodb-spring/90">
+                                        <Search className="w-4 h-4 mr-2" /> Find Appointments
+                                    </Button>
+                                </Link>
+                                <Link href="/dashboard/profile">
+                                    <Button variant="outline" className="w-full border-neutral-700 text-neutral-300 hover:bg-neutral-800">
+                                        <User className="w-4 h-4 mr-2" /> Edit Profile
+                                    </Button>
+                                </Link>
+                            </CardContent>
+                        </Card>
+                    </div>
+                </div>
+            </div>
+        )
+    }
+
+    // Default to Organizer
     const organizerId = await getOrganizerId(user.id)
 
     if (!organizerId) {
+        // Should realistically handle case where role is organizer but no organizer record exists,
+        // but for now redirect or show error.
         return (
-            <div className="min-h-screen bg-neutral-50 flex items-center justify-center p-4">
-                <Card className="max-w-md">
-                    <CardContent className="py-8 text-center">
-                        <h2 className="text-2xl font-bold text-neutral-900 mb-4">
-                            Organizer Account Required
-                        </h2>
-                        <p className="text-neutral-600 mb-6">
-                            You need to be registered as an organizer to access this dashboard.
-                        </p>
-                        <Link href="/">
-                            <Button>Go to Home</Button>
-                        </Link>
-                    </CardContent>
-                </Card>
+            <div className="p-8 text-center text-white">
+                Organizer profile not found.
             </div>
         )
     }
 
     return (
-        <div className="min-h-screen bg-neutral-50">
-            {/* Header */}
-            <div className="bg-white border-b border-neutral-200">
-                <div className="container mx-auto px-4 py-6">
-                    <div className="flex items-center justify-between mb-6">
+        <>
+            {/* Dashboard Header */}
+            <header className="bg-mongodb-slate/30 border-b border-neutral-700/50 pt-8 pb-20 rounded-xl mb-[-3rem]">
+                <div className="container mx-auto px-4">
+                    <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6 mb-8">
                         <div>
-                            <h1 className="text-3xl font-display font-bold text-neutral-900">
-                                Dashboard
+                            <div className="flex items-center gap-2 mb-2">
+                                <div className="w-2 h-2 rounded-full bg-mongodb-spring animate-pulse" />
+                                <span className="text-xs font-bold text-mongodb-spring uppercase tracking-widest">Live Dashboard</span>
+                            </div>
+                            <h1 className="text-3xl font-display font-bold text-white">
+                                Welcome back, <span className="gradient-text">Organizer</span>
                             </h1>
-                            <p className="text-neutral-600 mt-1">
-                                Manage your appointments and bookings
+                            <p className="text-neutral-400 mt-1">
+                                Monitor your performance and manage your schedule in real-time.
                             </p>
                         </div>
-                        <Link href="/appointments/new">
-                            <Button size="lg">
-                                <Plus className="w-5 h-5 mr-2" />
-                                New Appointment
+                        <div className="flex items-center gap-3">
+                            <Button variant="outline" size="sm" className="border-neutral-700 text-neutral-300 hover:bg-neutral-800">
+                                <Filter className="w-4 h-4 mr-2" />
+                                Filters
                             </Button>
-                        </Link>
+                            <Link href="/appointments/new">
+                                <Button variant="primary" className="bg-mongodb-spring text-mongodb-black hover:bg-mongodb-spring/90">
+                                    <Plus className="w-5 h-5 mr-2" />
+                                    New Appointment
+                                </Button>
+                            </Link>
+                        </div>
                     </div>
 
-                    {/* Search Bar */}
-                    <form className="relative max-w-2xl">
-                        <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-neutral-400" />
-                        <input
-                            type="text"
-                            name="search"
-                            placeholder="Search appointments..."
-                            defaultValue={searchParams.search}
-                            className="w-full pl-12 pr-4 py-3 rounded-lg border border-neutral-300 focus:border-primary-500 focus:ring-2 focus:ring-primary-200 transition-all outline-none"
-                        />
-                    </form>
+                    <Suspense fallback={
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                            {[1, 2, 3, 4].map(i => (
+                                <Card key={i} className="animate-pulse bg-neutral-800/50 border-neutral-800">
+                                    <CardContent className="p-6">
+                                        <Skeleton className="h-4 w-24 mb-4 bg-neutral-700" />
+                                        <Skeleton className="h-8 w-16 bg-neutral-700" />
+                                    </CardContent>
+                                </Card>
+                            ))}
+                        </div>
+                    }>
+                        <OrganizerStats organizerId={organizerId} />
+                    </Suspense>
                 </div>
+            </header>
+
+            {/* Main Dashboard Content */}
+            <div className="container mx-auto px-4 relative z-20">
+                <Card className="mb-8 border-mongodb-spring/10 bg-mongodb-slate/50 border-neutral-800">
+                    <CardHeader className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+                        <div>
+                            <CardTitle className="text-white">Manage Slots</CardTitle>
+                            <CardDescription className="text-neutral-400">Search and manage your active appointment types</CardDescription>
+                        </div>
+                        <div className="w-full md:w-96 relative group">
+                            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-500 group-focus-within:text-mongodb-spring transition-colors" />
+                            <input
+                                type="text"
+                                name="search"
+                                placeholder="Filter by title..."
+                                defaultValue={searchParams.search}
+                                className="w-full pl-11 pr-4 py-2.5 rounded-mongodb bg-mongodb-black border border-neutral-700 text-white placeholder:text-neutral-500 focus:outline-none focus:border-mongodb-spring transition-all"
+                            />
+                        </div>
+                    </CardHeader>
+                    <CardContent className="pt-6">
+                        <Suspense fallback={
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                                {[1, 2, 3].map(i => (
+                                    <div key={i} className="space-y-4 animate-pulse">
+                                        <Skeleton className="h-48 w-full rounded-mongodb bg-neutral-800" />
+                                        <Skeleton className="h-6 w-3/4 bg-neutral-800" />
+                                    </div>
+                                ))}
+                            </div>
+                        }>
+                            <OrganizerAppointmentsList organizerId={organizerId} searchQuery={searchParams.search} />
+                        </Suspense>
+                    </CardContent>
+                </Card>
             </div>
-
-            {/* Content */}
-            <div className="container mx-auto px-4 py-8">
-                {/* Stats */}
-                <Suspense fallback={
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-                        {[1, 2, 3, 4].map(i => (
-                            <Card key={i}>
-                                <CardContent className="py-6">
-                                    <Skeleton className="h-20 w-full" />
-                                </CardContent>
-                            </Card>
-                        ))}
-                    </div>
-                }>
-                    <DashboardStats organizerId={organizerId} />
-                </Suspense>
-
-                {/* Appointments */}
-                <div className="mb-6">
-                    <h2 className="text-2xl font-display font-semibold text-neutral-900 mb-4">
-                        Your Appointments
-                    </h2>
-                </div>
-
-                <Suspense fallback={
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                        {[1, 2, 3].map(i => (
-                            <Card key={i}>
-                                <Skeleton className="h-48 w-full rounded-t-xl" />
-                                <CardContent className="py-6">
-                                    <Skeleton className="h-6 w-3/4 mb-4" />
-                                    <Skeleton className="h-4 w-full mb-2" />
-                                    <Skeleton className="h-4 w-2/3" />
-                                </CardContent>
-                            </Card>
-                        ))}
-                    </div>
-                }>
-                    <AppointmentsList organizerId={organizerId} searchQuery={searchParams.search} />
-                </Suspense>
-            </div>
-        </div>
+        </>
     )
 }

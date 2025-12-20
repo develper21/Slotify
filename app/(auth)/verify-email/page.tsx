@@ -32,7 +32,7 @@ export default function VerifyEmailPage() {
             }
         } catch (error) {
             toast.error('Verification failed. Please try again.')
-        } finally {
+        } finally { 
             setIsLoading(false)
         }
     }

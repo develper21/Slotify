@@ -71,45 +71,45 @@ export default function UsersManagement() {
 
     if (isLoading) {
         return (
-            <Card>
+            <Card className="bg-mongodb-slate/50 border-neutral-800">
                 <CardHeader>
-                    <CardTitle>Users Management</CardTitle>
+                    <CardTitle className="text-white">Users Management</CardTitle>
                 </CardHeader>
                 <CardContent>
-                    <p className="text-center text-neutral-500 py-8">Loading users...</p>
+                    <p className="text-center text-neutral-400 py-8">Loading users...</p>
                 </CardContent>
             </Card>
         )
     }
 
     return (
-        <Card>
+        <Card className="bg-mongodb-slate/50 border-neutral-800">
             <CardHeader>
-                <CardTitle>Users Management ({users.length} total)</CardTitle>
+                <CardTitle className="text-white">Users Management ({users.length} total)</CardTitle>
             </CardHeader>
             <CardContent>
                 <div className="overflow-x-auto">
                     <table className="w-full">
                         <thead>
-                            <tr className="border-b border-neutral-200">
-                                <th className="text-left py-3 px-4 font-semibold text-neutral-700">Name</th>
-                                <th className="text-left py-3 px-4 font-semibold text-neutral-700">Email</th>
-                                <th className="text-left py-3 px-4 font-semibold text-neutral-700">Role</th>
-                                <th className="text-left py-3 px-4 font-semibold text-neutral-700">Status</th>
-                                <th className="text-left py-3 px-4 font-semibold text-neutral-700">Joined</th>
-                                <th className="text-left py-3 px-4 font-semibold text-neutral-700">Actions</th>
+                            <tr className="border-b border-neutral-800">
+                                <th className="text-left py-3 px-4 font-semibold text-neutral-400">Name</th>
+                                <th className="text-left py-3 px-4 font-semibold text-neutral-400">Email</th>
+                                <th className="text-left py-3 px-4 font-semibold text-neutral-400">Role</th>
+                                <th className="text-left py-3 px-4 font-semibold text-neutral-400">Status</th>
+                                <th className="text-left py-3 px-4 font-semibold text-neutral-400">Joined</th>
+                                <th className="text-left py-3 px-4 font-semibold text-neutral-400">Actions</th>
                             </tr>
                         </thead>
                         <tbody>
                             {users.map((user) => (
-                                <tr key={user.id} className="border-b border-neutral-100 hover:bg-neutral-50">
-                                    <td className="py-3 px-4">{user.full_name}</td>
-                                    <td className="py-3 px-4 text-neutral-600">{user.email}</td>
+                                <tr key={user.id} className="border-b border-neutral-800 hover:bg-neutral-800/50">
+                                    <td className="py-3 px-4 text-white">{user.full_name}</td>
+                                    <td className="py-3 px-4 text-neutral-400">{user.email}</td>
                                     <td className="py-3 px-4">
                                         <select
                                             value={user.role}
                                             onChange={(e) => handleRoleChange(user.id, e.target.value as any)}
-                                            className="px-3 py-1 rounded border border-neutral-300 text-sm"
+                                            className="px-3 py-1 rounded border border-neutral-700 bg-neutral-900 text-white text-sm focus:border-mongodb-spring focus:ring-1 focus:ring-mongodb-spring outline-none"
                                         >
                                             <option value="customer">Customer</option>
                                             <option value="organizer">Organizer</option>
@@ -121,7 +121,7 @@ export default function UsersManagement() {
                                             {user.status}
                                         </Badge>
                                     </td>
-                                    <td className="py-3 px-4 text-neutral-600 text-sm">
+                                    <td className="py-3 px-4 text-neutral-400 text-sm">
                                         {formatDate(new Date(user.created_at))}
                                     </td>
                                     <td className="py-3 px-4">
@@ -132,6 +132,7 @@ export default function UsersManagement() {
                                                 user.id,
                                                 user.status === 'active' ? 'inactive' : 'active'
                                             )}
+                                            className={user.status === 'active' ? "" : "bg-neutral-800 text-white hover:bg-neutral-700"}
                                         >
                                             {user.status === 'active' ? 'Deactivate' : 'Activate'}
                                         </Button>

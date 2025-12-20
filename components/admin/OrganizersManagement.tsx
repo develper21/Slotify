@@ -75,44 +75,44 @@ export default function OrganizersManagement() {
 
     if (isLoading) {
         return (
-            <Card>
+            <Card className="bg-mongodb-slate/50 border-neutral-800">
                 <CardHeader>
-                    <CardTitle>Organizers Management</CardTitle>
+                    <CardTitle className="text-white">Organizers Management</CardTitle>
                 </CardHeader>
                 <CardContent>
-                    <p className="text-center text-neutral-500 py-8">Loading organizers...</p>
+                    <p className="text-center text-neutral-400 py-8">Loading organizers...</p>
                 </CardContent>
             </Card>
         )
     }
 
     return (
-        <Card>
+        <Card className="bg-mongodb-slate/50 border-neutral-800">
             <CardHeader>
-                <CardTitle>Organizers Management ({organizers.length} total)</CardTitle>
+                <CardTitle className="text-white">Organizers Management ({organizers.length} total)</CardTitle>
             </CardHeader>
             <CardContent>
                 <div className="overflow-x-auto">
                     <table className="w-full">
                         <thead>
-                            <tr className="border-b border-neutral-200">
-                                <th className="text-left py-3 px-4 font-semibold text-neutral-700">Name</th>
-                                <th className="text-left py-3 px-4 font-semibold text-neutral-700">Business</th>
-                                <th className="text-left py-3 px-4 font-semibold text-neutral-700">Email</th>
-                                <th className="text-left py-3 px-4 font-semibold text-neutral-700">Status</th>
-                                <th className="text-left py-3 px-4 font-semibold text-neutral-700">Approval</th>
-                                <th className="text-left py-3 px-4 font-semibold text-neutral-700">Registered</th>
-                                <th className="text-left py-3 px-4 font-semibold text-neutral-700">Actions</th>
+                            <tr className="border-b border-neutral-800">
+                                <th className="text-left py-3 px-4 font-semibold text-neutral-400">Name</th>
+                                <th className="text-left py-3 px-4 font-semibold text-neutral-400">Business</th>
+                                <th className="text-left py-3 px-4 font-semibold text-neutral-400">Email</th>
+                                <th className="text-left py-3 px-4 font-semibold text-neutral-400">Status</th>
+                                <th className="text-left py-3 px-4 font-semibold text-neutral-400">Approval</th>
+                                <th className="text-left py-3 px-4 font-semibold text-neutral-400">Registered</th>
+                                <th className="text-left py-3 px-4 font-semibold text-neutral-400">Actions</th>
                             </tr>
                         </thead>
                         <tbody>
                             {organizers.map((organizer) => (
-                                <tr key={organizer.id} className="border-b border-neutral-100 hover:bg-neutral-50">
-                                    <td className="py-3 px-4">{organizer.users.full_name}</td>
-                                    <td className="py-3 px-4 text-neutral-600">
+                                <tr key={organizer.id} className="border-b border-neutral-800 hover:bg-neutral-800/50">
+                                    <td className="py-3 px-4 text-white">{organizer.users.full_name}</td>
+                                    <td className="py-3 px-4 text-neutral-400">
                                         {organizer.business_name || '-'}
                                     </td>
-                                    <td className="py-3 px-4 text-neutral-600">{organizer.users.email}</td>
+                                    <td className="py-3 px-4 text-neutral-400">{organizer.users.email}</td>
                                     <td className="py-3 px-4">
                                         <Badge variant={organizer.users.status === 'active' ? 'success' : 'danger'}>
                                             {organizer.users.status}
@@ -133,7 +133,7 @@ export default function OrganizersManagement() {
                                             )}
                                         </Badge>
                                     </td>
-                                    <td className="py-3 px-4 text-neutral-600 text-sm">
+                                    <td className="py-3 px-4 text-neutral-400 text-sm">
                                         {formatDate(new Date(organizer.created_at))}
                                     </td>
                                     <td className="py-3 px-4">
@@ -142,6 +142,7 @@ export default function OrganizersManagement() {
                                                 <Button
                                                     size="sm"
                                                     onClick={() => handleApprove(organizer.id)}
+                                                    className="bg-mongodb-spring text-mongodb-black hover:bg-mongodb-spring/90"
                                                 >
                                                     Approve
                                                 </Button>

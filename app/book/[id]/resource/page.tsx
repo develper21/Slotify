@@ -60,14 +60,14 @@ export default async function ResourceSelectionPage({
     }
 
     return (
-        <div className="min-h-screen bg-neutral-50 py-12">
+        <div className="min-h-screen bg-mongodb-black py-12">
             <div className="container mx-auto px-4 max-w-4xl">
                 {/* Header */}
                 <div className="mb-8">
-                    <h1 className="text-3xl font-display font-bold text-neutral-900 mb-2">
+                    <h1 className="text-3xl font-display font-bold text-white mb-2">
                         Select a Resource
                     </h1>
-                    <p className="text-neutral-600">
+                    <p className="text-neutral-400">
                         Choose who you'd like to book with for "{appointment.title}"
                     </p>
                 </div>
@@ -75,28 +75,28 @@ export default async function ResourceSelectionPage({
                 {/* Progress Steps */}
                 <div className="mb-8 flex items-center gap-4">
                     <div className="flex items-center gap-2">
-                        <div className="w-8 h-8 rounded-full bg-primary text-white flex items-center justify-center text-sm font-semibold">
+                        <div className="w-8 h-8 rounded-full bg-mongodb-spring text-mongodb-black flex items-center justify-center text-sm font-bold">
                             1
                         </div>
-                        <span className="text-sm font-medium text-primary">Resource</span>
+                        <span className="text-sm font-medium text-mongodb-spring">Resource</span>
                     </div>
-                    <div className="flex-1 h-0.5 bg-neutral-200" />
+                    <div className="flex-1 h-0.5 bg-neutral-800" />
                     <div className="flex items-center gap-2">
-                        <div className="w-8 h-8 rounded-full bg-neutral-200 text-neutral-500 flex items-center justify-center text-sm font-semibold">
+                        <div className="w-8 h-8 rounded-full bg-neutral-800 text-neutral-500 flex items-center justify-center text-sm font-semibold">
                             2
                         </div>
                         <span className="text-sm text-neutral-500">Date</span>
                     </div>
-                    <div className="flex-1 h-0.5 bg-neutral-200" />
+                    <div className="flex-1 h-0.5 bg-neutral-800" />
                     <div className="flex items-center gap-2">
-                        <div className="w-8 h-8 rounded-full bg-neutral-200 text-neutral-500 flex items-center justify-center text-sm font-semibold">
+                        <div className="w-8 h-8 rounded-full bg-neutral-800 text-neutral-500 flex items-center justify-center text-sm font-semibold">
                             3
                         </div>
                         <span className="text-sm text-neutral-500">Time</span>
                     </div>
-                    <div className="flex-1 h-0.5 bg-neutral-200" />
+                    <div className="flex-1 h-0.5 bg-neutral-800" />
                     <div className="flex items-center gap-2">
-                        <div className="w-8 h-8 rounded-full bg-neutral-200 text-neutral-500 flex items-center justify-center text-sm font-semibold">
+                        <div className="w-8 h-8 rounded-full bg-neutral-800 text-neutral-500 flex items-center justify-center text-sm font-semibold">
                             4
                         </div>
                         <span className="text-sm text-neutral-500">Details</span>
@@ -106,16 +106,16 @@ export default async function ResourceSelectionPage({
                 {/* Resources Grid */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     {resources.map((resource: any) => (
-                        <Card key={resource.id} hover className="overflow-hidden">
+                        <Card key={resource.id} hover className="overflow-hidden bg-mongodb-slate/50 border-neutral-800">
                             <CardHeader>
                                 <div className="flex items-start gap-4">
-                                    <div className="w-16 h-16 rounded-full bg-gradient-primary flex items-center justify-center">
-                                        <User className="w-8 h-8 text-white" />
+                                    <div className="w-16 h-16 rounded-full bg-mongodb-spring/10 flex items-center justify-center">
+                                        <User className="w-8 h-8 text-mongodb-spring" />
                                     </div>
                                     <div className="flex-1">
-                                        <CardTitle>{resource.name}</CardTitle>
+                                        <CardTitle className="text-white">{resource.name}</CardTitle>
                                         {resource.title && (
-                                            <p className="text-sm text-neutral-600 mt-1">
+                                            <p className="text-sm text-neutral-400 mt-1">
                                                 {resource.title}
                                             </p>
                                         )}
@@ -125,28 +125,28 @@ export default async function ResourceSelectionPage({
 
                             <CardContent className="space-y-4">
                                 {resource.description && (
-                                    <p className="text-sm text-neutral-600">
+                                    <p className="text-sm text-neutral-400">
                                         {resource.description}
                                     </p>
                                 )}
 
                                 {resource.specialization && (
                                     <div className="flex items-center gap-2">
-                                        <Badge variant="info">
+                                        <Badge variant="primary">
                                             {resource.specialization}
                                         </Badge>
                                     </div>
                                 )}
 
                                 {resource.availability_status === 'available' && (
-                                    <div className="flex items-center gap-2 text-sm text-green-600">
+                                    <div className="flex items-center gap-2 text-sm text-green-500">
                                         <CheckCircle className="w-4 h-4" />
                                         <span>Available</span>
                                     </div>
                                 )}
 
                                 <Link href={`/book/${params.id}/date?resource=${resource.id}`} className="block">
-                                    <Button className="w-full">
+                                    <Button className="w-full bg-mongodb-spring text-mongodb-black hover:bg-mongodb-spring/90">
                                         Select {resource.name}
                                     </Button>
                                 </Link>
@@ -158,7 +158,7 @@ export default async function ResourceSelectionPage({
                 {/* Back Button */}
                 <div className="mt-8">
                     <Link href={`/appointments/${params.id}`}>
-                        <Button variant="ghost">
+                        <Button variant="ghost" className="text-neutral-400 hover:text-white">
                             ← Back to Appointment Details
                         </Button>
                     </Link>

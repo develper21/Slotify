@@ -60,11 +60,11 @@ export default function TimeSlotPage({ params }: TimeSlotPageProps) {
 
     if (!date) {
         return (
-            <div className="min-h-screen bg-neutral-50 flex items-center justify-center">
-                <Card>
+            <div className="min-h-screen bg-mongodb-black flex items-center justify-center">
+                <Card className="bg-mongodb-slate/50 border-neutral-800">
                     <CardContent className="py-8 text-center">
-                        <p className="text-neutral-600">No date selected. Please go back and select a date.</p>
-                        <Button onClick={() => router.back()} className="mt-4">
+                        <p className="text-neutral-400">No date selected. Please go back and select a date.</p>
+                        <Button onClick={() => router.back()} className="mt-4" variant="outline">
                             Go Back
                         </Button>
                     </CardContent>
@@ -74,47 +74,47 @@ export default function TimeSlotPage({ params }: TimeSlotPageProps) {
     }
 
     return (
-        <div className="min-h-screen bg-neutral-50 py-12">
+        <div className="min-h-screen bg-mongodb-black py-12">
             <div className="container mx-auto px-4 max-w-3xl">
                 {/* Header */}
                 <div className="mb-8">
                     <button
                         onClick={() => router.back()}
-                        className="flex items-center gap-2 text-neutral-600 hover:text-neutral-900 mb-4"
+                        className="flex items-center gap-2 text-neutral-400 hover:text-white mb-4 transition-colors"
                     >
                         <ChevronLeft className="w-5 h-5" />
                         Back
                     </button>
-                    <h1 className="text-3xl font-display font-bold text-neutral-900 mb-2">
+                    <h1 className="text-3xl font-display font-bold text-white mb-2">
                         Select a Time
                     </h1>
-                    <p className="text-neutral-600">
+                    <p className="text-neutral-400">
                         Available time slots for {formatDate(new Date(date))}
                     </p>
                 </div>
 
                 {/* Time Slots */}
-                <Card>
+                <Card className="bg-mongodb-slate/50 border-neutral-800">
                     <CardHeader>
-                        <CardTitle>Available Time Slots</CardTitle>
+                        <CardTitle className="text-white">Available Time Slots</CardTitle>
                     </CardHeader>
                     <CardContent>
                         {isLoading ? (
                             <div className="space-y-3">
                                 {[1, 2, 3, 4, 5, 6].map((i) => (
-                                    <Skeleton key={i} className="h-16 w-full" />
+                                    <Skeleton key={i} className="h-16 w-full bg-neutral-800" />
                                 ))}
                             </div>
                         ) : slots.length === 0 ? (
                             <div className="text-center py-12">
-                                <Clock className="w-16 h-16 mx-auto text-neutral-300 mb-4" />
-                                <h3 className="text-xl font-semibold text-neutral-700 mb-2">
+                                <Clock className="w-16 h-16 mx-auto text-neutral-600 mb-4" />
+                                <h3 className="text-xl font-semibold text-white mb-2">
                                     No Available Slots
                                 </h3>
-                                <p className="text-neutral-500 mb-4">
+                                <p className="text-neutral-400 mb-4">
                                     There are no available time slots for this date.
                                 </p>
-                                <Button onClick={() => router.back()} variant="secondary">
+                                <Button onClick={() => router.back()} variant="secondary" className="bg-neutral-800 text-white hover:bg-neutral-700">
                                     Choose Another Date
                                 </Button>
                             </div>
@@ -132,27 +132,27 @@ export default function TimeSlotPage({ params }: TimeSlotPageProps) {
                                             disabled={isFull}
                                             className={cn(
                                                 'p-4 rounded-lg border-2 transition-all duration-200 text-left',
-                                                isSelected && 'border-primary-500 bg-primary-50 shadow-md',
-                                                !isSelected && !isFull && 'border-neutral-200 hover:border-primary-300 hover:shadow-sm',
-                                                isFull && 'border-neutral-200 bg-neutral-50 opacity-50 cursor-not-allowed'
+                                                isSelected && 'border-mongodb-spring bg-mongodb-spring/10 shadow-md',
+                                                !isSelected && !isFull && 'border-neutral-700 bg-mongodb-black text-white hover:border-neutral-500 hover:shadow-sm',
+                                                isFull && 'border-neutral-800 bg-neutral-900 opacity-50 cursor-not-allowed'
                                             )}
                                         >
                                             <div className="flex items-center justify-between mb-2">
                                                 <div className="flex items-center gap-2">
                                                     <Clock className={cn(
                                                         'w-5 h-5',
-                                                        isSelected ? 'text-primary-600' : 'text-neutral-600'
+                                                        isSelected ? 'text-mongodb-spring' : 'text-neutral-400'
                                                     )} />
                                                     <span className={cn(
                                                         'font-semibold text-lg',
-                                                        isSelected ? 'text-primary-900' : 'text-neutral-900'
+                                                        isSelected ? 'text-white' : 'text-white'
                                                     )}>
                                                         {formatTime(slot.start_time)}
                                                     </span>
                                                 </div>
                                                 {isSelected && (
-                                                    <div className="w-6 h-6 rounded-full bg-primary-600 flex items-center justify-center">
-                                                        <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                    <div className="w-6 h-6 rounded-full bg-mongodb-spring flex items-center justify-center">
+                                                        <svg className="w-4 h-4 text-mongodb-black" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                                                         </svg>
                                                     </div>
@@ -160,7 +160,7 @@ export default function TimeSlotPage({ params }: TimeSlotPageProps) {
                                             </div>
 
                                             <div className="flex items-center gap-4 text-sm">
-                                                <span className="text-neutral-600">
+                                                <span className="text-neutral-400">
                                                     to {formatTime(slot.end_time)}
                                                 </span>
                                                 {slot.max_capacity > 1 && (
@@ -168,7 +168,7 @@ export default function TimeSlotPage({ params }: TimeSlotPageProps) {
                                                         <Users className="w-4 h-4 text-neutral-500" />
                                                         <span className={cn(
                                                             'font-medium',
-                                                            isLowCapacity ? 'text-orange-600' : 'text-neutral-600'
+                                                            isLowCapacity ? 'text-orange-500' : 'text-neutral-400'
                                                         )}>
                                                             {slot.available_capacity}/{slot.max_capacity} spots
                                                         </span>
@@ -177,7 +177,7 @@ export default function TimeSlotPage({ params }: TimeSlotPageProps) {
                                             </div>
 
                                             {isFull && (
-                                                <div className="mt-2 text-sm font-medium text-red-600">
+                                                <div className="mt-2 text-sm font-medium text-red-500">
                                                     Fully Booked
                                                 </div>
                                             )}
@@ -192,7 +192,7 @@ export default function TimeSlotPage({ params }: TimeSlotPageProps) {
                 {/* Continue Button */}
                 {selectedSlot && (
                     <div className="mt-6 flex justify-end">
-                        <Button onClick={handleContinue} size="lg">
+                        <Button onClick={handleContinue} size="lg" variant="primary">
                             Continue to Booking Form
                         </Button>
                     </div>

@@ -36,6 +36,15 @@ export function formatTime(time: string): string {
  */
 export function formatDuration(duration: string): string {
     // Duration comes as PostgreSQL interval like "00:30:00" or "01:00:00"
+    // Handle mock data where duration might be a number (minutes)
+    if (typeof duration === 'number') {
+        return `${duration}m`
+    }
+
+    if (!duration || typeof duration !== 'string' || !duration.includes(':')) {
+        return '30m' // Default fallback
+    }
+
     const parts = duration.split(':')
     const hours = parseInt(parts[0])
     const minutes = parseInt(parts[1])

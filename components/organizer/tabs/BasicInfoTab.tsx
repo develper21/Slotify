@@ -36,9 +36,9 @@ export default function BasicInfoTab({ appointment }: { appointment: any }) {
 
     return (
         <form onSubmit={handleSubmit}>
-            <Card>
+            <Card className="bg-mongodb-slate/50 border-neutral-800">
                 <CardHeader>
-                    <CardTitle>Basic Information</CardTitle>
+                    <CardTitle className="text-white">Basic Information</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-6">
                     <Input
@@ -46,28 +46,30 @@ export default function BasicInfoTab({ appointment }: { appointment: any }) {
                         value={formData.title}
                         onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
                         required
+                        className="bg-mongodb-black border-neutral-700 text-white placeholder:text-neutral-500 focus:border-mongodb-spring"
+                        labelClassName="text-neutral-400"
                     />
 
                     <div>
-                        <label className="block text-sm font-medium text-neutral-700 mb-2">
+                        <label className="block text-sm font-medium text-neutral-400 mb-2">
                             Description
                         </label>
                         <textarea
                             value={formData.description}
                             onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
                             rows={4}
-                            className="w-full px-4 py-3 rounded-lg border border-neutral-300 focus:border-primary-500 focus:ring-2 focus:ring-primary-200 transition-all outline-none resize-none"
+                            className="w-full px-4 py-3 rounded-lg border border-neutral-700 bg-mongodb-black text-white focus:border-mongodb-spring focus:ring-1 focus:ring-mongodb-spring transition-all outline-none resize-none placeholder:text-neutral-500"
                         />
                     </div>
 
                     <div>
-                        <label className="block text-sm font-medium text-neutral-700 mb-2">
+                        <label className="block text-sm font-medium text-neutral-400 mb-2">
                             Duration
                         </label>
                         <select
                             value={formData.duration}
                             onChange={(e) => setFormData(prev => ({ ...prev, duration: e.target.value }))}
-                            className="w-full px-4 py-3 rounded-lg border border-neutral-300 focus:border-primary-500 focus:ring-2 focus:ring-primary-200 transition-all outline-none"
+                            className="w-full px-4 py-3 rounded-lg border border-neutral-700 bg-mongodb-black text-white focus:border-mongodb-spring focus:ring-1 focus:ring-mongodb-spring transition-all outline-none"
                         >
                             <option value="00:15:00">15 minutes</option>
                             <option value="00:30:00">30 minutes</option>
@@ -84,10 +86,12 @@ export default function BasicInfoTab({ appointment }: { appointment: any }) {
                         label="Location"
                         value={formData.location}
                         onChange={(e) => setFormData(prev => ({ ...prev, location: e.target.value }))}
+                        className="bg-mongodb-black border-neutral-700 text-white placeholder:text-neutral-500 focus:border-mongodb-spring"
+                        labelClassName="text-neutral-400"
                     />
 
                     <div className="flex justify-end">
-                        <Button type="submit" isLoading={isSubmitting}>
+                        <Button type="submit" isLoading={isSubmitting} className="bg-mongodb-spring text-mongodb-black hover:bg-mongodb-spring/90">
                             Save Changes
                         </Button>
                     </div>

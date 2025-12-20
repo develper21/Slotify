@@ -7,8 +7,9 @@ import { OTPInput } from '@/components/auth/OTPInput'
 import { toast } from 'sonner'
 import { Mail, ShieldCheck } from 'lucide-react'
 import { verifyOTPAction } from '@/lib/actions/otp'
+import { Suspense } from 'react'
 
-export default function VerifyRecoveryPage() {
+function VerifyRecoveryContent() {
     const router = useRouter()
     const searchParams = useSearchParams()
     const initialEmail = useMemo(() => searchParams.get('email') || '', [searchParams])
@@ -116,5 +117,21 @@ export default function VerifyRecoveryPage() {
                 </div>
             </div>
         </div>
+    )
+}
+
+export default function VerifyRecoveryPage() {
+    return (
+        <Suspense fallback={
+            <div className="min-h-screen flex items-center justify-center bg-gradient-primary p-4">
+                <div className="w-full max-w-md">
+                    <div className="bg-white rounded-2xl shadow-xl p-8 text-center">
+                        <div className="animate-pulse">Loading...</div>
+                    </div>
+                </div>
+            </div>
+        }>
+            <VerifyRecoveryContent />
+        </Suspense>
     )
 }
