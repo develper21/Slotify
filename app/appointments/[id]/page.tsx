@@ -13,7 +13,7 @@ export default async function AppointmentDetailPage({
 }: {
     params: { id: string }
 }) {
-    const appointment = await getAppointmentById(params.id)
+    const appointment: any = await getAppointmentById(params.id)
 
     if (!appointment) {
         notFound()
