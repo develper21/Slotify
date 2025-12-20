@@ -158,6 +158,7 @@ export async function getAvailableSlots(appointmentId: string, date: string) {
                     start_time: currentTime.toTimeString().split(' ')[0],
                     end_time: slotEnd.toTimeString().split(' ')[0],
                     available_capacity: maxCapacity - overlappingCount,
+                    max_capacity: maxCapacity,
                     full_start_time: currentSlotStart,
                     full_end_time: currentSlotEnd
                 })
