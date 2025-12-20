@@ -51,7 +51,7 @@ export default function SchedulePage({ params }: { params: { id: string } }) {
         setIsLoading(true)
         try {
             const supabase = createClient()
-            const { data, error } = await supabase
+            const { data, error }: { data: any; error: any } = await supabase
                 .from('appointments')
                 .select(`
           *,
@@ -126,7 +126,7 @@ export default function SchedulePage({ params }: { params: { id: string } }) {
             const supabase = createClient()
 
             // Call the database function to generate slots
-            const { error } = await supabase.rpc('generate_slots_for_appointment', {
+            const { error } = await (supabase.rpc as any)('generate_slots_for_appointment', {
                 p_appointment_id: params.id,
             })
 
