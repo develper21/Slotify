@@ -11,6 +11,9 @@ import UsersTab from '@/components/organizer/tabs/UsersTab'
 import AssignmentTab from '@/components/organizer/tabs/AssignmentTab'
 import CapacityTab from '@/components/organizer/tabs/CapacityTab'
 import PictureTab from '@/components/organizer/tabs/PictureTab'
+import AvailabilityTab from '@/components/organizer/tabs/AvailabilityTab'
+import QuestionsTab from '@/components/organizer/tabs/QuestionsTab'
+import { TogglePublishButton } from '@/components/appointments/AppointmentActions'
 
 export default async function EditAppointmentPage({
     params,
@@ -57,16 +60,21 @@ export default async function EditAppointmentPage({
                             Edit Appointment
                         </h1>
                         <p className="text-neutral-400 flex items-center gap-2">
-                            <span className="w-2 h-2 rounded-full bg-mongodb-spring"></span>
+                            <span className={`w-2 h-2 rounded-full ${appointment.published ? 'bg-mongodb-spring' : 'bg-yellow-500'}`}></span>
                             {appointment.title}
+                            <span className="text-neutral-600">|</span>
+                            <span className="text-sm">{appointment.published ? 'Published' : 'Draft Mode'}</span>
                         </p>
                     </div>
-                    <Link href={`/book/${appointment.id}`} target="_blank">
-                        <Button variant="outline" className="text-neutral-300 border-neutral-700 hover:bg-neutral-800">
-                            <Calendar className="w-4 h-4 mr-2" />
-                            View Booking Page
-                        </Button>
-                    </Link>
+                    <div className="flex items-center gap-3">
+                        <TogglePublishButton appointmentId={appointment.id} currentStatus={appointment.published} />
+                        <Link href={`/book/${appointment.id}`} target="_blank">
+                            <Button variant="outline" className="text-neutral-300 border-neutral-700 hover:bg-neutral-800">
+                                <Calendar className="w-4 h-4 mr-2" />
+                                Preview
+                            </Button>
+                        </Link>
+                    </div>
                 </div>
             </div>
 
@@ -74,19 +82,33 @@ export default async function EditAppointmentPage({
             <Tabs defaultValue="basic" className="space-y-6">
                 <TabsList className="bg-mongodb-slate/50 border-neutral-800 p-1 flex-wrap h-auto gap-2">
                     <TabsTrigger value="basic" className="data-[state=active]:bg-mongodb-black data-[state=active]:text-mongodb-spring">Basic Info</TabsTrigger>
-                    <TabsTrigger value="book" className="data-[state=active]:bg-mongodb-black data-[state=active]:text-mongodb-spring">Book</TabsTrigger>
-                    <TabsTrigger value="users" className="data-[state=active]:bg-mongodb-black data-[state=active]:text-mongodb-spring">Users</TabsTrigger>
+                    <TabsTrigger value="availability" className="data-[state=active]:bg-mongodb-black data-[state=active]:text-mongodb-spring">Availability</TabsTrigger>
+                    <TabsTrigger value="book" className="data-[state=active]:bg-mongodb-black data-[state=active]:text-mongodb-spring">Settings</TabsTrigger>
+                    <TabsTrigger value="questions" className="data-[state=active]:bg-mongodb-black data-[state=active]:text-mongodb-spring">Questions</TabsTrigger>
+                    <TabsTrigger value="capacity" className="data-[state=active]:bg-mongodb-black data-[state=active]:text-mongodb-spring">Capacity</TabsTrigger>
+                    <TabsTrigger value="users" className="data-[state=active]:bg-mongodb-black data-[state=active]:text-mongodb-spring">Team</TabsTrigger>
                     <TabsTrigger value="assignment" className="data-[state=active]:bg-mongodb-black data-[state=active]:text-mongodb-spring">Assignment</TabsTrigger>
-                    <TabsTrigger value="capacity" className="data-[state=active]:bg-mongodb-black data-[state=active]:text-mongodb-spring">Manage Capacity</TabsTrigger>
-                    <TabsTrigger value="picture" className="data-[state=active]:bg-mongodb-black data-[state=active]:text-mongodb-spring">Picture</TabsTrigger>
+                    <TabsTrigger value="picture" className="data-[state=active]:bg-mongodb-black data-[state=active]:text-mongodb-spring">Images</TabsTrigger>
                 </TabsList>
 
                 <TabsContent value="basic" className="focus-visible:ring-0 outline-none">
                     <BasicInfoTab appointment={appointment} />
                 </TabsContent>
 
+                <TabsContent value="availability" className="focus-visible:ring-0 outline-none">
+                    <AvailabilityTab appointment={appointment} />
+                </TabsContent>
+
                 <TabsContent value="book" className="focus-visible:ring-0 outline-none">
                     <BookTab appointment={appointment} />
+                </TabsContent>
+
+                <TabsContent value="questions" className="focus-visible:ring-0 outline-none">
+                    <QuestionsTab appointment={appointment} />
+                </TabsContent>
+
+                <TabsContent value="capacity" className="focus-visible:ring-0 outline-none">
+                    <CapacityTab appointment={appointment} />
                 </TabsContent>
 
                 <TabsContent value="users" className="focus-visible:ring-0 outline-none">
@@ -95,10 +117,6 @@ export default async function EditAppointmentPage({
 
                 <TabsContent value="assignment" className="focus-visible:ring-0 outline-none">
                     <AssignmentTab appointment={appointment} />
-                </TabsContent>
-
-                <TabsContent value="capacity" className="focus-visible:ring-0 outline-none">
-                    <CapacityTab appointment={appointment} />
                 </TabsContent>
 
                 <TabsContent value="picture" className="focus-visible:ring-0 outline-none">
