@@ -128,12 +128,11 @@ export default function BookingFormPage({ params }: BookingFormPageProps) {
                 appointmentId: params.id,
                 userId,
                 slotId,
-                capacityCount: 1, // TODO: Get from capacity selection page
                 answers: questionAnswers,
             })
 
-            if (result.error) {
-                toast.error(result.error)
+            if (!result.success) {
+                toast.error(result.message || 'Failed to create booking')
             } else {
                 toast.success('Booking created successfully!')
                 router.push(`/book/${params.id}/confirmation?booking=${result.bookingId}`)
