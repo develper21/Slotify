@@ -1,22 +1,36 @@
 'use client'
-
 import { useEffect, useState } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
 import { Card, CardContent } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { CheckCircle, Calendar, Clock, MapPin, Home } from 'lucide-react'
 import Link from 'next/link'
+import { getBookingDetails } from '@/lib/actions/bookings'
+import { formatDate, formatTime } from '@/lib/utils'
 
 export default function ConfirmationPage({ params }: { params: { id: string } }) {
     const searchParams = useSearchParams()
     const router = useRouter()
     const bookingId = searchParams.get('booking')
     const [bookingDetails, setBookingDetails] = useState<any>(null)
+    const [isLoading, setIsLoading] = useState(true)
 
     useEffect(() => {
-        // TODO: Fetch booking details
-        // For now, show generic confirmation
+        const fetchDetails = async () => {
+            if (!bookingId) return
+            try {
+                const data = await getBookingDetails(bookingId)
+                setBookingDetails(data)
+            } catch (error) {
+                console.error('Failed to fetch booking:', error)
+            } finally {
+                setIsLoading(false)
+            }
+        }
+        fetchDetails()
     }, [bookingId])
+
+    // ... (keep the rest of the render logic)
 
     return (
         <div className="min-h-screen bg-mongodb-black flex items-center justify-center p-4">
@@ -42,40 +56,49 @@ export default function ConfirmationPage({ params }: { params: { id: string } })
                             Appointment Details
                         </h2>
 
-                        <div className="space-y-4">
-                            <div className="flex items-start gap-4 p-4 bg-mongodb-black rounded-lg border border-neutral-700">
-                                <Calendar className="w-6 h-6 text-mongodb-spring mt-1" />
-                                <div>
-                                    <p className="text-sm font-medium text-neutral-400">Date</p>
-                                    <p className="text-lg font-semibold text-white">
-                                        {/* TODO: Display actual date */}
-                                        To be confirmed
-                                    </p>
-                                </div>
+                        {isLoading ? (
+                            <div className="space-y-4 animate-pulse">
+                                <div className="h-16 bg-neutral-800 rounded-lg"></div>
+                                <div className="h-16 bg-neutral-800 rounded-lg"></div>
+                                <div className="h-16 bg-neutral-800 rounded-lg"></div>
                             </div>
+                        ) : bookingDetails ? (
+                            <div className="space-y-4">
+                                <div className="flex items-start gap-4 p-4 bg-mongodb-black rounded-lg border border-neutral-700">
+                                    <Calendar className="w-6 h-6 text-mongodb-spring mt-1" />
+                                    <div>
+                                        <p className="text-sm font-medium text-neutral-400">Date</p>
+                                        <p className="text-lg font-semibold text-white">
+                                            {formatDate(bookingDetails.time_slots?.slot_date) || 'Date pending'}
+                                        </p>
+                                    </div>
+                                </div>
 
-                            <div className="flex items-start gap-4 p-4 bg-mongodb-black rounded-lg border border-neutral-700">
-                                <Clock className="w-6 h-6 text-mongodb-spring mt-1" />
-                                <div>
-                                    <p className="text-sm font-medium text-neutral-400">Time</p>
-                                    <p className="text-lg font-semibold text-white">
-                                        {/* TODO: Display actual time */}
-                                        To be confirmed
-                                    </p>
+                                <div className="flex items-start gap-4 p-4 bg-mongodb-black rounded-lg border border-neutral-700">
+                                    <Clock className="w-6 h-6 text-mongodb-spring mt-1" />
+                                    <div>
+                                        <p className="text-sm font-medium text-neutral-400">Time</p>
+                                        <p className="text-lg font-semibold text-white">
+                                            {bookingDetails.time_slots?.start_time && bookingDetails.time_slots?.end_time
+                                                ? `${formatTime(bookingDetails.time_slots.start_time)} - ${formatTime(bookingDetails.time_slots.end_time)}`
+                                                : 'Time pending'}
+                                        </p>
+                                    </div>
                                 </div>
-                            </div>
 
-                            <div className="flex items-start gap-4 p-4 bg-mongodb-black rounded-lg border border-neutral-700">
-                                <MapPin className="w-6 h-6 text-mongodb-spring mt-1" />
-                                <div>
-                                    <p className="text-sm font-medium text-neutral-400">Location</p>
-                                    <p className="text-lg font-semibold text-white">
-                                        {/* TODO: Display actual location */}
-                                        Online / Venue TBD
-                                    </p>
+                                <div className="flex items-start gap-4 p-4 bg-mongodb-black rounded-lg border border-neutral-700">
+                                    <MapPin className="w-6 h-6 text-mongodb-spring mt-1" />
+                                    <div>
+                                        <p className="text-sm font-medium text-neutral-400">Location</p>
+                                        <p className="text-lg font-semibold text-white">
+                                            {bookingDetails.appointments?.location || 'Online'}
+                                        </p>
+                                    </div>
                                 </div>
                             </div>
-                        </div>
+                        ) : (
+                            <p className="text-red-400">Could not load booking details</p>
+                        )}
 
                         {/* Confirmation Message */}
                         <div className="mt-6 p-4 bg-mongodb-spring/10 border border-mongodb-spring/20 rounded-lg">
