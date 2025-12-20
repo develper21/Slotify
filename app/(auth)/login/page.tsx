@@ -3,115 +3,127 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { signIn } from '@/lib/actions/auth'
+import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/Card'
 import { toast } from 'sonner'
-import { LogIn, Mail, Lock } from 'lucide-react'
+import { Calendar, ArrowRight, Lock, Mail } from 'lucide-react'
 
 export default function LoginPage() {
     const router = useRouter()
+    const [email, setEmail] = useState('')
+    const [password, setPassword] = useState('')
     const [isLoading, setIsLoading] = useState(false)
-    const [errors, setErrors] = useState<{ email?: string; password?: string }>({})
 
-    async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+    const handleLogin = async (e: React.FormEvent) => {
         e.preventDefault()
         setIsLoading(true)
-        setErrors({})
-
-        const formData = new FormData(e.currentTarget)
-        const email = formData.get('email') as string
-        const password = formData.get('password') as string
-
-        // Validation
-        const newErrors: { email?: string; password?: string } = {}
-        if (!email) newErrors.email = 'Email is required'
-        if (!password) newErrors.password = 'Password is required'
-
-        if (Object.keys(newErrors).length > 0) {
-            setErrors(newErrors)
-            setIsLoading(false)
-            return
-        }
 
         try {
-            const result = await signIn(formData)
-            if (result?.error) {
-                toast.error(result.error)
+            const supabase = createClient()
+            const { error } = await supabase.auth.signInWithPassword({
+                email,
+                password,
+            })
+
+            if (error) {
+                toast.error(error.message)
+            } else {
+                toast.success('Logged in successfully')
+                router.push('/dashboard')
+                router.refresh()
             }
         } catch (error) {
-            toast.error('An error occurred. Please try again.')
+            toast.error('An unexpected error occurred')
         } finally {
             setIsLoading(false)
         }
     }
 
     return (
-        <div className="min-h-screen flex items-center justify-center bg-gradient-primary p-4">
-            <div className="w-full max-w-md">
-                {/* Logo/Brand */}
-                <div className="text-center mb-8">
-                    <h1 className="text-4xl font-display font-bold text-white mb-2">Slotify</h1>
-                    <p className="text-white/80">Welcome back! Please login to continue.</p>
+        <div className="min-h-screen bg-mongodb-black flex items-center justify-center p-4 relative overflow-hidden">
+            {/* Background Decorations */}
+            <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-mongodb-spring/5 blur-[120px] rounded-full -mr-64 -mt-64" />
+            <div className="absolute bottom-0 left-0 w-[500px] h-[500px] bg-mongodb-forest/10 blur-[120px] rounded-full -ml-64 -mb-64" />
+
+            <div className="w-full max-w-md relative z-10 animate-scale-in">
+                <div className="flex flex-col items-center mb-10">
+                    <div className="w-12 h-12 bg-mongodb-spring rounded-mongodb flex items-center justify-center mb-4 shadow-mongodb">
+                        <Calendar className="w-7 h-7 text-mongodb-black" />
+                    </div>
+                    <h1 className="text-3xl font-display font-bold text-white tracking-tighter">SLOTIFY</h1>
+                    <p className="text-neutral-500 text-sm mt-1 uppercase tracking-widest font-bold">Business Portal</p>
                 </div>
 
-                {/* Login Card */}
-                <div className="bg-white rounded-2xl shadow-xl p-8 animate-scale-in">
-                    <div className="flex items-center gap-2 mb-6">
-                        <LogIn className="w-6 h-6 text-primary-600" />
-                        <h2 className="text-2xl font-display font-semibold">Login</h2>
-                    </div>
-
-                    <form onSubmit={handleSubmit} className="space-y-4">
-                        <div>
-                            <div className="relative">
-                                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-neutral-400" />
-                                <input
-                                    type="email"
-                                    name="email"
-                                    placeholder="Email address"
-                                    className="w-full pl-11 pr-4 py-3 rounded-lg border border-neutral-300 focus:border-primary-500 focus:ring-2 focus:ring-primary-200 transition-all outline-none"
-                                />
+                <Card className="border-mongodb-spring/10 shadow-2xl bg-mongodb-slate/50 backdrop-blur-xl">
+                    <CardHeader className="text-center pb-2">
+                        <CardTitle className="text-2xl">Welcome Back</CardTitle>
+                        <CardDescription>Enter your credentials to access your dashboard</CardDescription>
+                    </CardHeader>
+                    <CardContent className="pt-6">
+                        <form onSubmit={handleLogin} className="space-y-5">
+                            <div className="space-y-2">
+                                <label className="text-sm font-medium text-neutral-300 ml-1">Email Address</label>
+                                <div className="relative group">
+                                    <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-500 group-focus-within:text-mongodb-spring transition-colors" />
+                                    <input
+                                        type="email"
+                                        placeholder="name@company.com"
+                                        value={email}
+                                        onChange={(e) => setEmail(e.target.value)}
+                                        required
+                                        className="w-full pl-11 pr-4 py-3 rounded-mongodb bg-mongodb-black/50 border border-neutral-700/50 text-white placeholder:text-neutral-500 focus:outline-none focus:border-mongodb-spring transition-all"
+                                    />
+                                </div>
                             </div>
-                            {errors.email && (
-                                <p className="mt-1 text-sm text-red-500">{errors.email}</p>
-                            )}
-                        </div>
-
-                        <div>
-                            <div className="relative">
-                                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-neutral-400" />
-                                <input
-                                    type="password"
-                                    name="password"
-                                    placeholder="Password"
-                                    className="w-full pl-11 pr-4 py-3 rounded-lg border border-neutral-300 focus:border-primary-500 focus:ring-2 focus:ring-primary-200 transition-all outline-none"
-                                />
+                            
+                            <div className="space-y-2">
+                                <div className="flex justify-between items-center px-1">
+                                    <label className="text-sm font-medium text-neutral-300">Password</label>
+                                    <Link href="/forgot-password" size="sm" className="text-xs text-mongodb-spring hover:underline">
+                                        Forgot?
+                                    </Link>
+                                </div>
+                                <div className="relative group">
+                                    <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-500 group-focus-within:text-mongodb-spring transition-colors" />
+                                    <input
+                                        type="password"
+                                        placeholder="••••••••"
+                                        value={password}
+                                        onChange={(e) => setPassword(e.target.value)}
+                                        required
+                                        className="w-full pl-11 pr-4 py-3 rounded-mongodb bg-mongodb-black/50 border border-neutral-700/50 text-white placeholder:text-neutral-500 focus:outline-none focus:border-mongodb-spring transition-all"
+                                    />
+                                </div>
                             </div>
-                            {errors.password && (
-                                <p className="mt-1 text-sm text-red-500">{errors.password}</p>
-                            )}
-                        </div>
 
-                        <div className="flex items-center justify-between text-sm">
-                            <Link
-                                href="/forgot-password"
-                                className="text-primary-600 hover:text-primary-700 font-medium"
+                            <Button 
+                                type="submit" 
+                                className="w-full py-6 text-lg group" 
+                                isLoading={isLoading}
                             >
-                                Forgot password?
-                            </Link>
+                                Sign In
+                                <ArrowRight className="w-5 h-5 ml-2 transition-transform group-hover:translate-x-1" />
+                            </Button>
+                        </form>
+
+                        <div className="mt-8 text-center">
+                            <p className="text-sm text-neutral-500">
+                                New to Slotify?{' '}
+                                <Link href="/signup" className="text-mongodb-spring font-bold hover:underline">
+                                    Create Account
+                                </Link>
+                            </p>
                         </div>
+                    </CardContent>
+                </Card>
 
-                        <Button type="submit" className="w-full" isLoading={isLoading}>
-                            Login
-                        </Button>
-                    </form>
-
-                    <div className="mt-6 text-center text-sm text-neutral-600">
-                        Don't have an account?{' '}
-                        <Link href="/signup" className="text-primary-600 hover:text-primary-700 font-medium">
-                            Sign up
-                        </Link>
+                <div className="mt-12 text-center text-neutral-600 text-xs flex flex-col gap-4">
+                    <p>© 2025 Slotify Professional. All rights reserved.</p>
+                    <div className="flex items-center justify-center gap-6">
+                        <Link href="/privacy" className="hover:text-neutral-400">Privacy Policy</Link>
+                        <Link href="/terms" className="hover:text-neutral-400">Terms of Service</Link>
                     </div>
                 </div>
             </div>
