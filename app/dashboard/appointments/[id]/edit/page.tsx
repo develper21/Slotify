@@ -1,18 +1,15 @@
 import { notFound, redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
-import { getAppointmentForEdit, getOrganizerId } from '@/lib/actions/organizer'
+import { getAppointmentForEdit } from '@/lib/actions/organizer'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/Tabs'
 import { Button } from '@/components/ui/Button'
-import { ChevronLeft, Calendar } from 'lucide-react'
+import { Badge } from '@/components/ui/Badge'
+import { ChevronLeft, Calendar, Layout, Clock, HelpCircle, Users } from 'lucide-react'
 import Link from 'next/link'
 import BasicInfoTab from '@/components/organizer/tabs/BasicInfoTab'
-import BookTab from '@/components/organizer/tabs/BookTab'
-import UsersTab from '@/components/organizer/tabs/UsersTab'
-import AssignmentTab from '@/components/organizer/tabs/AssignmentTab'
-import CapacityTab from '@/components/organizer/tabs/CapacityTab'
-import PictureTab from '@/components/organizer/tabs/PictureTab'
 import AvailabilityTab from '@/components/organizer/tabs/AvailabilityTab'
 import QuestionsTab from '@/components/organizer/tabs/QuestionsTab'
+import CapacityTab from '@/components/organizer/tabs/CapacityTab'
 import { TogglePublishButton } from '@/components/appointments/AppointmentActions'
 
 export default async function EditAppointmentPage({
@@ -27,19 +24,14 @@ export default async function EditAppointmentPage({
         redirect('/login')
     }
 
-    const organizerId = await getOrganizerId(user.id)
-    if (!organizerId) {
-        redirect('/dashboard')
-    }
-
     const appointment: any = await getAppointmentForEdit(params.id)
 
     if (!appointment) {
         notFound()
     }
 
-    // Verify ownership
-    if (appointment.organizer_id !== organizerId) {
+    // Verify ownership (profiles.id == organizer_id)
+    if (appointment.organizer_id !== user.id) {
         redirect('/dashboard')
     }
 
@@ -49,79 +41,80 @@ export default async function EditAppointmentPage({
             <div>
                 <Link
                     href="/dashboard/appointments"
-                    className="flex items-center gap-2 text-neutral-400 hover:text-white mb-4 transition-colors"
-                >
-                    <ChevronLeft className="w-5 h-5" />
+                    className="flex items-center gap-2 text-neutral-500 hover:text-mongodb-spring mb-6 transition-colors group">
+                    <ChevronLeft className="w-5 h-5 transition-transform group-hover:-translate-x-1" />
                     Back to Appointments
                 </Link>
-                <div className="flex items-center justify-between">
-                    <div>
-                        <h1 className="text-3xl font-display font-bold text-white mb-2">
-                            Edit Appointment
-                        </h1>
-                        <p className="text-neutral-400 flex items-center gap-2">
-                            <span className={`w-2 h-2 rounded-full ${appointment.published ? 'bg-mongodb-spring' : 'bg-yellow-500'}`}></span>
+
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 bg-mongodb-slate/20 p-8 rounded-2xl border border-neutral-800 relative overflow-hidden">
+                    <div className="absolute top-0 right-0 w-64 h-64 bg-mongodb-spring/5 blur-3xl -mr-32 -mt-32" />
+
+                    <div className="relative z-10">
+                        <div className="flex items-center gap-3 mb-2">
+                            <Badge variant={appointment.is_active ? 'success' : 'warning'}>
+                                {appointment.is_active ? 'Active' : 'Hidden'}
+                            </Badge>
+                            <span className="text-xs font-bold text-neutral-500 uppercase tracking-widest">Appointment ID: {appointment.id.slice(0, 8)}</span>
+                        </div>
+                        <h1 className="text-4xl font-display font-bold text-white tracking-tight">
                             {appointment.title}
-                            <span className="text-neutral-600">|</span>
-                            <span className="text-sm">{appointment.published ? 'Published' : 'Draft Mode'}</span>
+                        </h1>
+                        <p className="text-neutral-400 mt-2 max-w-xl line-clamp-1">
+                            {appointment.description || 'No description provided.'}
                         </p>
                     </div>
-                    <div className="flex items-center gap-3">
-                        <TogglePublishButton appointmentId={appointment.id} currentStatus={appointment.published} />
+
+                    <div className="flex items-center gap-3 relative z-10 bg-mongodb-black/40 p-3 rounded-2xl backdrop-blur-md border border-neutral-800">
+                        <TogglePublishButton appointmentId={appointment.id} currentStatus={appointment.is_active} />
+                        <div className="w-px h-8 bg-neutral-800 mx-1" />
                         <Link href={`/book/${appointment.id}`} target="_blank">
-                            <Button variant="outline" className="text-neutral-300 border-neutral-700 hover:bg-neutral-800">
+                            <Button variant="primary" className="shadow-lg shadow-mongodb-spring/10 h-11 px-6 font-bold">
                                 <Calendar className="w-4 h-4 mr-2" />
-                                Preview
+                                Preview Page
                             </Button>
                         </Link>
                     </div>
                 </div>
             </div>
 
-            {/* Tabs */}
-            <Tabs defaultValue="basic" className="space-y-6">
-                <TabsList className="bg-mongodb-slate/50 border-neutral-800 p-1 flex-wrap h-auto gap-2">
-                    <TabsTrigger value="basic" className="data-[state=active]:bg-mongodb-black data-[state=active]:text-mongodb-spring">Basic Info</TabsTrigger>
-                    <TabsTrigger value="availability" className="data-[state=active]:bg-mongodb-black data-[state=active]:text-mongodb-spring">Availability</TabsTrigger>
-                    <TabsTrigger value="book" className="data-[state=active]:bg-mongodb-black data-[state=active]:text-mongodb-spring">Settings</TabsTrigger>
-                    <TabsTrigger value="questions" className="data-[state=active]:bg-mongodb-black data-[state=active]:text-mongodb-spring">Questions</TabsTrigger>
-                    <TabsTrigger value="capacity" className="data-[state=active]:bg-mongodb-black data-[state=active]:text-mongodb-spring">Capacity</TabsTrigger>
-                    <TabsTrigger value="users" className="data-[state=active]:bg-mongodb-black data-[state=active]:text-mongodb-spring">Team</TabsTrigger>
-                    <TabsTrigger value="assignment" className="data-[state=active]:bg-mongodb-black data-[state=active]:text-mongodb-spring">Assignment</TabsTrigger>
-                    <TabsTrigger value="picture" className="data-[state=active]:bg-mongodb-black data-[state=active]:text-mongodb-spring">Images</TabsTrigger>
+            {/* Designer Tabs */}
+            <Tabs defaultValue="basic" className="space-y-8">
+                <TabsList className="bg-mongodb-black border border-neutral-800 p-1.5 rounded-xl h-auto gap-1">
+                    <TabsTrigger value="basic" className="rounded-lg px-6 py-2.5 data-[state=active]:bg-mongodb-spring data-[state=active]:text-mongodb-black transition-all">
+                        <Layout className="w-4 h-4 mr-2" />
+                        Basic Info
+                    </TabsTrigger>
+                    <TabsTrigger value="availability" className="rounded-lg px-6 py-2.5 data-[state=active]:bg-mongodb-spring data-[state=active]:text-mongodb-black transition-all">
+                        <Clock className="w-4 h-4 mr-2" />
+                        Availability
+                    </TabsTrigger>
+                    <TabsTrigger value="questions" className="rounded-lg px-6 py-2.5 data-[state=active]:bg-mongodb-spring data-[state=active]:text-mongodb-black transition-all">
+                        <HelpCircle className="w-4 h-4 mr-2" />
+                        Booking Form
+                    </TabsTrigger>
+                    <TabsTrigger value="capacity" className="rounded-lg px-6 py-2.5 data-[state=active]:bg-mongodb-spring data-[state=active]:text-mongodb-black transition-all">
+                        <Users className="w-4 h-4 mr-2" />
+                        Capacity
+                    </TabsTrigger>
                 </TabsList>
 
-                <TabsContent value="basic" className="focus-visible:ring-0 outline-none">
-                    <BasicInfoTab appointment={appointment} />
-                </TabsContent>
+                <div className="mt-8 transition-all">
+                    <TabsContent value="basic" className="focus-visible:ring-0 outline-none">
+                        <BasicInfoTab appointment={appointment} />
+                    </TabsContent>
 
-                <TabsContent value="availability" className="focus-visible:ring-0 outline-none">
-                    <AvailabilityTab appointment={appointment} />
-                </TabsContent>
+                    <TabsContent value="availability" className="focus-visible:ring-0 outline-none">
+                        <AvailabilityTab appointment={appointment} />
+                    </TabsContent>
 
-                <TabsContent value="book" className="focus-visible:ring-0 outline-none">
-                    <BookTab appointment={appointment} />
-                </TabsContent>
+                    <TabsContent value="questions" className="focus-visible:ring-0 outline-none">
+                        <QuestionsTab appointment={appointment} />
+                    </TabsContent>
 
-                <TabsContent value="questions" className="focus-visible:ring-0 outline-none">
-                    <QuestionsTab appointment={appointment} />
-                </TabsContent>
-
-                <TabsContent value="capacity" className="focus-visible:ring-0 outline-none">
-                    <CapacityTab appointment={appointment} />
-                </TabsContent>
-
-                <TabsContent value="users" className="focus-visible:ring-0 outline-none">
-                    <UsersTab appointment={appointment} />
-                </TabsContent>
-
-                <TabsContent value="assignment" className="focus-visible:ring-0 outline-none">
-                    <AssignmentTab appointment={appointment} />
-                </TabsContent>
-
-                <TabsContent value="picture" className="focus-visible:ring-0 outline-none">
-                    <PictureTab appointment={appointment} />
-                </TabsContent>
+                    <TabsContent value="capacity" className="focus-visible:ring-0 outline-none">
+                        <CapacityTab appointment={appointment} />
+                    </TabsContent>
+                </div>
             </Tabs>
         </div>
     )
