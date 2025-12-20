@@ -96,16 +96,22 @@ export async function getBookingQuestions(appointmentId: string) {
 export async function getAvailableSlots(appointmentId: string, date: string) {
     const supabase = createClient()
 
-    // 1. Get Appointment details (duration and capacity)
+    // 1. Get Appointment details including working hours (availability JSONB)
     const { data: appointment, error: aptError } = await supabase
         .from('appointments')
-        .select('duration, max_capacity')
+        .select('duration, max_capacity, availability')
         .eq('id', appointmentId)
         .single()
 
     if (aptError || !appointment) return []
 
-    // 2. Get existing bookings for that date to calculate overlapping availability
+    // 2. Determine Day of Week
+    const dayName = new Date(date).toLocaleDateString('en-US', { weekday: 'long' }).toLowerCase()
+    const dayConfig = appointment.availability?.[dayName]
+
+    if (!dayConfig || !dayConfig.active || !dayConfig.slots) return []
+
+    // 3. Get existing bookings for overlapping
     const startOfDay = new Date(date)
     startOfDay.setHours(0, 0, 0, 0)
     const endOfDay = new Date(date)
@@ -121,46 +127,43 @@ export async function getAvailableSlots(appointmentId: string, date: string) {
 
     if (bookingsError) return []
 
-    // 3. Generate slots based on duration (from 9:00 AM to 6:00 PM)
+    // 4. Generate slots based on the organizer's custom configuration for THIS specific day
     const slots = []
     const duration = appointment.duration || 60
     const maxCapacity = appointment.max_capacity || 1
 
-    let currentTime = new Date(date)
-    currentTime.setHours(9, 0, 0, 0)
+    for (const range of dayConfig.slots) {
+        let currentTime = new Date(date)
+        const [startH, startM] = range.start.split(':').map(Number)
+        const [endH, endM] = range.end.split(':').map(Number)
 
-    const dayEndTime = new Date(date)
-    dayEndTime.setHours(18, 0, 0, 0)
+        currentTime.setHours(startH, startM, 0, 0)
+        const rangeEndTime = new Date(date)
+        rangeEndTime.setHours(endH, endM, 0, 0)
 
-    while (currentTime < dayEndTime) {
-        const slotEnd = new Date(currentTime.getTime() + duration * 60000)
+        while (currentTime < rangeEndTime) {
+            const slotEnd = new Date(currentTime.getTime() + duration * 60000)
+            if (slotEnd > rangeEndTime) break
 
-        // Performance optimization: Filter overlapping bookings in memory
-        const currentSlotStart = currentTime.toISOString()
-        const currentSlotEnd = slotEnd.toISOString()
+            const currentSlotStart = currentTime.toISOString()
+            const currentSlotEnd = slotEnd.toISOString()
 
-        const overlappingCount = bookings.filter((b: any) => {
-            return (currentSlotStart < b.end_time && currentSlotEnd > b.start_time)
-        }).length
+            const overlappingCount = bookings.filter((b: any) => {
+                return (currentSlotStart < b.end_time && currentSlotEnd > b.start_time)
+            }).length
 
-        if (overlappingCount < maxCapacity) {
-            const timeString = currentTime.toTimeString().split(' ')[0] // HH:mm:ss
-            const endTimeString = slotEnd.toTimeString().split(' ')[0] // HH:mm:ss
-
-            slots.push({
-                id: currentSlotStart, // Unique ID for React keys
-                appointment_id: appointmentId,
-                start_time: timeString,
-                end_time: endTimeString,
-                available_capacity: maxCapacity - overlappingCount,
-                max_capacity: maxCapacity, // Added for UI
-                full_start_time: currentSlotStart,
-                full_end_time: currentSlotEnd
-            })
+            if (overlappingCount < maxCapacity) {
+                slots.push({
+                    id: currentSlotStart,
+                    start_time: currentTime.toTimeString().split(' ')[0],
+                    end_time: slotEnd.toTimeString().split(' ')[0],
+                    available_capacity: maxCapacity - overlappingCount,
+                    full_start_time: currentSlotStart,
+                    full_end_time: currentSlotEnd
+                })
+            }
+            currentTime = new Date(currentTime.getTime() + duration * 60000)
         }
-
-        // Increment by duration
-        currentTime = new Date(currentTime.getTime() + duration * 60000)
     }
 
     return slots
