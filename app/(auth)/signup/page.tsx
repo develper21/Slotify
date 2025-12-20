@@ -20,6 +20,7 @@ export default function SignupPage() {
 
     async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
         e.preventDefault()
+        console.log('Form submitted')
         setIsLoading(true)
         setErrors({})
 
@@ -42,20 +43,26 @@ export default function SignupPage() {
         if (password !== confirm_password) newErrors.confirm_password = 'Passwords do not match'
 
         if (Object.keys(newErrors).length > 0) {
+            console.log('Validation failed', newErrors)
             setErrors(newErrors)
             setIsLoading(false)
             return
         }
 
         try {
+            console.log('Calling signUp server action')
             const result = await signUp(formData)
+            console.log('SignUp result:', result)
             if (result?.error) {
+                console.error('SignUp error:', result.error)
                 toast.error(result.error)
             } else {
+                console.log('SignUp success')
                 toast.success('Account created! Please check your email for verification.')
                 router.push('/verify-email')
             }
         } catch (error) {
+            console.error('SignUp process exception:', error)
             toast.error('An error occurred. Please try again.')
         } finally {
             setIsLoading(false)
