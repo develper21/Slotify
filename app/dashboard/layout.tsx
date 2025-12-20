@@ -33,16 +33,16 @@ export default async function DashboardLayout({
 
     return (
         <div className="min-h-screen bg-mongodb-black text-white font-sans selection:bg-mongodb-spring/30">
-            {/* Fixed Sidebar */}
+            {/* Fixed Sidebar - Hidden on mobile by default, but we'll add responsive classes in Sidebar component */}
             <Sidebar userRole={userRole} />
 
             {/* Main Content Area */}
-            <div className="pl-64 flex flex-col min-h-screen transition-all duration-300">
+            <div className="md:pl-64 flex flex-col min-h-screen transition-all duration-300">
                 {/* Fixed Topbar */}
                 <Topbar />
 
                 {/* Scrollable Page Content */}
-                <main className="flex-1 p-6 bg-mongodb-black">
+                <main className="flex-1 p-4 md:p-6 bg-mongodb-black">
                     {children}
                 </main>
             </div>
