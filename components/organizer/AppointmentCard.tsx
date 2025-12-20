@@ -1,183 +1,98 @@
 'use client'
 
-import { useState } from 'react'
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/Card'
+import { Card, CardContent, CardFooter, CardHeader, CardTitle, CardDescription } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { Badge } from '@/components/ui/Badge'
-import { Modal } from '@/components/ui/Modal'
-import { Clock, MapPin, Edit, Share2, Trash2, Eye, EyeOff } from 'lucide-react'
+import { Clock, Users, Globe, Lock, MoreVertical, Edit2, Eye, Trash2 } from 'lucide-react'
 import Link from 'next/link'
-import { formatDuration, getAppointmentLink, copyToClipboard } from '@/lib/utils'
-import { togglePublishStatus, deleteAppointment } from '@/lib/actions/organizer'
-import { toast } from 'sonner'
-import { useRouter } from 'next/navigation'
-import Image from 'next/image'
+import { formatDuration } from '@/lib/utils'
 
-interface AppointmentCardProps {
-    appointment: any
-}
-
-export default function AppointmentCard({ appointment }: AppointmentCardProps) {
-    const router = useRouter()
-    const [showDeleteModal, setShowDeleteModal] = useState(false)
-    const [isDeleting, setIsDeleting] = useState(false)
-    const [isTogglingPublish, setIsTogglingPublish] = useState(false)
-
-    const primaryImage = appointment.appointment_images?.find((img: any) => img.is_primary)
-    const shareLink = getAppointmentLink(appointment.id)
-
-    const handleCopyLink = async () => {
-        const success = await copyToClipboard(shareLink)
-        if (success) {
-            toast.success('Link copied to clipboard!')
-        } else {
-            toast.error('Failed to copy link')
-        }
-    }
-
-    const handleTogglePublish = async () => {
-        setIsTogglingPublish(true)
-        try {
-            const result = await togglePublishStatus(appointment.id, appointment.published)
-            if (result.error) {
-                toast.error(result.error)
-            } else {
-                toast.success(appointment.published ? 'Appointment unpublished' : 'Appointment published')
-                router.refresh()
-            }
-        } catch (error) {
-            toast.error('Failed to update status')
-        } finally {
-            setIsTogglingPublish(false)
-        }
-    }
-
-    const handleDelete = async () => {
-        setIsDeleting(true)
-        try {
-            const result = await deleteAppointment(appointment.id)
-            if (result.error) {
-                toast.error(result.error)
-            } else {
-                toast.success('Appointment deleted')
-                setShowDeleteModal(false)
-                router.refresh()
-            }
-        } catch (error) {
-            toast.error('Failed to delete appointment')
-        } finally {
-            setIsDeleting(false)
-        }
-    }
+export default function AppointmentCard({ appointment }: { appointment: any }) {
+    const images = appointment.images || []
+    const primaryImage = images.find((img: any) => img.is_primary) || images[0]
 
     return (
-        <>
-            <Card hover className="overflow-hidden">
-                {/* Image */}
+        <Card hover className="group flex flex-col h-full bg-mongodb-slate/40 border-neutral-700/30 overflow-hidden">
+            {/* Header/Image Area */}
+            <div className="relative h-40 overflow-hidden">
                 {primaryImage ? (
-                    <div className="h-48 relative overflow-hidden">
-                        <Image
-                            src={primaryImage.image_url}
-                            alt={appointment.title}
-                            fill
-                            className="object-cover"
-                        />
-                    </div>
+                    <img
+                        src={primaryImage.url}
+                        alt={appointment.title}
+                        className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                    />
                 ) : (
-                    <div className="h-48 bg-gradient-primary flex items-center justify-center">
-                        <Clock className="w-16 h-16 text-white/50" />
+                    <div className="w-full h-full bg-mongodb-black/40 flex items-center justify-center">
+                        <Clock className="w-12 h-12 text-neutral-800" />
                     </div>
                 )}
+                <div className="absolute inset-0 bg-gradient-to-t from-mongodb-black/90 via-mongodb-black/20 to-transparent" />
+                
+                <div className="absolute top-3 left-3 flex gap-2">
+                    <Badge variant={appointment.is_published ? 'primary' : 'default'} className="backdrop-blur-md bg-mongodb-black/40">
+                        {appointment.is_published ? (
+                            <div className="flex items-center gap-1">
+                                <Globe className="w-3 h-3" />
+                                <span>Published</span>
+                            </div>
+                        ) : (
+                            <div className="flex items-center gap-1">
+                                <Lock className="w-3 h-3" />
+                                <span>Draft</span>
+                            </div>
+                        )}
+                    </Badge>
+                </div>
 
-                {/* Content */}
-                <CardHeader>
-                    <div className="flex items-start justify-between gap-2">
-                        <CardTitle className="line-clamp-2">{appointment.title}</CardTitle>
-                        <Badge variant={appointment.published ? 'success' : 'warning'}>
-                            {appointment.published ? 'Published' : 'Draft'}
-                        </Badge>
-                    </div>
-                </CardHeader>
+                <div className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <Button variant="ghost" size="sm" className="h-8 w-8 p-0 bg-mongodb-black/60 hover:bg-mongodb-black">
+                        <MoreVertical className="w-4 h-4 text-white" />
+                    </Button>
+                </div>
+            </div>
 
-                <CardContent className="space-y-3">
-                    <div className="flex items-center gap-2 text-sm text-neutral-600">
-                        <Clock className="w-4 h-4" />
-                        <span>{formatDuration(appointment.duration)}</span>
-                    </div>
-                    <div className="flex items-center gap-2 text-sm text-neutral-600">
-                        <MapPin className="w-4 h-4" />
-                        <span>{appointment.location || 'Online'}</span>
-                    </div>
+            <CardHeader className="pt-4 pb-2">
+                <div className="flex justify-between items-start gap-2">
+                    <CardTitle className="text-lg leading-tight group-hover:text-mongodb-spring transition-colors">
+                        {appointment.title}
+                    </CardTitle>
+                </div>
+                <CardDescription className="line-clamp-1 text-xs">
+                    {appointment.description || 'No description provided'}
+                </CardDescription>
+            </CardHeader>
 
-                    {/* Share Link */}
-                    <div className="pt-3 border-t border-neutral-200">
-                        <p className="text-xs text-neutral-500 mb-2">Share Link:</p>
-                        <div className="flex items-center gap-2">
-                            <input
-                                type="text"
-                                value={shareLink}
-                                readOnly
-                                className="flex-1 px-3 py-2 text-xs bg-neutral-50 border border-neutral-200 rounded-lg"
-                            />
-                            <Button size="sm" variant="ghost" onClick={handleCopyLink}>
-                                <Share2 className="w-4 h-4" />
-                            </Button>
-                        </div>
+            <CardContent className="flex-1 pb-4">
+                <div className="grid grid-cols-2 gap-3 mt-4">
+                    <div className="bg-mongodb-black/30 rounded-mongodb p-2 flex flex-col items-center justify-center text-center border border-neutral-700/20">
+                        <Clock className="w-3.5 h-3.5 text-mongodb-spring mb-1" />
+                        <span className="text-[10px] text-neutral-400 font-bold uppercase tracking-tighter">Duration</span>
+                        <span className="text-xs text-white font-medium">{formatDuration(appointment.duration)}</span>
                     </div>
-                </CardContent>
+                    <div className="bg-mongodb-black/30 rounded-mongodb p-2 flex flex-col items-center justify-center text-center border border-neutral-700/20">
+                        <Users className="w-3.5 h-3.5 text-blue-400 mb-1" />
+                        <span className="text-[10px] text-neutral-400 font-bold uppercase tracking-tighter">Capacity</span>
+                        <span className="text-xs text-white font-medium">{appointment.capacity || 'Unlimited'}</span>
+                    </div>
+                </div>
+            </CardContent>
 
-                {/* Actions */}
-                <CardFooter className="flex gap-2">
-                    <Link href={`/appointments/${appointment.id}/edit`} className="flex-1">
-                        <Button variant="secondary" className="w-full">
-                            <Edit className="w-4 h-4 mr-2" />
+            <CardFooter className="pt-0 border-t border-neutral-700/20 bg-mongodb-black/20 p-3">
+                <div className="grid grid-cols-2 gap-2 w-full">
+                    <Link href={`/appointments/${appointment.id}/edit`} className="w-full">
+                        <Button variant="outline" size="sm" className="w-full text-xs h-9 bg-white/5 border-white/10 hover:bg-white/10 hover:text-white">
+                            <Edit2 className="w-3 h-3 mr-2" />
                             Edit
                         </Button>
                     </Link>
-                    <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={handleTogglePublish}
-                        isLoading={isTogglingPublish}
-                    >
-                        {appointment.published ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                    </Button>
-                    <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => setShowDeleteModal(true)}
-                        className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                    >
-                        <Trash2 className="w-4 h-4" />
-                    </Button>
-                </CardFooter>
-            </Card>
-
-            {/* Delete Confirmation Modal */}
-            <Modal
-                isOpen={showDeleteModal}
-                onClose={() => setShowDeleteModal(false)}
-                title="Delete Appointment"
-                description="Are you sure you want to delete this appointment? This action cannot be undone."
-            >
-                <div className="flex gap-4 mt-6">
-                    <Button
-                        variant="ghost"
-                        onClick={() => setShowDeleteModal(false)}
-                        className="flex-1"
-                    >
-                        Cancel
-                    </Button>
-                    <Button
-                        variant="danger"
-                        onClick={handleDelete}
-                        isLoading={isDeleting}
-                        className="flex-1"
-                    >
-                        Delete
-                    </Button>
+                    <Link href={`/appointments/${appointment.id}`} className="w-full">
+                        <Button variant="secondary" size="sm" className="w-full text-xs h-9 border-none">
+                            <Eye className="w-3 h-3 mr-2" />
+                            Preview
+                        </Button>
+                    </Link>
                 </div>
-            </Modal>
-        </>
+            </CardFooter>
+        </Card>
     )
 }
