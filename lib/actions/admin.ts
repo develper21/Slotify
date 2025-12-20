@@ -21,7 +21,7 @@ export async function getAllUsers() {
 }
 
 // Update user status
-export async function updateUserStatus(userId: string, status: 'active' | 'inactive') {
+export async function updateUserStatus(userId: string, status: 'active' | 'inactive' | 'banned') {
     const supabase = createClient()
 
     const { error } = await supabase
