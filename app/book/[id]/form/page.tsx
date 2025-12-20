@@ -265,97 +265,88 @@ export default function BookingFormPage({ params }: BookingFormPageProps) {
     }
 
     return (
-        <div className="min-h-screen bg-mongodb-black py-12">
-            <div className="container mx-auto px-4 max-w-2xl">
-                {/* Header */}
-                <div className="mb-8">
-                    <button
-                        onClick={() => router.back()}
-                        className="flex items-center gap-2 text-neutral-400 hover:text-white mb-4 transition-colors"
-                    >
-                        <ChevronLeft className="w-5 h-5" />
-                        Back
-                    </button>
-                    <h1 className="text-3xl font-display font-bold text-white mb-2">
-                        Booking Information
-                    </h1>
-                    <p className="text-neutral-400">Please fill in your details to complete the booking</p>
-                </div>
-
-                {/* Form */}
-                <form onSubmit={handleSubmit}>
-                    <Card className="bg-mongodb-slate/50 border-neutral-800">
-                        <CardHeader>
-                            <CardTitle className="text-white">Your Information</CardTitle>
-                        </CardHeader>
-                        <CardContent className="space-y-6">
-                            {/* Name */}
-                            <div>
-                                <label className="block text-sm font-medium text-neutral-300 mb-2">
-                                    Full Name <span className="text-red-500">*</span>
-                                </label>
-                                <input
-                                    type="text"
-                                    value={answers.name || ''}
-                                    onChange={(e) => handleInputChange('name', e.target.value)}
-                                    className="w-full px-4 py-3 rounded-lg border border-neutral-700 bg-mongodb-black text-white focus:border-mongodb-spring focus:ring-1 focus:ring-mongodb-spring transition-all outline-none"
-                                />
-                                {errors.name && <p className="mt-1 text-sm text-red-500">{errors.name}</p>}
-                            </div>
-
-                            {/* Email */}
-                            <div>
-                                <label className="block text-sm font-medium text-neutral-300 mb-2">
-                                    Email <span className="text-red-500">*</span>
-                                </label>
-                                <input
-                                    type="email"
-                                    value={answers.email || ''}
-                                    onChange={(e) => handleInputChange('email', e.target.value)}
-                                    className="w-full px-4 py-3 rounded-lg border border-neutral-700 bg-mongodb-black text-white focus:border-mongodb-spring focus:ring-1 focus:ring-mongodb-spring transition-all outline-none"
-                                />
-                                {errors.email && <p className="mt-1 text-sm text-red-500">{errors.email}</p>}
-                            </div>
-
-                            {/* Phone */}
-                            <div>
-                                <label className="block text-sm font-medium text-neutral-300 mb-2">
-                                    Phone Number <span className="text-red-500">*</span>
-                                </label>
-                                <input
-                                    type="tel"
-                                    value={answers.phone || ''}
-                                    onChange={(e) => handleInputChange('phone', e.target.value)}
-                                    className="w-full px-4 py-3 rounded-lg border border-neutral-700 bg-mongodb-black text-white focus:border-mongodb-spring focus:ring-1 focus:ring-mongodb-spring transition-all outline-none"
-                                />
-                                {errors.phone && <p className="mt-1 text-sm text-red-500">{errors.phone}</p>}
-                            </div>
-
-                            {/* Dynamic Questions */}
-                            {questions.length > 0 && (
-                                <>
-                                    <div className="pt-6 border-t border-neutral-800">
-                                        <h3 className="text-lg font-semibold text-white mb-4">
-                                            Additional Information
-                                        </h3>
-                                    </div>
-                                    {questions.map(renderQuestion)}
-                                </>
-                            )}
-                        </CardContent>
-                    </Card>
-
-                    {/* Submit Button */}
-                    <div className="mt-6 flex justify-end gap-4">
-                        <Button type="button" variant="ghost" onClick={() => router.back()} className="text-neutral-400 hover:text-white">
-                            Cancel
-                        </Button>
-                        <Button type="submit" size="lg" isLoading={isSubmitting} variant="primary">
-                            Complete Booking
-                        </Button>
-                    </div>
-                </form>
+        <div className="max-w-2xl mx-auto">
+            {/* Header */}
+            <div className="mb-12 text-center">
+                <h1 className="text-5xl font-display font-bold text-white mb-4 tracking-tight">
+                    Almost <span className="gradient-text">There</span>
+                </h1>
+                <p className="text-xl text-neutral-400">Please provide a few more details to confirm</p>
             </div>
+
+            {/* Form */}
+            <form onSubmit={handleSubmit}>
+                <Card className="bg-mongodb-slate/50 border-neutral-800">
+                    <CardHeader>
+                        <CardTitle className="text-white">Your Information</CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-6">
+                        {/* Name */}
+                        <div>
+                            <label className="block text-sm font-medium text-neutral-300 mb-2">
+                                Full Name <span className="text-red-500">*</span>
+                            </label>
+                            <input
+                                type="text"
+                                value={answers.name || ''}
+                                onChange={(e) => handleInputChange('name', e.target.value)}
+                                className="w-full px-4 py-3 rounded-lg border border-neutral-700 bg-mongodb-black text-white focus:border-mongodb-spring focus:ring-1 focus:ring-mongodb-spring transition-all outline-none"
+                            />
+                            {errors.name && <p className="mt-1 text-sm text-red-500">{errors.name}</p>}
+                        </div>
+
+                        {/* Email */}
+                        <div>
+                            <label className="block text-sm font-medium text-neutral-300 mb-2">
+                                Email <span className="text-red-500">*</span>
+                            </label>
+                            <input
+                                type="email"
+                                value={answers.email || ''}
+                                onChange={(e) => handleInputChange('email', e.target.value)}
+                                className="w-full px-4 py-3 rounded-lg border border-neutral-700 bg-mongodb-black text-white focus:border-mongodb-spring focus:ring-1 focus:ring-mongodb-spring transition-all outline-none"
+                            />
+                            {errors.email && <p className="mt-1 text-sm text-red-500">{errors.email}</p>}
+                        </div>
+
+                        {/* Phone */}
+                        <div>
+                            <label className="block text-sm font-medium text-neutral-300 mb-2">
+                                Phone Number <span className="text-red-500">*</span>
+                            </label>
+                            <input
+                                type="tel"
+                                value={answers.phone || ''}
+                                onChange={(e) => handleInputChange('phone', e.target.value)}
+                                className="w-full px-4 py-3 rounded-lg border border-neutral-700 bg-mongodb-black text-white focus:border-mongodb-spring focus:ring-1 focus:ring-mongodb-spring transition-all outline-none"
+                            />
+                            {errors.phone && <p className="mt-1 text-sm text-red-500">{errors.phone}</p>}
+                        </div>
+
+                        {/* Dynamic Questions */}
+                        {questions.length > 0 && (
+                            <>
+                                <div className="pt-6 border-t border-neutral-800">
+                                    <h3 className="text-lg font-semibold text-white mb-4">
+                                        Additional Information
+                                    </h3>
+                                </div>
+                                {questions.map(renderQuestion)}
+                            </>
+                        )}
+                    </CardContent>
+                </Card>
+
+                {/* Submit Button */}
+                <div className="mt-6 flex justify-end gap-4">
+                    <Button type="button" variant="ghost" onClick={() => router.back()} className="text-neutral-400 hover:text-white">
+                        Cancel
+                    </Button>
+                    <Button type="submit" size="lg" isLoading={isSubmitting} variant="primary">
+                        Complete Booking
+                    </Button>
+                </div>
+            </form>
         </div>
     )
 }
