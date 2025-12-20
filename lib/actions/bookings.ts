@@ -60,6 +60,40 @@ export async function getOrganizerBookings(organizerId: string, filters?: {
     return data || []
 }
 
+// Get all bookings for customer
+export async function getCustomerBookings(userId: string) {
+    const supabase = createClient()
+
+    const { data, error } = await supabase
+        .from('bookings')
+        .select(`
+            *,
+            appointments (
+                id,
+                title,
+                organizer_id
+            ),
+            users (
+                full_name,
+                email
+            ),
+            time_slots (
+                slot_date,
+                start_time,
+                end_time
+            )
+        `)
+        .eq('user_id', userId)
+        .order('created_at', { ascending: false })
+
+    if (error) {
+        console.error('Error fetching customer bookings:', error)
+        return []
+    }
+
+    return data || []
+}
+
 // Update booking status
 export async function updateBookingStatus(bookingId: string, status: string) {
     const supabase = createClient()

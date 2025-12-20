@@ -35,8 +35,8 @@ export const createMockClient = () => {
                     id: 'mock-user-1',
                     email: 'demo@slotify.com',
                     user_metadata: {
-                        full_name: 'Charlie Customer',
-                        role: 'customer' // Change to check customer dashboard
+                        full_name: 'Narvin Divina',
+                        role: 'organizer'
                     },
                     role: 'authenticated',
                     aud: 'authenticated',
