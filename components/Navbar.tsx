@@ -14,8 +14,8 @@ export function Navbar() {
     const navItems = [
         { name: 'Home', href: '/home', icon: Calendar },
         { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
-        { name: 'My Bookings', href: '/bookings', icon: User },
-        { name: 'Settings', href: '/settings', icon: Settings },
+        { name: 'My Bookings', href: '/dashboard/bookings', icon: User },
+        { name: 'Settings', href: '/dashboard/settings', icon: Settings },
     ]
 
     return (
