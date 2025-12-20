@@ -61,7 +61,7 @@ export async function createAppointment(organizerId: string, data: {
             title: data.title,
             description: data.description,
             duration: data.duration,
-            location: data.location || 'Online',
+            location_details: data.location || 'Online',
             published: false,
             booking_enabled: true,
         })
@@ -202,7 +202,7 @@ export async function upsertSchedule(appointmentId: string, schedules: any[]) {
                 day_of_week: s.day_of_week,
                 start_time: s.start_time,
                 end_time: s.end_time,
-                is_working_day: s.is_working_day,
+                is_active: s.is_working_day,
             }))
         )
 
@@ -228,8 +228,11 @@ export async function createBookingQuestion(appointmentId: string, question: {
         .from('booking_questions')
         .insert({
             appointment_id: appointmentId,
-            ...question,
+            question_text: question.question_text,
+            question_type: question.question_type as "single_line" | "multi_line" | "phone" | "radio" | "checkbox",
             options: question.options ? JSON.stringify(question.options) : null,
+            is_mandatory: question.is_mandatory,
+            order_index: question.order_index,
         })
 
     if (error) {
