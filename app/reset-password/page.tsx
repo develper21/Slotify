@@ -1,48 +1,33 @@
 'use client'
 
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
-import { updatePassword } from '@/lib/actions/auth'
+import { completePasswordReset } from '@/lib/actions/auth'
 import { toast } from 'sonner'
 import { Lock, CheckCircle, Mail } from 'lucide-react'
-import { createClient } from '@/lib/supabase/client'
 import { getPasswordValidationError } from '@/lib/utils'
 
 export default function ResetPasswordPage() {
     const router = useRouter()
     const searchParams = useSearchParams()
-    const initialEmail = useMemo(() => searchParams.get('email') || '', [searchParams])
-    const [email, setEmail] = useState(initialEmail)
+
+    const email = searchParams.get('email') || ''
+    const code = searchParams.get('code') || ''
+
     const [password, setPassword] = useState('')
     const [confirmPassword, setConfirmPassword] = useState('')
     const [isLoading, setIsLoading] = useState(false)
     const [success, setSuccess] = useState(false)
 
     useEffect(() => {
-        const supabase = createClient()
-        const hash = typeof window !== 'undefined' ? window.location.hash : ''
-        if (hash) {
-            const params = new URLSearchParams(hash.replace('#', ''))
-            const access_token = params.get('access_token')
-            const refresh_token = params.get('refresh_token')
-            const type = params.get('type')
-
-            if (type === 'recovery' && access_token && refresh_token) {
-                supabase.auth
-                    .setSession({ access_token, refresh_token })
-                    .then(({ error }) => {
-                        if (error) {
-                            toast.error('Failed to initialize session for password reset')
-                        } else {
-                            router.replace('/reset-password')
-                        }
-                    })
-            }
+        if (!email || !code) {
+            toast.error('Invalid password reset link')
+            router.push('/forgot-password')
         }
-    }, [router])
+    }, [email, code, router])
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
@@ -59,7 +44,9 @@ export default function ResetPasswordPage() {
         }
 
         setIsLoading(true)
-        const result = await updatePassword(password)
+
+        // Call the server action with email, otp code, and new password
+        const result = await completePasswordReset(email, code, password)
 
         if (result.error) {
             toast.error(result.error)
@@ -100,26 +87,14 @@ export default function ResetPasswordPage() {
                     <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-4">
                         <Lock className="w-8 h-8 text-primary" />
                     </div>
-                    <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-4">
-                        <Mail className="w-8 h-8 text-primary" />
-                    </div>
                     <CardTitle className="text-2xl">Reset Password</CardTitle>
                     <p className="text-neutral-600 mt-2">
-                        Enter the code you verified for {email || 'your account'} and set a new password.
+                        Set a new password for {email}
                     </p>
                 </CardHeader>
 
                 <CardContent>
                     <form onSubmit={handleSubmit} className="space-y-4">
-                        <Input
-                            type="email"
-                            label="Email"
-                            value={email}
-                            onChange={(event) => setEmail(event.target.value)}
-                            placeholder="your@email.com"
-                            required
-                        />
-
                         <Input
                             type="password"
                             label="New Password"
