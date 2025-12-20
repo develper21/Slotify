@@ -16,6 +16,7 @@
   },
   "dependencies": {
     "@supabase/auth-helpers-nextjs": "^0.10.0",
+    "@supabase/ssr": "^0.8.0",
     "@supabase/supabase-js": "^2.39.3",
     "clsx": "^2.1.0",
     "date-fns": "^3.0.6",
