@@ -3,7 +3,10 @@
 import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
 
-// Get all bookings for organizer
+/**
+ * GET ALL BOOKINGS FOR AN ORGANIZER
+ * Uses optimized single-table filtering
+ */
 export async function getOrganizerBookings(organizerId: string, filters?: {
     status?: string
     appointmentId?: string
@@ -16,22 +19,17 @@ export async function getOrganizerBookings(organizerId: string, filters?: {
         .from('bookings')
         .select(`
             *,
-            appointments!inner (
+            appointment:appointment_id (
                 id,
                 title,
                 organizer_id
             ),
-            users (
+            profiles:customer_id (
                 full_name,
                 email
-            ),
-            time_slots (
-                slot_date,
-                start_time,
-                end_time
             )
         `)
-        .eq('appointments.organizer_id', organizerId)
+        .eq('appointment.organizer_id', organizerId)
         .order('created_at', { ascending: false })
 
     if (filters?.status) {
@@ -43,11 +41,11 @@ export async function getOrganizerBookings(organizerId: string, filters?: {
     }
 
     if (filters?.startDate) {
-        query = query.gte('time_slots.slot_date', filters.startDate)
+        query = query.gte('start_time', filters.startDate)
     }
 
     if (filters?.endDate) {
-        query = query.lte('time_slots.slot_date', filters.endDate)
+        query = query.lte('start_time', filters.endDate)
     }
 
     const { data, error } = await query
@@ -60,7 +58,9 @@ export async function getOrganizerBookings(organizerId: string, filters?: {
     return data || []
 }
 
-// Get all bookings for customer
+/**
+ * GET ALL BOOKINGS FOR A CUSTOMER
+ */
 export async function getCustomerBookings(userId: string) {
     const supabase = createClient()
 
@@ -68,22 +68,20 @@ export async function getCustomerBookings(userId: string) {
         .from('bookings')
         .select(`
             *,
-            appointments (
+            appointment:appointment_id (
                 id,
                 title,
-                organizer_id
+                organizer_id,
+                image_url
             ),
-            users (
-                full_name,
-                email
-            ),
-            time_slots (
-                slot_date,
-                start_time,
-                end_time
+            organizer:appointment_id (
+                profiles:organizer_id (
+                    business_name,
+                    full_name
+                )
             )
         `)
-        .eq('user_id', userId)
+        .eq('customer_id', userId)
         .order('created_at', { ascending: false })
 
     if (error) {
@@ -94,24 +92,28 @@ export async function getCustomerBookings(userId: string) {
     return data || []
 }
 
-// Update booking status
+/**
+ * UPDATE BOOKING STATUS
+ */
 export async function updateBookingStatus(bookingId: string, status: string) {
     const supabase = createClient()
 
     const { error } = await supabase
         .from('bookings')
-        .update({ status, updated_at: new Date().toISOString() })
+        .update({ status })
         .eq('id', bookingId)
 
     if (error) {
-        return { error: error.message }
+        return { success: false, message: error.message }
     }
 
-    revalidatePath('/bookings')
+    revalidatePath('/dashboard/bookings')
     return { success: true }
 }
 
-// Get booking details with answers
+/**
+ * GET BOOKING DETAILS WITH ANSWERS (Stored as JSONB)
+ */
 export async function getBookingDetails(bookingId: string) {
     const supabase = createClient()
 
@@ -119,28 +121,15 @@ export async function getBookingDetails(bookingId: string) {
         .from('bookings')
         .select(`
             *,
-            appointments (
+            appointment:appointment_id (
                 title,
                 description,
-                location,
+                location_details,
                 duration
             ),
-            users (
+            customer:customer_id (
                 full_name,
-                email,
-                phone
-            ),
-            time_slots (
-                slot_date,
-                start_time,
-                end_time
-            ),
-            booking_answers (
-                answer_text,
-                booking_questions (
-                    question_text,
-                    question_type
-                )
+                email
             )
         `)
         .eq('id', bookingId)
@@ -154,18 +143,19 @@ export async function getBookingDetails(bookingId: string) {
     return booking
 }
 
-// Export bookings to CSV
+/**
+ * EXPORT BOOKINGS TO CSV
+ */
 export async function exportBookingsToCSV(organizerId: string) {
     const bookings = await getOrganizerBookings(organizerId)
 
-    const headers = ['Booking ID', 'Customer Name', 'Email', 'Appointment', 'Date', 'Time', 'Status', 'Created At']
+    const headers = ['Booking ID', 'Customer Name', 'Email', 'Appointment', 'Start Time', 'Status', 'Created At']
     const rows = bookings.map((booking: any) => [
         booking.id,
-        booking.users?.full_name || 'N/A',
-        booking.users?.email || 'N/A',
-        booking.appointments?.title || 'N/A',
-        booking.time_slots?.slot_date || 'N/A',
-        `${booking.time_slots?.start_time} - ${booking.time_slots?.end_time}`,
+        booking.profiles?.full_name || 'N/A',
+        booking.profiles?.email || 'N/A',
+        booking.appointment?.title || 'N/A',
+        new Date(booking.start_time).toLocaleString(),
         booking.status,
         new Date(booking.created_at).toLocaleDateString()
     ])
