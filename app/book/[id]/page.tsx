@@ -1,5 +1,5 @@
 import { Suspense } from 'react'
-import { getAppointmentById } from '@/lib/actions/mock-appointments'
+import { getAppointmentById } from '@/lib/actions/appointments'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { Badge } from '@/components/ui/Badge'
@@ -30,8 +30,7 @@ async function AppointmentContent({ id }: { id: string }) {
         )
     }
 
-    const organizerName = appointment.organizers?.business_name || 'Unknown Organizer'
-    const settings = appointment.appointment_settings
+    const organizerName = appointment.profiles?.business_name || appointment.profiles?.full_name || 'Expert Organizer'
 
     return (
         <div className="relative min-h-screen bg-mongodb-black pb-24">
@@ -106,7 +105,7 @@ async function AppointmentContent({ id }: { id: string }) {
                                 </div>
                             </div>
                             <p className="text-lg text-neutral-400 leading-relaxed">
-                                {appointment.organizers?.description || 'A recognized leader in the field, dedicated to providing high-impact professional services and exceptional client experiences.'}
+                                {appointment.profiles?.business_description || 'A recognized leader in the field, dedicated to providing high-impact professional services and exceptional client experiences.'}
                             </p>
                         </div>
                     </div>
@@ -130,11 +129,11 @@ async function AppointmentContent({ id }: { id: string }) {
                                     </div>
                                 </div>
 
-                                {settings?.paid_booking && settings.price > 0 && (
+                                {appointment.price > 0 && (
                                     <div className="p-4 rounded-xl bg-white/5 border border-white/10">
                                         <p className="text-neutral-500 text-sm font-medium mb-1">Professional Fee</p>
                                         <p className="text-4xl font-bold text-white">
-                                            ${settings.price}<span className="text-lg text-neutral-500">/{settings.currency === 'USD' ? 'hr' : 'session'}</span>
+                                            ${appointment.price}<span className="text-lg text-neutral-500">/{appointment.currency || 'USD'}</span>
                                         </p>
                                     </div>
                                 )}
