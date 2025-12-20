@@ -25,27 +25,24 @@ async function AppointmentsList({ searchQuery }: { searchQuery?: string }) {
     return (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {appointments.map((appointment: any) => {
-                const images = appointment.images || []
-                const primaryImage = images.find((img: any) => img.is_primary) || images[0]
-                const organizerName = appointment.organizers?.users?.full_name || appointment.organizers?.business_name
+                const organizerName = appointment.profiles?.business_name || appointment.profiles?.full_name || 'Expert Organizer'
 
                 return (
                     <Card key={appointment.id} hover className="group flex flex-col h-full overflow-hidden">
-                        {primaryImage && (
-                            <div className="h-52 relative overflow-hidden">
+                        <div className="h-52 relative overflow-hidden">
+                            {appointment.image_url ? (
                                 <img
-                                    src={primaryImage.url}
+                                    src={appointment.image_url}
                                     alt={appointment.title}
                                     className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
                                 />
-                                <div className="absolute inset-0 bg-gradient-to-t from-mongodb-black/80 to-transparent" />
-                            </div>
-                        )}
-                        {!primaryImage && (
-                            <div className="h-52 bg-mongodb-forest/20 flex items-center justify-center">
-                                <Calendar className="w-16 h-16 text-mongodb-spring/30" />
-                            </div>
-                        )}
+                            ) : (
+                                <div className="w-full h-full bg-mongodb-forest/20 flex items-center justify-center">
+                                    <Calendar className="w-16 h-16 text-mongodb-spring/30" />
+                                </div>
+                            )}
+                            <div className="absolute inset-0 bg-gradient-to-t from-mongodb-black/80 to-transparent" />
+                        </div>
 
                         <CardHeader className="flex-1">
                             <div className="flex justify-between items-start mb-2">
@@ -68,7 +65,7 @@ async function AppointmentsList({ searchQuery }: { searchQuery?: string }) {
                                     <div className="w-8 h-8 rounded-mongodb bg-mongodb-black/50 flex items-center justify-center">
                                         <MapPin className="w-4 h-4 text-mongodb-spring" />
                                     </div>
-                                    <span className="truncate">{appointment.location || 'Online'}</span>
+                                    <span className="truncate">{appointment.location_details || 'Online'}</span>
                                 </div>
                             </div>
                             {organizerName && (
