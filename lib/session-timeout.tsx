@@ -84,7 +84,7 @@ export function useSessionTimeout() {
         const interval = setInterval(checkSession, SESSION_CONFIG.checkInterval)
 
         // Listen for auth state changes
-        const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+        const { data: { subscription } } = supabase.auth.onAuthStateChange((event: string, session: any) => {
             if (event === 'SIGNED_OUT') {
                 router.push('/login')
             } else if (event === 'TOKEN_REFRESHED') {
