@@ -8,40 +8,35 @@ export default async function DashboardLayout({
 }: {
     children: React.ReactNode
 }) {
-    // In our mocked environment, we can fetch the user.
-    // The mocked createClient returns a mocked user with role 'organizer' by default in my previous edit.
     const supabase = createClient()
 
-    // Get session/user - Mock client returns valid session
+    // 1. Get current authenticated user
     const { data: { user } } = await supabase.auth.getUser()
 
-    // Default role 'organizer' as per mock client configuration
-    let userRole: 'admin' | 'organizer' | 'customer' = 'organizer'
-
-    // Try to get role from mocked DB
-    if (user) {
-        const { data: userData } = await supabase
-            .from('users')
-            .select('role')
-            .eq('id', user.id)
-            .single()
-
-        if (userData && userData.role) {
-            userRole = userData.role as any
-        }
+    if (!user) {
+        redirect('/login')
     }
+
+    // 2. Fetch user role from profiles
+    const { data: profile } = await supabase
+        .from('profiles')
+        .select('role')
+        .eq('id', user.id)
+        .single()
+
+    const userRole = profile?.role || 'customer'
 
     return (
         <div className="min-h-screen bg-mongodb-black text-white font-sans selection:bg-mongodb-spring/30">
-            {/* Fixed Sidebar - Hidden on mobile by default, but we'll add responsive classes in Sidebar component */}
+            {/* Navigation Sidebar */}
             <Sidebar userRole={userRole} />
 
-            {/* Main Content Area */}
+            {/* Main Viewport */}
             <div className="md:pl-64 flex flex-col min-h-screen transition-all duration-300">
-                {/* Fixed Topbar */}
+                {/* Global Topbar */}
                 <Topbar />
 
-                {/* Scrollable Page Content */}
+                {/* Page Content */}
                 <main className="flex-1 p-4 md:p-6 bg-mongodb-black">
                     {children}
                 </main>
