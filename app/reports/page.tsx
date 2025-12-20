@@ -13,7 +13,7 @@ async function ReportingStats({ organizerId }: { organizerId: string }) {
     const supabase = createClient()
 
     // Get all appointments for this organizer
-    const { data: appointments } = await supabase
+    const { data: appointments }: { data: any[] | null } = await supabase
         .from('appointments')
         .select('id')
         .eq('organizer_id', organizerId)
