@@ -5,6 +5,8 @@ import { usePathname } from 'next/navigation'
 import { cn } from '@/lib/utils'
 import { Calendar, LayoutDashboard, Settings, User, LogOut, FileText, HelpCircle, Users } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
+import { signOut } from '@/lib/actions/auth'
+import { useState } from 'react'
 
 interface SidebarProps extends React.HTMLAttributes<HTMLDivElement> {
     userRole?: 'admin' | 'organizer' | 'customer'
@@ -12,6 +14,12 @@ interface SidebarProps extends React.HTMLAttributes<HTMLDivElement> {
 
 export function Sidebar({ className, userRole = 'organizer' }: SidebarProps) {
     const pathname = usePathname()
+    const [isLoggingOut, setIsLoggingOut] = useState(false)
+
+    const handleSignOut = async () => {
+        setIsLoggingOut(true)
+        await signOut()
+    }
 
     const navItems = [
         {
@@ -95,8 +103,7 @@ export function Sidebar({ className, userRole = 'organizer' }: SidebarProps) {
                                 isActive
                                     ? 'bg-mongodb-spring/10 text-mongodb-spring'
                                     : 'text-neutral-400 hover:text-white hover:bg-white/5'
-                            )}
-                        >
+                            )}>
                             <Icon className={cn("w-5 h-5 transition-colors", isActive ? "text-mongodb-spring" : "text-neutral-500 group-hover:text-white")} />
                             {item.name}
                         </Link>
@@ -106,7 +113,11 @@ export function Sidebar({ className, userRole = 'organizer' }: SidebarProps) {
 
             {/* Footer / Logout */}
             <div className="p-4 border-t border-neutral-800">
-                <Button variant="ghost" className="w-full justify-start text-neutral-400 hover:text-red-400 hover:bg-red-900/10">
+                <Button 
+                    variant="ghost" 
+                    className="w-full justify-start text-neutral-400 hover:text-red-400 hover:bg-red-900/10"
+                    onClick={handleSignOut}
+                    isLoading={isLoggingOut}>
                     <LogOut className="w-4 h-4 mr-2" />
                     Sign Out
                 </Button>
