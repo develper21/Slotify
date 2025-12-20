@@ -1,17 +1,17 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { useSearchParams, useRouter } from 'next/navigation'
+import { useSearchParams } from 'next/navigation'
 import { Card, CardContent } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { CheckCircle, Calendar, Clock, MapPin, Home } from 'lucide-react'
 import Link from 'next/link'
 import { getBookingDetails } from '@/lib/actions/bookings'
-import { formatDate, formatTime } from '@/lib/utils'
+import { formatDate } from '@/lib/utils'
+import { format } from 'date-fns'
 
 export default function ConfirmationPage({ params }: { params: { id: string } }) {
     const searchParams = useSearchParams()
-    const router = useRouter()
     const bookingId = searchParams.get('booking')
     const [bookingDetails, setBookingDetails] = useState<any>(null)
     const [isLoading, setIsLoading] = useState(true)
@@ -67,7 +67,7 @@ export default function ConfirmationPage({ params }: { params: { id: string } })
                                 <div>
                                     <p className="text-sm font-medium text-neutral-400">Date</p>
                                     <p className="text-lg font-semibold text-white">
-                                        {formatDate(bookingDetails.time_slots?.slot_date) || 'Date pending'}
+                                        {formatDate(bookingDetails.start_time)}
                                     </p>
                                 </div>
                             </div>
@@ -77,9 +77,7 @@ export default function ConfirmationPage({ params }: { params: { id: string } })
                                 <div>
                                     <p className="text-sm font-medium text-neutral-400">Time</p>
                                     <p className="text-lg font-semibold text-white">
-                                        {bookingDetails.time_slots?.start_time && bookingDetails.time_slots?.end_time
-                                            ? `${formatTime(bookingDetails.time_slots.start_time)} - ${formatTime(bookingDetails.time_slots.end_time)}`
-                                            : 'Time pending'}
+                                        {format(new Date(bookingDetails.start_time), 'hh:mm a')} - {format(new Date(bookingDetails.end_time), 'hh:mm a')}
                                     </p>
                                 </div>
                             </div>
@@ -89,7 +87,7 @@ export default function ConfirmationPage({ params }: { params: { id: string } })
                                 <div>
                                     <p className="text-sm font-medium text-neutral-400">Location</p>
                                     <p className="text-lg font-semibold text-white">
-                                        {bookingDetails.appointments?.location || 'Online'}
+                                        {bookingDetails.appointment?.location_details || 'Online / Online Details Provided'}
                                     </p>
                                 </div>
                             </div>
