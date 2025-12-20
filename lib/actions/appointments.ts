@@ -114,7 +114,7 @@ export async function createBooking(bookingData: {
         .eq('id', bookingData.slotId)
         .single()
 
-    if (!slot || slot.available_capacity < bookingData.capacityCount) {
+    if (!slot || (slot.available_capacity ?? 0) < bookingData.capacityCount) {
         return { error: 'Slot not available' }
     }
 
@@ -125,7 +125,7 @@ export async function createBooking(bookingData: {
             appointment_id: bookingData.appointmentId,
             user_id: bookingData.userId,
             slot_id: bookingData.slotId,
-            capacity_count: bookingData.capacityCount,
+            guest_count: bookingData.capacityCount,
             status: 'pending',
         })
         .select()
@@ -149,7 +149,6 @@ export async function createBooking(bookingData: {
     // Decrement capacity
     await supabase.rpc('decrement_slot_capacity', {
         p_slot_id: bookingData.slotId,
-        p_amount: bookingData.capacityCount,
     })
 
     return { success: true, bookingId: booking.id }
