@@ -43,24 +43,28 @@ export default function RecentBookings({ organizerId }: { organizerId: string })
                 .select('id')
                 .eq('organizer_id', organizerId)
 
-            const appointmentIds = appointments?.map(a => a.id) || []
+            const appointmentIds = appointments?.map((a: { id: string }) => a.id) || []
 
             // Get recent bookings
             const { data } = await supabase
                 .from('bookings')
-                .select(`
-          id,
-          status,
-          created_at,
-          users (full_name, email),
-          appointments (title),
-          time_slots (slot_date, start_time)
-        `)
+                .select(
+                    `id, status, created_at, users (full_name, email), appointments (title), time_slots (slot_date, start_time)`
+                )
                 .in('appointment_id', appointmentIds)
                 .order('created_at', { ascending: false })
                 .limit(10)
 
-            setBookings(data as Booking[] || [])
+            const normalized = (data || []).map((booking: any) => ({
+                id: booking.id,
+                status: booking.status,
+                created_at: booking.created_at,
+                users: booking.users?.[0] ?? booking.users ?? { full_name: '', email: '' },
+                appointments: booking.appointments?.[0] ?? booking.appointments ?? { title: '' },
+                time_slots: booking.time_slots?.[0] ?? booking.time_slots ?? { slot_date: '', start_time: '' },
+            })) as Booking[]
+
+            setBookings(normalized)
         } catch (error) {
             console.error('Error loading recent bookings:', error)
         } finally {
