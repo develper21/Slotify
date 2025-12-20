@@ -8,6 +8,8 @@ import { Building2, CheckCircle, XCircle, Clock } from 'lucide-react'
 import { format } from 'date-fns'
 import { ApprovalActions, DisableButton } from '@/components/admin/OrganizerActions'
 
+export const dynamic = 'force-dynamic'
+
 export default async function AdminOrganizersPage() {
     const supabase = createClient()
 
