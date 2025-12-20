@@ -154,7 +154,7 @@ export default function BookingFormPage({ params }: BookingFormPageProps) {
             case 'single_line':
                 return (
                     <div key={question.id}>
-                        <label className="block text-sm font-medium text-neutral-700 mb-2">
+                        <label className="block text-sm font-medium text-neutral-300 mb-2">
                             {question.question_text}
                             {question.is_mandatory && <span className="text-red-500 ml-1">*</span>}
                         </label>
@@ -162,7 +162,7 @@ export default function BookingFormPage({ params }: BookingFormPageProps) {
                             type="text"
                             value={value}
                             onChange={(e) => handleInputChange(question.id, e.target.value)}
-                            className="w-full px-4 py-3 rounded-lg border border-neutral-300 focus:border-primary-500 focus:ring-2 focus:ring-primary-200 transition-all outline-none"
+                            className="w-full px-4 py-3 rounded-lg border border-neutral-700 bg-mongodb-black text-white focus:border-mongodb-spring focus:ring-1 focus:ring-mongodb-spring transition-all outline-none"
                         />
                         {error && <p className="mt-1 text-sm text-red-500">{error}</p>}
                     </div>
@@ -171,7 +171,7 @@ export default function BookingFormPage({ params }: BookingFormPageProps) {
             case 'multi_line':
                 return (
                     <div key={question.id}>
-                        <label className="block text-sm font-medium text-neutral-700 mb-2">
+                        <label className="block text-sm font-medium text-neutral-300 mb-2">
                             {question.question_text}
                             {question.is_mandatory && <span className="text-red-500 ml-1">*</span>}
                         </label>
@@ -179,7 +179,7 @@ export default function BookingFormPage({ params }: BookingFormPageProps) {
                             value={value}
                             onChange={(e) => handleInputChange(question.id, e.target.value)}
                             rows={4}
-                            className="w-full px-4 py-3 rounded-lg border border-neutral-300 focus:border-primary-500 focus:ring-2 focus:ring-primary-200 transition-all outline-none resize-none"
+                            className="w-full px-4 py-3 rounded-lg border border-neutral-700 bg-mongodb-black text-white focus:border-mongodb-spring focus:ring-1 focus:ring-mongodb-spring transition-all outline-none resize-none"
                         />
                         {error && <p className="mt-1 text-sm text-red-500">{error}</p>}
                     </div>
@@ -188,7 +188,7 @@ export default function BookingFormPage({ params }: BookingFormPageProps) {
             case 'phone':
                 return (
                     <div key={question.id}>
-                        <label className="block text-sm font-medium text-neutral-700 mb-2">
+                        <label className="block text-sm font-medium text-neutral-300 mb-2">
                             {question.question_text}
                             {question.is_mandatory && <span className="text-red-500 ml-1">*</span>}
                         </label>
@@ -196,7 +196,7 @@ export default function BookingFormPage({ params }: BookingFormPageProps) {
                             type="tel"
                             value={value}
                             onChange={(e) => handleInputChange(question.id, e.target.value)}
-                            className="w-full px-4 py-3 rounded-lg border border-neutral-300 focus:border-primary-500 focus:ring-2 focus:ring-primary-200 transition-all outline-none"
+                            className="w-full px-4 py-3 rounded-lg border border-neutral-700 bg-mongodb-black text-white focus:border-mongodb-spring focus:ring-1 focus:ring-mongodb-spring transition-all outline-none"
                         />
                         {error && <p className="mt-1 text-sm text-red-500">{error}</p>}
                     </div>
@@ -205,22 +205,22 @@ export default function BookingFormPage({ params }: BookingFormPageProps) {
             case 'radio':
                 return (
                     <div key={question.id}>
-                        <label className="block text-sm font-medium text-neutral-700 mb-2">
+                        <label className="block text-sm font-medium text-neutral-300 mb-2">
                             {question.question_text}
                             {question.is_mandatory && <span className="text-red-500 ml-1">*</span>}
                         </label>
                         <div className="space-y-2">
                             {question.options?.map((option, index) => (
-                                <label key={index} className="flex items-center gap-3 p-3 rounded-lg border border-neutral-200 hover:bg-neutral-50 cursor-pointer">
+                                <label key={index} className="flex items-center gap-3 p-3 rounded-lg border border-neutral-700 hover:border-neutral-500 bg-mongodb-black hover:bg-neutral-900 cursor-pointer transition-colors">
                                     <input
                                         type="radio"
                                         name={question.id}
                                         value={option}
                                         checked={value === option}
                                         onChange={(e) => handleInputChange(question.id, e.target.value)}
-                                        className="w-4 h-4 text-primary-600"
+                                        className="w-4 h-4 text-mongodb-spring border-neutral-600 bg-neutral-800 focus:ring-mongodb-spring"
                                     />
-                                    <span className="text-neutral-700">{option}</span>
+                                    <span className="text-neutral-300">{option}</span>
                                 </label>
                             ))}
                         </div>
@@ -231,13 +231,13 @@ export default function BookingFormPage({ params }: BookingFormPageProps) {
             case 'checkbox':
                 return (
                     <div key={question.id}>
-                        <label className="block text-sm font-medium text-neutral-700 mb-2">
+                        <label className="block text-sm font-medium text-neutral-300 mb-2">
                             {question.question_text}
                             {question.is_mandatory && <span className="text-red-500 ml-1">*</span>}
                         </label>
                         <div className="space-y-2">
                             {question.options?.map((option, index) => (
-                                <label key={index} className="flex items-center gap-3 p-3 rounded-lg border border-neutral-200 hover:bg-neutral-50 cursor-pointer">
+                                <label key={index} className="flex items-center gap-3 p-3 rounded-lg border border-neutral-700 hover:border-neutral-500 bg-mongodb-black hover:bg-neutral-900 cursor-pointer transition-colors">
                                     <input
                                         type="checkbox"
                                         value={option}
@@ -249,9 +249,9 @@ export default function BookingFormPage({ params }: BookingFormPageProps) {
                                                 : currentValues.filter(v => v !== option)
                                             handleInputChange(question.id, newValues.join(','))
                                         }}
-                                        className="w-4 h-4 text-primary-600 rounded"
+                                        className="w-4 h-4 text-mongodb-spring border-neutral-600 bg-neutral-800 rounded focus:ring-mongodb-spring"
                                     />
-                                    <span className="text-neutral-700">{option}</span>
+                                    <span className="text-neutral-300">{option}</span>
                                 </label>
                             ))}
                         </div>
@@ -265,68 +265,68 @@ export default function BookingFormPage({ params }: BookingFormPageProps) {
     }
 
     return (
-        <div className="min-h-screen bg-neutral-50 py-12">
+        <div className="min-h-screen bg-mongodb-black py-12">
             <div className="container mx-auto px-4 max-w-2xl">
                 {/* Header */}
                 <div className="mb-8">
                     <button
                         onClick={() => router.back()}
-                        className="flex items-center gap-2 text-neutral-600 hover:text-neutral-900 mb-4"
+                        className="flex items-center gap-2 text-neutral-400 hover:text-white mb-4 transition-colors"
                     >
                         <ChevronLeft className="w-5 h-5" />
                         Back
                     </button>
-                    <h1 className="text-3xl font-display font-bold text-neutral-900 mb-2">
+                    <h1 className="text-3xl font-display font-bold text-white mb-2">
                         Booking Information
                     </h1>
-                    <p className="text-neutral-600">Please fill in your details to complete the booking</p>
+                    <p className="text-neutral-400">Please fill in your details to complete the booking</p>
                 </div>
 
                 {/* Form */}
                 <form onSubmit={handleSubmit}>
-                    <Card>
+                    <Card className="bg-mongodb-slate/50 border-neutral-800">
                         <CardHeader>
-                            <CardTitle>Your Information</CardTitle>
+                            <CardTitle className="text-white">Your Information</CardTitle>
                         </CardHeader>
                         <CardContent className="space-y-6">
                             {/* Name */}
                             <div>
-                                <label className="block text-sm font-medium text-neutral-700 mb-2">
+                                <label className="block text-sm font-medium text-neutral-300 mb-2">
                                     Full Name <span className="text-red-500">*</span>
                                 </label>
                                 <input
                                     type="text"
                                     value={answers.name || ''}
                                     onChange={(e) => handleInputChange('name', e.target.value)}
-                                    className="w-full px-4 py-3 rounded-lg border border-neutral-300 focus:border-primary-500 focus:ring-2 focus:ring-primary-200 transition-all outline-none"
+                                    className="w-full px-4 py-3 rounded-lg border border-neutral-700 bg-mongodb-black text-white focus:border-mongodb-spring focus:ring-1 focus:ring-mongodb-spring transition-all outline-none"
                                 />
                                 {errors.name && <p className="mt-1 text-sm text-red-500">{errors.name}</p>}
                             </div>
 
                             {/* Email */}
                             <div>
-                                <label className="block text-sm font-medium text-neutral-700 mb-2">
+                                <label className="block text-sm font-medium text-neutral-300 mb-2">
                                     Email <span className="text-red-500">*</span>
                                 </label>
                                 <input
                                     type="email"
                                     value={answers.email || ''}
                                     onChange={(e) => handleInputChange('email', e.target.value)}
-                                    className="w-full px-4 py-3 rounded-lg border border-neutral-300 focus:border-primary-500 focus:ring-2 focus:ring-primary-200 transition-all outline-none"
+                                    className="w-full px-4 py-3 rounded-lg border border-neutral-700 bg-mongodb-black text-white focus:border-mongodb-spring focus:ring-1 focus:ring-mongodb-spring transition-all outline-none"
                                 />
                                 {errors.email && <p className="mt-1 text-sm text-red-500">{errors.email}</p>}
                             </div>
 
                             {/* Phone */}
                             <div>
-                                <label className="block text-sm font-medium text-neutral-700 mb-2">
+                                <label className="block text-sm font-medium text-neutral-300 mb-2">
                                     Phone Number <span className="text-red-500">*</span>
                                 </label>
                                 <input
                                     type="tel"
                                     value={answers.phone || ''}
                                     onChange={(e) => handleInputChange('phone', e.target.value)}
-                                    className="w-full px-4 py-3 rounded-lg border border-neutral-300 focus:border-primary-500 focus:ring-2 focus:ring-primary-200 transition-all outline-none"
+                                    className="w-full px-4 py-3 rounded-lg border border-neutral-700 bg-mongodb-black text-white focus:border-mongodb-spring focus:ring-1 focus:ring-mongodb-spring transition-all outline-none"
                                 />
                                 {errors.phone && <p className="mt-1 text-sm text-red-500">{errors.phone}</p>}
                             </div>
@@ -334,8 +334,8 @@ export default function BookingFormPage({ params }: BookingFormPageProps) {
                             {/* Dynamic Questions */}
                             {questions.length > 0 && (
                                 <>
-                                    <div className="pt-6 border-t border-neutral-200">
-                                        <h3 className="text-lg font-semibold text-neutral-900 mb-4">
+                                    <div className="pt-6 border-t border-neutral-800">
+                                        <h3 className="text-lg font-semibold text-white mb-4">
                                             Additional Information
                                         </h3>
                                     </div>
@@ -347,10 +347,10 @@ export default function BookingFormPage({ params }: BookingFormPageProps) {
 
                     {/* Submit Button */}
                     <div className="mt-6 flex justify-end gap-4">
-                        <Button type="button" variant="ghost" onClick={() => router.back()}>
+                        <Button type="button" variant="ghost" onClick={() => router.back()} className="text-neutral-400 hover:text-white">
                             Cancel
                         </Button>
-                        <Button type="submit" size="lg" isLoading={isSubmitting}>
+                        <Button type="submit" size="lg" isLoading={isSubmitting} variant="primary">
                             Complete Booking
                         </Button>
                     </div>
