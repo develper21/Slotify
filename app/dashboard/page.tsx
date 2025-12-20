@@ -120,6 +120,17 @@ export default async function OrganizerDashboard({
         redirect('/login')
     }
 
+    // Check if user has organizer role
+    const { data: userData }: { data: { role?: string } | null } = await supabase
+        .from('users')
+        .select('role')
+        .eq('id', user.id)
+        .single()
+
+    if (userData?.role !== 'organizer') {
+        redirect('/')
+    }
+
     const organizerId = await getOrganizerId(user.id)
 
     if (!organizerId) {
