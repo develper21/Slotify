@@ -12,8 +12,10 @@ export default function BasicInfoTab({ appointment }: { appointment: any }) {
     const [formData, setFormData] = useState({
         title: appointment.title || '',
         description: appointment.description || '',
-        duration: appointment.duration || '01:00:00',
-        location: appointment.location || 'Online',
+        duration: appointment.duration || 60,
+        location_details: appointment.location_details || 'Online',
+        price: appointment.price || 0,
+        image_url: appointment.image_url || ''
     })
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -22,77 +24,101 @@ export default function BasicInfoTab({ appointment }: { appointment: any }) {
 
         try {
             const result = await updateAppointment(appointment.id, formData)
-            if (result.error) {
-                toast.error(result.error)
+            if (!result.success) {
+                toast.error(result.message || 'Update failed')
             } else {
-                toast.success('Appointment updated successfully!')
+                toast.success('Service details updated!')
             }
         } catch (error) {
-            toast.error('Failed to update appointment')
+            toast.error('Unexpected error occurred')
         } finally {
             setIsSubmitting(false)
         }
     }
 
     return (
-        <form onSubmit={handleSubmit}>
-            <Card className="bg-mongodb-slate/50 border-neutral-800">
-                <CardHeader>
-                    <CardTitle className="text-white">Basic Information</CardTitle>
+        <form onSubmit={handleSubmit} className="max-w-3xl">
+            <Card className="bg-mongodb-slate/30 border-neutral-800 shadow-xl relative overflow-hidden group">
+                <CardHeader className="border-b border-neutral-800 mb-6">
+                    <CardTitle className="text-white text-xl">Core Service Details</CardTitle>
                 </CardHeader>
-                <CardContent className="space-y-6">
+                <CardContent className="space-y-8">
                     <Input
-                        label="Appointment Title"
+                        label="Plan Title"
                         value={formData.title}
                         onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
                         required
-                        className="bg-mongodb-black border-neutral-700 text-white placeholder:text-neutral-500 focus:border-mongodb-spring"
-                        labelClassName="text-neutral-400"
+                        className="bg-mongodb-black border-neutral-700 text-white placeholder:text-neutral-500 focus:border-mongodb-spring h-12"
+                        labelClassName="text-neutral-400 font-bold uppercase text-[10px] tracking-widest px-1 mb-2"
                     />
 
                     <div>
-                        <label className="block text-sm font-medium text-neutral-400 mb-2">
-                            Description
+                        <label className="block text-[10px] font-bold text-neutral-400 uppercase tracking-widest px-1 mb-2">
+                            Public Description
                         </label>
                         <textarea
                             value={formData.description}
                             onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
                             rows={4}
-                            className="w-full px-4 py-3 rounded-lg border border-neutral-700 bg-mongodb-black text-white focus:border-mongodb-spring focus:ring-1 focus:ring-mongodb-spring transition-all outline-none resize-none placeholder:text-neutral-500"
+                            className="w-full px-4 py-3 rounded-xl border border-neutral-700 bg-mongodb-black text-white focus:border-mongodb-spring focus:ring-4 focus:ring-mongodb-spring/10 transition-all outline-none resize-none placeholder:text-neutral-500 min-h-[120px]"
+                            placeholder="Tell your customers what to expect..."
                         />
                     </div>
 
-                    <div>
-                        <label className="block text-sm font-medium text-neutral-400 mb-2">
-                            Duration
-                        </label>
-                        <select
-                            value={formData.duration}
-                            onChange={(e) => setFormData(prev => ({ ...prev, duration: e.target.value }))}
-                            className="w-full px-4 py-3 rounded-lg border border-neutral-700 bg-mongodb-black text-white focus:border-mongodb-spring focus:ring-1 focus:ring-mongodb-spring transition-all outline-none"
-                        >
-                            <option value="00:15:00">15 minutes</option>
-                            <option value="00:30:00">30 minutes</option>
-                            <option value="00:45:00">45 minutes</option>
-                            <option value="01:00:00">1 hour</option>
-                            <option value="01:30:00">1.5 hours</option>
-                            <option value="02:00:00">2 hours</option>
-                            <option value="03:00:00">3 hours</option>
-                            <option value="04:00:00">4 hours</option>
-                        </select>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label className="block text-[10px] font-bold text-neutral-400 uppercase tracking-widest px-1 mb-2">
+                                Session Duration
+                            </label>
+                            <select
+                                value={formData.duration}
+                                onChange={(e) => setFormData(prev => ({ ...prev, duration: parseInt(e.target.value) }))}
+                                className="w-full px-4 py-3 rounded-xl border border-neutral-700 bg-mongodb-black text-white focus:border-mongodb-spring focus:ring-4 focus:ring-mongodb-spring/10 transition-all outline-none h-12"
+                            >
+                                <option value={15}>15 Minutes</option>
+                                <option value={30}>30 Minutes</option>
+                                <option value={45}>45 Minutes</option>
+                                <option value={60}>1 Hour</option>
+                                <option value={90}>1.5 Hours</option>
+                                <option value={120}>2 Hours</option>
+                            </select>
+                        </div>
+
+                        <Input
+                            label="Price Tag ($)"
+                            type="number"
+                            value={formData.price}
+                            onChange={(e) => setFormData(prev => ({ ...prev, price: parseFloat(e.target.value) }))}
+                            className="bg-mongodb-black border-neutral-700 text-white placeholder:text-neutral-500 focus:border-mongodb-spring h-12"
+                            labelClassName="text-neutral-400 font-bold uppercase text-[10px] tracking-widest px-1 mb-2"
+                        />
                     </div>
 
                     <Input
-                        label="Location"
-                        value={formData.location}
-                        onChange={(e) => setFormData(prev => ({ ...prev, location: e.target.value }))}
-                        className="bg-mongodb-black border-neutral-700 text-white placeholder:text-neutral-500 focus:border-mongodb-spring"
-                        labelClassName="text-neutral-400"
+                        label="Location / Meeting Link"
+                        value={formData.location_details}
+                        onChange={(e) => setFormData(prev => ({ ...prev, location_details: e.target.value }))}
+                        className="bg-mongodb-black border-neutral-700 text-white placeholder:text-neutral-500 focus:border-mongodb-spring h-12"
+                        labelClassName="text-neutral-400 font-bold uppercase text-[10px] tracking-widest px-1 mb-2"
                     />
 
-                    <div className="flex justify-end">
-                        <Button type="submit" isLoading={isSubmitting} className="bg-mongodb-spring text-mongodb-black hover:bg-mongodb-spring/90">
-                            Save Changes
+                    <Input
+                        label="Thumbnail Image URL"
+                        value={formData.image_url}
+                        onChange={(e) => setFormData(prev => ({ ...prev, image_url: e.target.value }))}
+                        placeholder="https://images.unsplash.com/..."
+                        className="bg-mongodb-black border-neutral-700 text-white placeholder:text-neutral-500 focus:border-mongodb-spring h-12"
+                        labelClassName="text-neutral-400 font-bold uppercase text-[10px] tracking-widest px-1 mb-2"
+                    />
+
+                    <div className="flex justify-end pt-4 border-t border-neutral-800">
+                        <Button
+                            type="submit"
+                            isLoading={isSubmitting}
+                            variant="primary"
+                            className="rounded-xl px-12 h-12 shadow-lg shadow-mongodb-spring/10 font-bold"
+                        >
+                            Update Service
                         </Button>
                     </div>
                 </CardContent>

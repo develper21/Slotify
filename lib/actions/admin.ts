@@ -3,12 +3,14 @@
 import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
 
-// Get all users
+/**
+ * GET ALL USERS (PROFILES)
+ */
 export async function getAllUsers() {
     const supabase = createClient()
 
     const { data, error } = await supabase
-        .from('users')
+        .from('profiles')
         .select('*')
         .order('created_at', { ascending: false })
 
@@ -20,50 +22,35 @@ export async function getAllUsers() {
     return data || []
 }
 
-// Update user status
-export async function updateUserStatus(userId: string, status: 'active' | 'inactive' | 'banned') {
-    const supabase = createClient()
-
-    const { error } = await supabase
-        .from('users')
-        .update({ status })
-        .eq('id', userId)
-
-    if (error) {
-        return { error: error.message }
-    }
-
-    revalidatePath('/admin')
-    return { success: true }
-}
-
-// Update user role
+/**
+ * UPDATE USER ROLE
+ */
 export async function updateUserRole(userId: string, role: 'customer' | 'organizer' | 'admin') {
     const supabase = createClient()
 
     const { error } = await supabase
-        .from('users')
+        .from('profiles')
         .update({ role })
         .eq('id', userId)
 
     if (error) {
-        return { error: error.message }
+        return { success: false, error: error.message }
     }
 
     revalidatePath('/admin')
     return { success: true }
 }
 
-// Get all organizers
+/**
+ * GET ALL ORGANIZERS (PROFILES with role 'organizer')
+ */
 export async function getAllOrganizers() {
     const supabase = createClient()
 
     const { data, error } = await supabase
-        .from('organizers')
-        .select(`
-      *,
-      users (full_name, email, status)
-    `)
+        .from('profiles')
+        .select('*')
+        .eq('role', 'organizer')
         .order('created_at', { ascending: false })
 
     if (error) {
@@ -74,83 +61,99 @@ export async function getAllOrganizers() {
     return data || []
 }
 
-// Approve organizer
-export async function approveOrganizer(organizerId: string) {
+/**
+ * UPDATE USER STATUS
+ */
+export async function updateUserStatus(userId: string, status: 'active' | 'suspended') {
     const supabase = createClient()
 
     const { error } = await supabase
-        .from('organizers')
-        .update({ approved: true })
-        .eq('id', organizerId)
+        .from('profiles')
+        .update({ status })
+        .eq('id', userId)
 
     if (error) {
-        return { error: error.message }
+        return { success: false, error: error.message }
     }
 
-    revalidatePath('/admin')
+    revalidatePath('/dashboard/admin')
     return { success: true }
 }
 
-// Reject/disable organizer
-export async function disableOrganizer(organizerId: string) {
+/**
+ * APPROVE ORGANIZER
+ */
+export async function approveOrganizer(userId: string) {
     const supabase = createClient()
 
     const { error } = await supabase
-        .from('organizers')
-        .update({ approved: false })
-        .eq('id', organizerId)
+        .from('profiles')
+        .update({
+            role: 'organizer',
+            status: 'active'
+        })
+        .eq('id', userId)
 
     if (error) {
-        return { error: error.message }
+        return { success: false, error: error.message }
     }
 
-    revalidatePath('/admin')
+    revalidatePath('/dashboard/admin')
     return { success: true }
 }
 
-// Get system statistics
+/**
+ * DISABLE ORGANIZER
+ */
+export async function disableOrganizer(userId: string) {
+    const supabase = createClient()
+
+    const { error } = await supabase
+        .from('profiles')
+        .update({ status: 'suspended' })
+        .eq('id', userId)
+
+    if (error) {
+        return { success: false, error: error.message }
+    }
+
+    revalidatePath('/dashboard/admin')
+    return { success: true }
+}
+
+/**
+ * GET SYSTEM STATISTICS
+ */
 export async function getSystemStats() {
     const supabase = createClient()
 
-    // Total users
+    // Total profiles
     const { count: totalUsers } = await supabase
-        .from('users')
+        .from('profiles')
         .select('*', { count: 'exact', head: true })
-
-    // Active users
-    const { count: activeUsers } = await supabase
-        .from('users')
-        .select('*', { count: 'exact', head: true })
-        .eq('status', 'active')
 
     // Total organizers
     const { count: totalOrganizers } = await supabase
-        .from('organizers')
+        .from('profiles')
         .select('*', { count: 'exact', head: true })
-
-    // Approved organizers
-    const { count: approvedOrganizers } = await supabase
-        .from('organizers')
-        .select('*', { count: 'exact', head: true })
-        .eq('approved', true)
+        .eq('role', 'organizer')
 
     // Total appointments
     const { count: totalAppointments } = await supabase
         .from('appointments')
         .select('*', { count: 'exact', head: true })
 
-    // Published appointments
-    const { count: publishedAppointments } = await supabase
-        .from('appointments')
-        .select('*', { count: 'exact', head: true })
-        .eq('published', true)
-
     // Total bookings
     const { count: totalBookings } = await supabase
         .from('bookings')
         .select('*', { count: 'exact', head: true })
 
-    // Confirmed bookings
+    // Extended Stats for Mockup
+    const { count: activeUsers } = await supabase
+        .from('profiles')
+        .select('*', { count: 'exact', head: true })
+        .eq('status', 'active')
+
     const { count: confirmedBookings } = await supabase
         .from('bookings')
         .select('*', { count: 'exact', head: true })
@@ -158,12 +161,12 @@ export async function getSystemStats() {
 
     return {
         totalUsers: totalUsers || 0,
-        activeUsers: activeUsers || 0,
         totalOrganizers: totalOrganizers || 0,
-        approvedOrganizers: approvedOrganizers || 0,
         totalAppointments: totalAppointments || 0,
-        publishedAppointments: publishedAppointments || 0,
         totalBookings: totalBookings || 0,
+        activeUsers: activeUsers || 0,
+        approvedOrganizers: totalOrganizers || 0,
+        publishedAppointments: totalAppointments || 0,
         confirmedBookings: confirmedBookings || 0,
     }
 }

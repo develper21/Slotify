@@ -3,35 +3,22 @@
 import { useState } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
-import { Plus, GripVertical, Trash2 } from 'lucide-react'
+import { Plus, GripVertical, Trash2, HelpCircle, CheckCircle2 } from 'lucide-react'
 import { toast } from 'sonner'
-import { upsertBookingQuestions } from '@/lib/actions/organizer'
+import { updateAppointment } from '@/lib/actions/organizer'
 
 export default function QuestionsTab({ appointment }: { appointment: any }) {
     const [isSubmitting, setIsSubmitting] = useState(false)
     const [questions, setQuestions] = useState(() => {
-        // Initialize with default system questions that are always there (visually)
+        // Default system questions
         const systemQuestions = [
-            { id: '1', label: 'Name', type: 'text', required: true, system: true },
-            { id: '2', label: 'Email', type: 'email', required: true, system: true },
-            { id: '3', label: 'Phone Number', type: 'phone', required: true, system: true },
+            { id: 'sys-1', label: 'Full Name', type: 'text', required: true, system: true },
+            { id: 'sys-2', label: 'Email Address', type: 'email', required: true, system: true },
         ]
 
-        // Map existing booking_questions
-        const customQuestions = (appointment.booking_questions || []).map((q: any) => ({
-            id: q.id,
-            label: q.question_text,
-            type: q.question_type === 'single_line' ? 'text' :
-                q.question_type === 'multi_line' ? 'textarea' :
-                    q.question_type, // 'phone', 'radio', 'checkbox'
-            required: q.is_mandatory,
-            system: false,
-            options: q.options // preserve options if any
-        }))
-
-        // Sort by order_index if available, or just push to end
-        // For now, system first, then custom
-        return [...systemQuestions, ...customQuestions]
+        // Custom questions from JSONB
+        const existing = appointment.questions || []
+        return [...systemQuestions, ...existing]
     })
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -39,25 +26,17 @@ export default function QuestionsTab({ appointment }: { appointment: any }) {
         setIsSubmitting(true)
 
         try {
-            // Filter out system questions, they aren't stored in booking_questions
-            const questionsToSave = questions.filter(q => !q.system).map(q => ({
-                question_text: q.label,
-                question_type: q.type === 'text' ? 'single_line' :
-                    q.type === 'textarea' ? 'multi_line' :
-                        q.type,
-                is_mandatory: q.required,
-                options: q.options || null
-            }))
+            // Only save custom (non-system) questions to JSONB
+            const customQuestions = questions.filter(q => !q.system)
 
-            const result = await upsertBookingQuestions(appointment.id, questionsToSave)
-
-            if (result.error) {
-                toast.error(result.error)
+            const result = await updateAppointment(appointment.id, { questions: customQuestions })
+            if (!result.success) {
+                toast.error(result.message || 'Saving failed')
             } else {
-                toast.success('Questions updated successfully')
+                toast.success('Booking form updated!')
             }
         } catch (error) {
-            toast.error('Failed to update questions')
+            toast.error('Unexpected error')
         } finally {
             setIsSubmitting(false)
         }
@@ -67,8 +46,8 @@ export default function QuestionsTab({ appointment }: { appointment: any }) {
         setQuestions(prev => [
             ...prev,
             {
-                id: `temp-${Date.now()}`,
-                label: 'New Question',
+                id: `q-${Date.now()}`,
+                label: 'Untitled Question',
                 type: 'text',
                 required: false,
                 system: false
@@ -76,114 +55,125 @@ export default function QuestionsTab({ appointment }: { appointment: any }) {
         ])
     }
 
-    const updateQuestion = (index: number, field: string, value: any) => {
-        const newQuestions = [...questions]
-        newQuestions[index] = { ...newQuestions[index], [field]: value }
-        setQuestions(newQuestions)
+    const updateQuestion = (id: string, field: string, value: any) => {
+        setQuestions(prev => prev.map(q => q.id === id ? { ...q, [field]: value } : q))
     }
 
-    const removeQuestion = (index: number) => {
-        const newQuestions = [...questions]
-        if (newQuestions[index].system) return
-        newQuestions.splice(index, 1)
-        setQuestions(newQuestions)
+    const removeQuestion = (id: string) => {
+        setQuestions(prev => prev.filter(q => q.id !== id || q.system))
     }
 
     return (
-        <form onSubmit={handleSubmit}>
-            <div className="space-y-6">
-                <Card className="bg-mongodb-slate/50 border-neutral-800">
-                    <CardHeader className="flex flex-row items-center justify-between">
-                        <CardTitle className="text-white">Booking Questions</CardTitle>
-                        <Button
-                            type="button"
-                            variant="secondary"
-                            onClick={addQuestion}
-                            className="bg-neutral-800 text-white hover:bg-neutral-700"
-                        >
-                            <Plus className="w-4 h-4 mr-2" />
-                            Add Question
-                        </Button>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                        {questions.map((question, index) => (
-                            <div key={question.id} className="flex flex-col sm:flex-row sm:items-center gap-4 p-4 bg-mongodb-black rounded-lg border border-neutral-700 group">
-                                <GripVertical className="hidden sm:block w-5 h-5 text-neutral-600 cursor-move hover:text-white" />
+        <form onSubmit={handleSubmit} className="max-w-4xl space-y-6">
+            <Card className="bg-mongodb-slate/30 border-neutral-800 shadow-2xl backdrop-blur-sm overflow-hidden">
+                <CardHeader className="bg-mongodb-black/40 border-b border-neutral-800 p-6 flex flex-row items-center justify-between">
+                    <div>
+                        <CardTitle className="text-white text-xl flex items-center gap-2">
+                            <HelpCircle className="w-5 h-5 text-mongodb-spring" />
+                            Booking Form Designer
+                        </CardTitle>
+                        <p className="text-neutral-500 text-sm mt-1">Add custom fields you want customers to fill when booking.</p>
+                    </div>
+                    <Button
+                        type="button"
+                        onClick={addQuestion}
+                        variant="primary"
+                        className="rounded-xl h-11 px-6 font-bold shadow-mongodb-spring/10 shadow-lg text-mongodb-black"
+                    >
+                        <Plus className="w-4 h-4 mr-2" />
+                        Add Field
+                    </Button>
+                </CardHeader>
+                <CardContent className="p-6 space-y-4">
+                    {questions.map((question, index) => (
+                        <div key={question.id} className={`group flex flex-col md:flex-row md:items-center gap-4 p-5 rounded-2xl border transition-all ${question.system ? 'bg-mongodb-black/20 border-neutral-800/50 opacity-80' : 'bg-mongodb-black/60 border-neutral-700 hover:border-mongodb-spring/40'}`}>
+                            <div className="flex items-center gap-3 flex-1">
+                                {!question.system && <GripVertical className="w-5 h-5 text-neutral-700 group-hover:text-neutral-500 cursor-grab" />}
 
-                                <div className="flex-1 space-y-2 sm:space-y-0 sm:flex sm:items-center sm:gap-4">
-                                    {/* Question Label Input */}
-                                    <div className="flex-1">
-                                        {question.system ? (
-                                            <p className="font-medium text-white flex items-center gap-2">
-                                                {question.label}
-                                                <span className="text-xs text-neutral-500 bg-neutral-800 px-2 py-0.5 rounded">System</span>
-                                            </p>
-                                        ) : (
+                                <div className="flex-1">
+                                    {question.system ? (
+                                        <div className="flex flex-col">
+                                            <span className="text-xs font-black uppercase tracking-widest text-neutral-600 mb-1">Required Core Field</span>
+                                            <span className="text-white font-bold">{question.label}</span>
+                                        </div>
+                                    ) : (
+                                        <div className="space-y-1">
+                                            <span className="text-[10px] font-black uppercase tracking-widest text-mongodb-spring px-1">Custom Field</span>
                                             <input
                                                 type="text"
                                                 value={question.label}
-                                                onChange={(e) => updateQuestion(index, 'label', e.target.value)}
-                                                className="w-full bg-transparent border-b border-neutral-700 focus:border-mongodb-spring outline-none text-white py-1 transition-colors"
-                                                placeholder="Question Text"
+                                                onChange={(e) => updateQuestion(question.id, 'label', e.target.value)}
+                                                className="w-full bg-transparent border-none text-white font-bold text-lg focus:ring-0 p-0 placeholder:text-neutral-600"
+                                                placeholder="Enter question here..."
                                             />
-                                        )}
-                                    </div>
-
-                                    {/* Type Select */}
-                                    <div className="w-full sm:w-32">
-                                        {question.system ? (
-                                            <p className="text-sm text-neutral-500 capitalize">{question.type}</p>
-                                        ) : (
-                                            <select
-                                                value={question.type}
-                                                onChange={(e) => updateQuestion(index, 'type', e.target.value)}
-                                                className="w-full bg-neutral-900 border border-neutral-700 rounded px-2 py-1 text-sm text-white focus:border-mongodb-spring outline-none"
-                                            >
-                                                <option value="text">Short Text</option>
-                                                <option value="textarea">Long Text</option>
-                                                <option value="phone">Phone</option>
-                                                <option value="checkbox">Checkbox</option>
-                                                <option value="radio">Radio</option>
-                                            </select>
-                                        )}
-                                    </div>
-                                </div>
-
-                                <div className="flex items-center gap-4 mt-2 sm:mt-0">
-                                    <label className="flex items-center gap-2 text-sm text-neutral-400">
-                                        <input
-                                            type="checkbox"
-                                            checked={question.required}
-                                            disabled={question.system}
-                                            onChange={() => updateQuestion(index, 'required', !question.required)}
-                                            className="rounded border-neutral-600 bg-neutral-800 text-mongodb-spring focus:ring-mongodb-spring"
-                                        />
-                                        Required
-                                    </label>
-
-                                    {!question.system && (
-                                        <Button
-                                            type="button"
-                                            variant="ghost"
-                                            size="sm"
-                                            onClick={() => removeQuestion(index)}
-                                            className="text-neutral-500 hover:text-red-500 hover:bg-red-500/10"
-                                        >
-                                            <Trash2 className="w-4 h-4" />
-                                        </Button>
+                                        </div>
                                     )}
                                 </div>
                             </div>
-                        ))}
-                    </CardContent>
-                </Card>
 
-                <div className="flex justify-end">
-                    <Button type="submit" isLoading={isSubmitting} className="bg-mongodb-spring text-mongodb-black hover:bg-mongodb-spring/90">
-                        Save Questions
-                    </Button>
-                </div>
-            </div>
+                            <div className="flex items-center gap-4 bg-mongodb-black/40 p-2 rounded-xl border border-neutral-800">
+                                {/* Type Select */}
+                                {!question.system && (
+                                    <select
+                                        value={question.type}
+                                        onChange={(e) => updateQuestion(question.id, 'type', e.target.value)}
+                                        className="bg-transparent text-neutral-400 text-xs font-bold uppercase tracking-wider outline-none border-none py-1 px-2 focus:text-white"
+                                    >
+                                        <option value="text">Short Answer</option>
+                                        <option value="textarea">Paragraph</option>
+                                        <option value="phone">Phone Number</option>
+                                        <option value="checkbox">Multi-Check</option>
+                                    </select>
+                                )}
+
+                                {question.system && (
+                                    <span className="text-neutral-600 text-xs font-bold uppercase tracking-widest px-4">Standard</span>
+                                )}
+
+                                <div className="w-px h-4 bg-neutral-800" />
+
+                                <label className="flex items-center gap-2 cursor-pointer group/check">
+                                    <input
+                                        type="checkbox"
+                                        checked={question.required}
+                                        disabled={question.system}
+                                        onChange={() => updateQuestion(question.id, 'required', !question.required)}
+                                        className="sr-only"
+                                    />
+                                    <div className={`w-4 h-4 rounded border flex items-center justify-center transition-colors ${question.required ? 'bg-mongodb-spring border-mongodb-spring' : 'border-neutral-600 group-hover/check:border-neutral-400'}`}>
+                                        {question.required && <CheckCircle2 className="w-3 h-3 text-mongodb-black" />}
+                                    </div>
+                                    <span className={`text-[10px] font-black uppercase tracking-widest ${question.required ? 'text-white' : 'text-neutral-600'}`}>Mandatory</span>
+                                </label>
+
+                                {!question.system && (
+                                    <>
+                                        <div className="w-px h-4 bg-neutral-800" />
+                                        <button
+                                            type="button"
+                                            onClick={() => removeQuestion(question.id)}
+                                            className="text-neutral-600 hover:text-red-500 transition-colors px-2"
+                                        >
+                                            <Trash2 className="w-4 h-4" />
+                                        </button>
+                                    </>
+                                )}
+                            </div>
+                        </div>
+                    ))}
+
+                    <div className="flex justify-end pt-6">
+                        <Button
+                            type="submit"
+                            isLoading={isSubmitting}
+                            variant="primary"
+                            className="rounded-xl px-12 h-12 shadow-lg shadow-mongodb-spring/10 font-black h-14"
+                        >
+                            Save Booking Form
+                        </Button>
+                    </div>
+                </CardContent>
+            </Card>
         </form>
     )
 }

@@ -9,25 +9,31 @@
     /* MongoDB Deep Forest Palette */
     --primary-50: 144 100% 97%;
     --primary-100: 144 96% 94%;
-    --primary-500: 145 100% 47%; /* #00ED64 - Spring Green */
-    --primary-600: 161 100% 20%; /* #00684A - Forest Green */
+    --primary-500: 145 100% 47%;
+    /* #00ED64 - Spring Green */
+    --primary-600: 161 100% 20%;
+    /* #00684A - Forest Green */
     --primary-700: 161 100% 15%;
-    
+
     /* Accent - Spring Green */
     --accent-500: 145 100% 47%;
     --accent-600: 161 100% 20%;
-    
+
     /* Neutral - MongoDB Dark Slate */
-    --neutral-50: 198 100% 8%;   /* #001E2B - Black/Dark Navy */
-    --neutral-100: 201 32% 16%;  /* #1C2B36 - Slate */
-    --neutral-200: 200 18% 29%;  /* #3D4F58 - Gray */
-    --neutral-900: 193 11% 92%;  /* #E8EDEB - Light */
-    
+    --neutral-50: 198 100% 8%;
+    /* #001E2B - Black/Dark Navy */
+    --neutral-100: 201 32% 16%;
+    /* #1C2B36 - Slate */
+    --neutral-200: 200 18% 29%;
+    /* #3D4F58 - Gray */
+    --neutral-900: 193 11% 92%;
+    /* #E8EDEB - Light */
+
     /* Shadows */
-    --shadow-sm: 0 2px 8px rgba(0,30,43,0.1);
-    --shadow-md: 0 4px 16px rgba(0,30,43,0.2);
-    --shadow-lg: 0 8px 32px rgba(0,30,43,0.3);
-    
+    --shadow-sm: 0 2px 8px rgba(0, 30, 43, 0.1);
+    --shadow-md: 0 4px 16px rgba(0, 30, 43, 0.2);
+    --shadow-lg: 0 8px 32px rgba(0, 30, 43, 0.3);
+
     /* Transitions */
     --transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
     --transition-base: 250ms cubic-bezier(0.4, 0, 0.2, 1);
@@ -42,12 +48,18 @@
     @apply bg-mongodb-black text-mongodb-light font-sans antialiased selection:bg-mongodb-spring selection:text-mongodb-black;
   }
 
-  h1, h2, h3, h4, h5, h6 {
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
     @apply font-display font-bold tracking-tight text-white;
   }
 }
 
 @layer components {
+
   /* MongoDB Style Card */
   .card {
     @apply bg-mongodb-slate border border-neutral-700/50 rounded-mongodb p-6 transition-all duration-300;
@@ -69,36 +81,28 @@
 
   /* Button Base */
   .btn {
-    @apply px-5 py-2.5 rounded-mongodb font-semibold transition-all duration-200 
-           focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-mongodb-black;
+    @apply px-5 py-2.5 rounded-mongodb font-semibold transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-mongodb-black;
   }
 
   .btn-primary {
-    @apply bg-mongodb-spring text-mongodb-black hover:bg-white hover:scale-[1.02]
-           active:scale-95 focus:ring-mongodb-spring;
+    @apply bg-mongodb-spring text-mongodb-black hover:bg-white hover:scale-[1.02] active:scale-95 focus:ring-mongodb-spring;
   }
 
   .btn-secondary {
-    @apply bg-mongodb-forest text-white border border-mongodb-spring/20
-           hover:bg-mongodb-forest/80 focus:ring-mongodb-forest;
+    @apply bg-mongodb-forest text-white border border-mongodb-spring/20 hover:bg-mongodb-forest/80 focus:ring-mongodb-forest;
   }
 
   .btn-outline {
-    @apply bg-transparent text-mongodb-spring border border-mongodb-spring/30
-           hover:bg-mongodb-spring/10 focus:ring-mongodb-spring;
+    @apply bg-transparent text-mongodb-spring border border-mongodb-spring/30 hover:bg-mongodb-spring/10 focus:ring-mongodb-spring;
   }
 
   .btn-ghost {
-    @apply bg-transparent text-neutral-400 hover:text-white hover:bg-white/5
-           focus:ring-white/20;
+    @apply bg-transparent text-neutral-400 hover:text-white hover:bg-white/5 focus:ring-white/20;
   }
 
   /* Input Base */
   .input {
-    @apply w-full px-4 py-2.5 bg-mongodb-black/50 rounded-mongodb border border-neutral-700/50
-           text-white placeholder:text-neutral-500
-           focus:border-mongodb-spring focus:ring-1 focus:ring-mongodb-spring/50
-           transition-all duration-200 outline-none;
+    @apply w-full px-4 py-2.5 bg-mongodb-black/50 rounded-mongodb border border-neutral-700/50 text-white placeholder:text-neutral-500 focus:border-mongodb-spring focus:ring-1 focus:ring-mongodb-spring/50 transition-all duration-200 outline-none;
   }
 
   /* Badge */
@@ -112,12 +116,12 @@
 
   /* Loading Spinner */
   .spinner {
-    @apply animate-spin rounded-full border-2 border-white/10 
-           border-t-mongodb-spring;
+    @apply animate-spin rounded-full border-2 border-white/10 border-t-mongodb-spring;
   }
 }
 
 @layer utilities {
+
   /* Custom Scrollbar */
   .scrollbar-thin::-webkit-scrollbar {
     width: 6px;
@@ -144,20 +148,90 @@
   .animate-scale-in {
     animation: scaleIn 0.3s ease-out;
   }
+
+  .animate-float {
+    animation: float 6s ease-in-out infinite;
+  }
+
+  .animate-pulse-glow {
+    animation: pulseGlow 3s ease-in-out infinite;
+  }
+
+  .bg-grid-pattern {
+    background-image: radial-gradient(circle, #ffffff05 1px, transparent 1px);
+    background-size: 24px 24px;
+  }
 }
 
 /* Keyframes */
 @keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
 }
 
 @keyframes slideUp {
-  from { transform: translateY(12px); opacity: 0; }
-  to { transform: translateY(0); opacity: 1; }
+  from {
+    transform: translateY(12px);
+    opacity: 0;
+  }
+
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
 }
 
 @keyframes scaleIn {
-  from { transform: scale(0.98); opacity: 0; }
-  to { transform: scale(1); opacity: 1; }
+  from {
+    transform: scale(0.98);
+    opacity: 0;
+  }
+
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes float {
+  0% {
+    transform: translateY(0px);
+  }
+
+  50% {
+    transform: translateY(-10px);
+  }
+
+  100% {
+    transform: translateY(0px);
+  }
+}
+
+@keyframes pulseGlow {
+
+  0%,
+  100% {
+    opacity: 0.3;
+    filter: blur(40px);
+  }
+
+  50% {
+    opacity: 0.6;
+    filter: blur(60px);
+  }
+}
+
+@keyframes progressFast {
+  0% {
+    width: 0%;
+  }
+
+  100% {
+    width: 100%;
+  }
 }

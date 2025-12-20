@@ -1,7 +1,7 @@
 import { Suspense } from 'react'
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
-import { getOrganizerId, getOrganizerAppointments, getOrganizerStats } from '@/lib/actions/organizer'
+import { getOrganizerAppointments, getOrganizerStats } from '@/lib/actions/organizer'
 import { getSystemStats } from '@/lib/actions/admin'
 import { getCustomerBookings } from '@/lib/actions/bookings'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/Card'
@@ -18,9 +18,9 @@ async function OrganizerStats({ organizerId }: { organizerId: string }) {
     const stats = await getOrganizerStats(organizerId)
     const statCards = [
         { label: 'Total Appointments', value: stats.totalAppointments, icon: Calendar, color: 'text-mongodb-spring', bg: 'bg-mongodb-spring/10' },
-        { label: 'Published Slots', value: stats.publishedAppointments, icon: TrendingUp, color: 'text-blue-400', bg: 'bg-blue-400/10' },
+        { label: 'Active Slots', value: stats.publishedAppointments, icon: TrendingUp, color: 'text-blue-400', bg: 'bg-blue-400/10' },
         { label: 'Total Bookings', value: stats.totalBookings, icon: Users, color: 'text-purple-400', bg: 'bg-purple-400/10' },
-        { label: 'Upcoming', value: stats.upcomingBookings, icon: Clock, color: 'text-yellow-400', bg: 'bg-yellow-400/10' },
+        { label: 'Upcoming sessions', value: stats.upcomingBookings, icon: Clock, color: 'text-yellow-400', bg: 'bg-yellow-400/10' },
     ]
 
     return (
@@ -35,7 +35,7 @@ async function OrganizerStats({ organizerId }: { organizerId: string }) {
                             </div>
                             <span className="text-[10px] font-bold text-neutral-500 uppercase tracking-widest flex items-center gap-1">
                                 <ArrowUpRight className="w-3 h-3" />
-                                +12%
+                                +Live
                             </span>
                         </div>
                         <div>
@@ -62,7 +62,7 @@ async function OrganizerAppointmentsList({ organizerId, searchQuery }: { organiz
                 <p className="text-neutral-400 mb-8 max-w-sm mx-auto">
                     Launch your professional booking experience by creating your first appointment slot.
                 </p>
-                <Link href="/appointments/new">
+                <Link href="/dashboard/appointments/new">
                     <Button variant="primary" size="lg" className="bg-mongodb-spring text-mongodb-black hover:bg-mongodb-spring/90">
                         <Plus className="w-5 h-5 mr-2" />
                         Create Appointment
@@ -125,11 +125,11 @@ async function CustomerRecentBookings({ userId }: { userId: string }) {
                     No Bookings Yet
                 </h3>
                 <p className="text-neutral-400 mb-6 max-w-sm mx-auto">
-                    You haven't made any bookings yet.
+                    Search for experts and book your first appointment.
                 </p>
                 <Link href="/">
                     <Button variant="primary" className="bg-mongodb-spring text-mongodb-black hover:bg-mongodb-spring/90">
-                        Find Appointments
+                        Find Sessions
                     </Button>
                 </Link>
             </div>
@@ -138,21 +138,21 @@ async function CustomerRecentBookings({ userId }: { userId: string }) {
 
     return (
         <div className="space-y-4">
-            <h2 className="text-xl font-bold text-white mb-4">Recent Bookings</h2>
+            <h2 className="text-xl font-bold text-white mb-4">Recent Appointments</h2>
             <div className="grid grid-cols-1 gap-4">
                 {bookings.slice(0, 5).map((booking: any) => (
                     <Card key={booking.id} className="bg-mongodb-slate/50 border-neutral-800 hover:border-neutral-700 transition-colors">
                         <CardContent className="p-4 flex items-center justify-between">
                             <div className="flex items-center gap-4">
-                                <div className="w-12 h-12 rounded-full bg-mongodb-spring/10 flex items-center justify-center">
+                                <div className="w-12 h-12 rounded-xl bg-mongodb-spring/10 flex items-center justify-center">
                                     <Calendar className="w-6 h-6 text-mongodb-spring" />
                                 </div>
                                 <div>
                                     <h3 className="text-lg font-semibold text-white">
-                                        {booking.appointments?.title || 'Appointment'}
+                                        {booking.appointment?.title || 'Appointment'}
                                     </h3>
                                     <p className="text-sm text-neutral-400">
-                                        {formatDate(booking.time_slots?.slot_date || booking.created_at)}
+                                        {formatDate(booking.start_time)}
                                     </p>
                                 </div>
                             </div>
@@ -166,7 +166,7 @@ async function CustomerRecentBookings({ userId }: { userId: string }) {
             <div className="mt-4">
                 <Link href="/dashboard/bookings">
                     <Button variant="outline" className="w-full border-neutral-700 text-neutral-300 hover:bg-neutral-800">
-                        View All Bookings
+                        View Full History
                     </Button>
                 </Link>
             </div>
@@ -186,24 +186,21 @@ export default async function DashboardPage({
         redirect('/login')
     }
 
-    const { data: userData }: { data: { role?: string } | null } = await supabase
-        .from('users')
+    const { data: profile } = await supabase
+        .from('profiles')
         .select('role')
         .eq('id', user.id)
         .single()
 
-    const role = userData?.role || 'customer'
+    const role = profile?.role || 'customer'
 
     if (role === 'admin') {
         return (
-            <div className="container mx-auto px-4 py-8">
+            <div className="container mx-auto p-2">
                 <header className="mb-8">
-                    <h1 className="text-3xl font-display font-bold text-white">
-                        Admin Dashboard
+                    <h1 className="text-4xl font-display font-bold text-white">
+                        System <span className="gradient-text">Admin</span>
                     </h1>
-                    <p className="text-neutral-400 mt-1">
-                        System overview and management.
-                    </p>
                 </header>
                 <Suspense fallback={<div className="text-white">Loading stats...</div>}>
                     <AdminStats />
@@ -232,14 +229,11 @@ export default async function DashboardPage({
 
     if (role === 'customer') {
         return (
-            <div className="container mx-auto px-4 py-8">
+            <div className="container mx-auto p-2">
                 <header className="mb-8">
-                    <h1 className="text-3xl font-display font-bold text-white">
-                        Welcome back, Customer
+                    <h1 className="text-4xl font-display font-bold text-white">
+                        User <span className="gradient-text">Dashboard</span>
                     </h1>
-                    <p className="text-neutral-400 mt-1">
-                        Manage your appointments and profile.
-                    </p>
                 </header>
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                     <div className="lg:col-span-2">
@@ -255,12 +249,12 @@ export default async function DashboardPage({
                             <CardContent className="space-y-3">
                                 <Link href="/">
                                     <Button className="w-full bg-mongodb-spring text-mongodb-black hover:bg-mongodb-spring/90">
-                                        <Search className="w-4 h-4 mr-2" /> Find Appointments
+                                        <Search className="w-4 h-4 mr-2" /> Browse Appointments
                                     </Button>
                                 </Link>
                                 <Link href="/dashboard/profile">
                                     <Button variant="outline" className="w-full border-neutral-700 text-neutral-300 hover:bg-neutral-800">
-                                        <User className="w-4 h-4 mr-2" /> Edit Profile
+                                        <User className="w-4 h-4 mr-2" /> Manage Profile
                                     </Button>
                                 </Link>
                             </CardContent>
@@ -271,64 +265,38 @@ export default async function DashboardPage({
         )
     }
 
-    // Default to Organizer
-    const organizerId = await getOrganizerId(user.id)
-
-    if (!organizerId) {
-        // Should realistically handle case where role is organizer but no organizer record exists,
-        // but for now redirect or show error.
-        return (
-            <div className="p-8 text-center text-white">
-                Organizer profile not found.
-            </div>
-        )
-    }
-
+    // Organizer View
     return (
-        <>
+        <div className="animate-in fade-in duration-500">
             {/* Dashboard Header */}
-            <header className="bg-mongodb-slate/30 border-b border-neutral-700/50 pt-8 pb-20 rounded-xl mb-[-3rem]">
-                <div className="container mx-auto px-4">
+            <header className="bg-mongodb-slate/30 border-b border-neutral-700/50 pt-8 pb-20 rounded-xl mb-[-3rem] overflow-hidden relative">
+                <div className="absolute top-0 right-0 w-64 h-64 bg-mongodb-spring/5 blur-3xl -mr-32 -mt-32" />
+                <div className="container mx-auto px-4 relative z-10">
                     <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6 mb-8">
                         <div>
                             <div className="flex items-center gap-2 mb-2">
                                 <div className="w-2 h-2 rounded-full bg-mongodb-spring animate-pulse" />
-                                <span className="text-xs font-bold text-mongodb-spring uppercase tracking-widest">Live Dashboard</span>
+                                <span className="text-xs font-bold text-mongodb-spring uppercase tracking-widest">Organizer Mode</span>
                             </div>
-                            <h1 className="text-3xl font-display font-bold text-white">
-                                Welcome back, <span className="gradient-text">Organizer</span>
+                            <h1 className="text-4xl font-display font-bold text-white tracking-tight">
+                                Business <span className="gradient-text">Intelligence</span>
                             </h1>
                             <p className="text-neutral-400 mt-1">
-                                Monitor your performance and manage your schedule in real-time.
+                                Monitor performance and manage your sessions.
                             </p>
                         </div>
                         <div className="flex items-center gap-3">
-                            <Button variant="outline" size="sm" className="border-neutral-700 text-neutral-300 hover:bg-neutral-800">
-                                <Filter className="w-4 h-4 mr-2" />
-                                Filters
-                            </Button>
-                            <Link href="/appointments/new">
-                                <Button variant="primary" className="bg-mongodb-spring text-mongodb-black hover:bg-mongodb-spring/90">
+                            <Link href="/dashboard/appointments/new">
+                                <Button variant="primary" className="bg-mongodb-spring text-mongodb-black hover:bg-mongodb-spring/90 shadow-lg shadow-mongodb-spring/20">
                                     <Plus className="w-5 h-5 mr-2" />
-                                    New Appointment
+                                    New Slot
                                 </Button>
                             </Link>
                         </div>
                     </div>
 
-                    <Suspense fallback={
-                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                            {[1, 2, 3, 4].map(i => (
-                                <Card key={i} className="animate-pulse bg-neutral-800/50 border-neutral-800">
-                                    <CardContent className="p-6">
-                                        <Skeleton className="h-4 w-24 mb-4 bg-neutral-700" />
-                                        <Skeleton className="h-8 w-16 bg-neutral-700" />
-                                    </CardContent>
-                                </Card>
-                            ))}
-                        </div>
-                    }>
-                        <OrganizerStats organizerId={organizerId} />
+                    <Suspense fallback={<div className="h-32 w-full bg-neutral-900 rounded-xl animate-pulse" />}>
+                        <OrganizerStats organizerId={user.id} />
                     </Suspense>
                 </div>
             </header>
@@ -336,10 +304,10 @@ export default async function DashboardPage({
             {/* Main Dashboard Content */}
             <div className="container mx-auto px-4 relative z-20">
                 <Card className="mb-8 border-mongodb-spring/10 bg-mongodb-slate/50 border-neutral-800">
-                    <CardHeader className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+                    <CardHeader className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 border-b border-neutral-800 mb-6">
                         <div>
-                            <CardTitle className="text-white">Manage Slots</CardTitle>
-                            <CardDescription className="text-neutral-400">Search and manage your active appointment types</CardDescription>
+                            <CardTitle className="text-white">Your Appointments</CardTitle>
+                            <CardDescription className="text-neutral-400">Quickly filter and manage your booking types.</CardDescription>
                         </div>
                         <div className="w-full md:w-96 relative group">
                             <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-500 group-focus-within:text-mongodb-spring transition-colors" />
@@ -348,11 +316,11 @@ export default async function DashboardPage({
                                 name="search"
                                 placeholder="Filter by title..."
                                 defaultValue={searchParams.search}
-                                className="w-full pl-11 pr-4 py-2.5 rounded-mongodb bg-mongodb-black border border-neutral-700 text-white placeholder:text-neutral-500 focus:outline-none focus:border-mongodb-spring transition-all"
+                                className="w-full pl-11 pr-4 py-3 rounded-xl bg-mongodb-black border border-neutral-700 text-white placeholder:text-neutral-500 focus:outline-none focus:border-mongodb-spring transition-all"
                             />
                         </div>
                     </CardHeader>
-                    <CardContent className="pt-6">
+                    <CardContent>
                         <Suspense fallback={
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                                 {[1, 2, 3].map(i => (
@@ -363,11 +331,11 @@ export default async function DashboardPage({
                                 ))}
                             </div>
                         }>
-                            <OrganizerAppointmentsList organizerId={organizerId} searchQuery={searchParams.search} />
+                            <OrganizerAppointmentsList organizerId={user.id} searchQuery={searchParams.search} />
                         </Suspense>
                     </CardContent>
                 </Card>
             </div>
-        </>
+        </div>
     )
 }

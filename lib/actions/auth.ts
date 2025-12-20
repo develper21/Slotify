@@ -1,64 +1,100 @@
 'use server'
 
+import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 
-// MOCK AUTHENTICATION ACTIONS
-// Disconnecting real Supabase auth for UI testing purposes
-
 export async function signUp(formData: FormData) {
-    console.log('--- MOCK SIGNUP CALL ---')
-    await new Promise(resolve => setTimeout(resolve, 1000)) // Simulate network delay
+    const supabase = createClient()
 
-    // Always return success for testing
-    return { success: true, message: 'Account created! (MOCK)' }
+    const email = formData.get('email') as string
+    const password = formData.get('password') as string
+    const full_name = formData.get('full_name') as string
+
+    const { error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+            data: {
+                full_name: full_name,
+            },
+            emailRedirectTo: `${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/auth/callback`,
+        },
+    })
+
+    if (error) {
+        return { success: false, message: error.message }
+    }
+
+    return { success: true, message: 'Check your email to confirm your account.' }
 }
 
 export async function signIn(formData: FormData) {
-    console.log('--- MOCK LOGIN CALL ---')
-    await new Promise(resolve => setTimeout(resolve, 1000))
+    const supabase = createClient()
 
     const email = formData.get('email') as string
+    const password = formData.get('password') as string
 
-    // Simulate redirection based on "role" (mock logic)
-    // admin@example.com -> /admin
-    // organizer@example.com -> /dashboard
-    // others -> /
+    const { error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+    })
 
-    if (email.includes('admin')) {
-        redirect('/admin')
-    } else if (email.includes('organizer')) {
-        redirect('/dashboard')
-    } else {
-        redirect('/')
+    if (error) {
+        return { success: false, message: error.message }
     }
+
+    revalidatePath('/', 'layout')
+    redirect('/dashboard')
 }
 
 export async function signOut() {
-    console.log('--- MOCK SIGN OUT ---')
+    const supabase = createClient()
+    await supabase.auth.signOut()
     revalidatePath('/', 'layout')
     redirect('/login')
 }
 
 export async function verifyOTP(email: string, token: string) {
-    return { success: true }
-}
+    const supabase = createClient()
+    const { error } = await supabase.auth.verifyOtp({
+        email,
+        token,
+        type: 'signup',
+    })
 
-export async function verifyRecoveryOtp(email: string, token: string) {
+    if (error) return { success: false, message: error.message }
     return { success: true }
 }
 
 export async function resetPassword(email: string) {
-    return {
-        success: true,
-        message: 'A verification code has been sent (MOCK)'
-    }
-}
+    const supabase = createClient()
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/reset-password`,
+    })
 
-export async function updatePassword(newPassword: string) {
-    return { success: true }
+    if (error) return { success: false, message: error.message }
+    return { success: true, message: 'Password reset email sent.' }
 }
 
 export async function completePasswordReset(email: string, otp: string, newPassword: string) {
+    const supabase = createClient()
+
+    // First verify the OTP
+    const { error: verifyError } = await supabase.auth.verifyOtp({
+        email,
+        token: otp,
+        type: 'recovery',
+    })
+
+    if (verifyError) return { success: false, message: verifyError.message }
+
+    // Then update the password
+    const { error: updateError } = await supabase.auth.updateUser({
+        password: newPassword
+    })
+
+    if (updateError) return { success: false, message: updateError.message }
+
     return { success: true }
 }

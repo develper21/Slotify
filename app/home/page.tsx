@@ -25,27 +25,24 @@ async function AppointmentsList({ searchQuery }: { searchQuery?: string }) {
     return (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {appointments.map((appointment: any) => {
-                const images = appointment.images || []
-                const primaryImage = images.find((img: any) => img.is_primary) || images[0]
-                const organizerName = appointment.organizers?.users?.full_name || appointment.organizers?.business_name
+                const organizerName = appointment.profiles?.business_name || appointment.profiles?.full_name || 'Expert Organizer'
 
                 return (
                     <Card key={appointment.id} hover className="group flex flex-col h-full overflow-hidden">
-                        {primaryImage && (
-                            <div className="h-52 relative overflow-hidden">
+                        <div className="h-52 relative overflow-hidden">
+                            {appointment.image_url ? (
                                 <img
-                                    src={primaryImage.url}
+                                    src={appointment.image_url}
                                     alt={appointment.title}
                                     className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
                                 />
-                                <div className="absolute inset-0 bg-gradient-to-t from-mongodb-black/80 to-transparent" />
-                            </div>
-                        )}
-                        {!primaryImage && (
-                            <div className="h-52 bg-mongodb-forest/20 flex items-center justify-center">
-                                <Calendar className="w-16 h-16 text-mongodb-spring/30" />
-                            </div>
-                        )}
+                            ) : (
+                                <div className="w-full h-full bg-mongodb-forest/20 flex items-center justify-center">
+                                    <Calendar className="w-16 h-16 text-mongodb-spring/30" />
+                                </div>
+                            )}
+                            <div className="absolute inset-0 bg-gradient-to-t from-mongodb-black/80 to-transparent" />
+                        </div>
 
                         <CardHeader className="flex-1">
                             <div className="flex justify-between items-start mb-2">
@@ -68,7 +65,7 @@ async function AppointmentsList({ searchQuery }: { searchQuery?: string }) {
                                     <div className="w-8 h-8 rounded-mongodb bg-mongodb-black/50 flex items-center justify-center">
                                         <MapPin className="w-4 h-4 text-mongodb-spring" />
                                     </div>
-                                    <span className="truncate">{appointment.location || 'Online'}</span>
+                                    <span className="truncate">{appointment.location_details || 'Online'}</span>
                                 </div>
                             </div>
                             {organizerName && (
@@ -86,7 +83,7 @@ async function AppointmentsList({ searchQuery }: { searchQuery?: string }) {
                         </CardContent>
 
                         <CardFooter>
-                            <Link href={`/appointments/${appointment.id}`} className="w-full">
+                            <Link href={`/book/${appointment.id}`} className="w-full">
                                 <Button className="w-full group/btn" variant="primary">
                                     Book Now
                                     <ArrowRight className="w-4 h-4 ml-2 transition-transform group-hover/btn:translate-x-1" />
@@ -130,43 +127,45 @@ export default async function HomePage({
             <Navbar />
 
             {/* Hero Section */}
-            <section className="relative overflow-hidden py-24 lg:py-32">
-                {/* Background Pattern */}
+            <section className="relative overflow-hidden pt-32 pb-24 lg:pt-48 lg:pb-32 bg-grid-pattern">
+                {/* Background Glows */}
                 <div className="absolute inset-0 z-0">
-                    <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-mongodb-spring/5 blur-[120px] rounded-full" />
-                    <div className="absolute bottom-0 left-0 w-[500px] h-[500px] bg-mongodb-forest/10 blur-[120px] rounded-full" />
+                    <div className="absolute top-0 right-1/4 w-[600px] h-[600px] bg-mongodb-spring/10 animate-pulse-glow rounded-full mix-blend-screen" />
+                    <div className="absolute -bottom-48 -left-48 w-[800px] h-[800px] bg-mongodb-forest/20 animate-pulse-glow rounded-full mix-blend-screen" style={{ animationDelay: '1.5s' }} />
                 </div>
 
                 <div className="container mx-auto px-4 relative z-10">
-                    <div className="max-w-4xl mx-auto text-center">
-                        <Badge variant="primary" className="mb-6 animate-fade-in">
-                            Trusted by 10,000+ Businesses
-                        </Badge>
-                        <h1 className="text-6xl md:text-7xl font-display font-bold mb-8 tracking-tight animate-slide-up">
-                            Scale Your <span className="gradient-text">Bookings</span> Fast
+                    <div className="max-w-5xl mx-auto text-center">
+                        <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/5 border border-white/10 mb-8 animate-fade-in backdrop-blur-md">
+                            <div className="w-2 h-2 rounded-full bg-mongodb-spring animate-pulse" />
+                            <span className="text-xs font-bold text-neutral-300 uppercase tracking-widest">The Future of Scheduling</span>
+                        </div>
+
+                        <h1 className="text-7xl md:text-8xl lg:text-9xl font-display font-extrabold mb-10 tracking-tighter leading-[0.9] animate-slide-up">
+                            Scale Your <span className="gradient-text">Bookings</span> <br className="hidden md:block" /> with Intelligence.
                         </h1>
-                        <p className="text-xl text-neutral-400 mb-12 max-w-2xl mx-auto leading-relaxed animate-slide-up" style={{ animationDelay: '0.1s' }}>
-                            Discover and book professional appointments with instant confirmation and seamless scheduling technology.
+
+                        <p className="text-xl md:text-2xl text-neutral-400 mb-16 max-w-2xl mx-auto leading-relaxed animate-slide-up" style={{ animationDelay: '0.1s' }}>
+                            Experience the world's most advanced booking engine. Built for professionals who value speed, beauty, and precision.
                         </p>
 
-                        {/* Search Bar */}
-                        <form className="relative max-w-2xl mx-auto animate-slide-up" style={{ animationDelay: '0.2s' }}>
-                            <div className="relative group">
-                                <Search className="absolute left-5 top-1/2 -translate-y-1/2 w-5 h-5 text-neutral-500 group-focus-within:text-mongodb-spring transition-colors" />
+                        {/* Search Bar with Glow */}
+                        <div className="relative max-w-3xl mx-auto animate-slide-up" style={{ animationDelay: '0.2s' }}>
+                            <div className="absolute -inset-4 bg-mongodb-spring/5 blur-2xl rounded-full opacity-50 group-hover:opacity-100 transition-opacity" />
+                            <form className="relative group flex items-center p-2 rounded-2xl bg-mongodb-slate/80 border border-neutral-700/50 backdrop-blur-xl shadow-2xl focus-within:border-mongodb-spring/50 transition-all">
+                                <Search className="absolute left-6 w-6 h-6 text-neutral-500 group-focus-within:text-mongodb-spring transition-colors" />
                                 <input
                                     type="text"
                                     name="search"
                                     placeholder="Search by title, location or business..."
                                     defaultValue={searchParams.search}
-                                    className="w-full pl-14 pr-6 py-5 rounded-mongodb bg-mongodb-slate border border-neutral-700/50 text-white placeholder:text-neutral-500 focus:outline-none focus:border-mongodb-spring focus:ring-4 focus:ring-mongodb-spring/10 transition-all shadow-xl"
+                                    className="w-full pl-16 pr-6 py-5 bg-transparent text-white text-lg placeholder:text-neutral-500 focus:outline-none"
                                 />
-                                <div className="absolute right-3 top-1/2 -translate-y-1/2">
-                                    <Button type="submit" size="sm" className="hidden sm:flex">
-                                        Search
-                                    </Button>
-                                </div>
-                            </div>
-                        </form>
+                                <Button type="submit" size="xl" className="hidden sm:flex bg-mongodb-spring text-mongodb-black hover:bg-white px-10 h-14 rounded-xl font-bold shadow-mongodb">
+                                    Search
+                                </Button>
+                            </form>
+                        </div>
                     </div>
                 </div>
             </section>

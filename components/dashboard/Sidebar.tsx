@@ -5,6 +5,8 @@ import { usePathname } from 'next/navigation'
 import { cn } from '@/lib/utils'
 import { Calendar, LayoutDashboard, Settings, User, LogOut, FileText, HelpCircle, Users } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
+import { signOut } from '@/lib/actions/auth'
+import { useState } from 'react'
 
 interface SidebarProps extends React.HTMLAttributes<HTMLDivElement> {
     userRole?: 'admin' | 'organizer' | 'customer'
@@ -12,6 +14,12 @@ interface SidebarProps extends React.HTMLAttributes<HTMLDivElement> {
 
 export function Sidebar({ className, userRole = 'organizer' }: SidebarProps) {
     const pathname = usePathname()
+    const [isLoggingOut, setIsLoggingOut] = useState(false)
+
+    const handleSignOut = async () => {
+        setIsLoggingOut(true)
+        await signOut()
+    }
 
     const navItems = [
         {
@@ -67,7 +75,7 @@ export function Sidebar({ className, userRole = 'organizer' }: SidebarProps) {
     const filteredNavItems = navItems.filter((item) => item.roles.includes(userRole))
 
     return (
-        <div className={cn("w-64 h-screen bg-mongodb-black/95 border-r border-neutral-800 flex flex-col fixed left-0 top-0 z-50", className)}>
+        <div className={cn("hidden md:flex w-64 h-screen bg-mongodb-black/95 border-r border-neutral-800 flex-col fixed left-0 top-0 z-50", className)}>
             {/* Logo */}
             <div className="h-16 flex items-center px-6 border-b border-neutral-800">
                 <Link href="/" className="flex items-center gap-2">
@@ -95,8 +103,7 @@ export function Sidebar({ className, userRole = 'organizer' }: SidebarProps) {
                                 isActive
                                     ? 'bg-mongodb-spring/10 text-mongodb-spring'
                                     : 'text-neutral-400 hover:text-white hover:bg-white/5'
-                            )}
-                        >
+                            )}>
                             <Icon className={cn("w-5 h-5 transition-colors", isActive ? "text-mongodb-spring" : "text-neutral-500 group-hover:text-white")} />
                             {item.name}
                         </Link>
@@ -106,7 +113,11 @@ export function Sidebar({ className, userRole = 'organizer' }: SidebarProps) {
 
             {/* Footer / Logout */}
             <div className="p-4 border-t border-neutral-800">
-                <Button variant="ghost" className="w-full justify-start text-neutral-400 hover:text-red-400 hover:bg-red-900/10">
+                <Button 
+                    variant="ghost" 
+                    className="w-full justify-start text-neutral-400 hover:text-red-400 hover:bg-red-900/10"
+                    onClick={handleSignOut}
+                    isLoading={isLoggingOut}>
                     <LogOut className="w-4 h-4 mr-2" />
                     Sign Out
                 </Button>

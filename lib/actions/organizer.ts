@@ -3,32 +3,37 @@
 import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
 
-// Get organizer ID from user ID
+/**
+ * GET ORGANIZER DETAILS
+ * Profiles table contains both User and Organizer data.
+ */
 export async function getOrganizerId(userId: string) {
     const supabase = createClient()
 
     const { data, error } = await supabase
-        .from('organizers')
+        .from('profiles')
         .select('id')
-        .eq('user_id', userId)
+        .eq('id', userId)
+        .eq('role', 'organizer')
         .single()
 
     if (error) return null
     return data?.id
 }
 
-// Get all appointments for organizer
+/**
+ * GET ALL APPOINTMENTS FOR AN ORGANIZER
+ * Simplified query with no joins to extra settings/images tables.
+ */
 export async function getOrganizerAppointments(organizerId: string, searchQuery?: string) {
     const supabase = createClient()
 
     let query = supabase
         .from('appointments')
         .select(`
-      *,
-      appointment_settings (*),
-      appointment_images (image_url, is_primary),
-      _count:bookings(count)
-    `)
+            *,
+            bookings_count:bookings(count)
+        `)
         .eq('organizer_id', organizerId)
 
     if (searchQuery) {
@@ -45,12 +50,17 @@ export async function getOrganizerAppointments(organizerId: string, searchQuery?
     return data || []
 }
 
-// Create new appointment
+/**
+ * CREATE NEW APPOINTMENT
+ * Consolidates settings into the main appointments table.
+ */
 export async function createAppointment(organizerId: string, data: {
     title: string
     description?: string
-    duration: string
-    location?: string
+    duration: number
+    location_details?: string
+    image_url?: string
+    price?: number
 }) {
     const supabase = createClient()
 
@@ -60,37 +70,26 @@ export async function createAppointment(organizerId: string, data: {
             organizer_id: organizerId,
             title: data.title,
             description: data.description,
-            duration: data.duration,
-            location_details: data.location || 'Online',
-            published: false,
-            booking_enabled: true,
+            duration: data.duration || 60,
+            location_details: data.location_details || 'Online',
+            image_url: data.image_url,
+            price: data.price || 0,
+            is_active: true
         })
         .select()
         .single()
 
     if (error) {
-        return { error: error.message }
+        return { success: false, message: error.message }
     }
-
-    // Create default settings
-    await supabase
-        .from('appointment_settings')
-        .insert({
-            appointment_id: appointment.id,
-            auto_assignment: false,
-            capacity_enabled: false,
-            max_capacity: 1,
-            manual_confirmation: false,
-            paid_booking: false,
-            price: 0,
-            meeting_type: 'online',
-        })
 
     revalidatePath('/dashboard')
     return { success: true, appointmentId: appointment.id }
 }
 
-// Update appointment
+/**
+ * UPDATE APPOINTMENT
+ */
 export async function updateAppointment(appointmentId: string, data: any) {
     const supabase = createClient()
 
@@ -100,7 +99,7 @@ export async function updateAppointment(appointmentId: string, data: any) {
         .eq('id', appointmentId)
 
     if (error) {
-        return { error: error.message }
+        return { success: false, message: error.message }
     }
 
     revalidatePath('/dashboard')
@@ -108,41 +107,28 @@ export async function updateAppointment(appointmentId: string, data: any) {
     return { success: true }
 }
 
-// Update appointment settings
-export async function updateAppointmentSettings(appointmentId: string, settings: any) {
-    const supabase = createClient()
-
-    const { error } = await supabase
-        .from('appointment_settings')
-        .update(settings)
-        .eq('appointment_id', appointmentId)
-
-    if (error) {
-        return { error: error.message }
-    }
-
-    revalidatePath(`/appointments/${appointmentId}/edit`)
-    return { success: true }
-}
-
-// Toggle publish status
-export async function togglePublishStatus(appointmentId: string, currentStatus: boolean) {
+/**
+ * TOGGLE ACTIVE STATUS
+ */
+export async function toggleActiveStatus(appointmentId: string, currentStatus: boolean) {
     const supabase = createClient()
 
     const { error } = await supabase
         .from('appointments')
-        .update({ published: !currentStatus })
+        .update({ is_active: !currentStatus })
         .eq('id', appointmentId)
 
     if (error) {
-        return { error: error.message }
+        return { success: false, message: error.message }
     }
 
     revalidatePath('/dashboard')
     return { success: true }
 }
 
-// Delete appointment
+/**
+ * DELETE APPOINTMENT
+ */
 export async function deleteAppointment(appointmentId: string) {
     const supabase = createClient()
 
@@ -152,26 +138,22 @@ export async function deleteAppointment(appointmentId: string) {
         .eq('id', appointmentId)
 
     if (error) {
-        return { error: error.message }
+        return { success: false, message: error.message }
     }
 
     revalidatePath('/dashboard')
     return { success: true }
 }
 
-// Get appointment for editing
+/**
+ * GET APPOINTMENT FOR EDITING
+ */
 export async function getAppointmentForEdit(appointmentId: string) {
     const supabase = createClient()
 
     const { data, error } = await supabase
         .from('appointments')
-        .select(`
-      *,
-      appointment_settings (*),
-      appointment_images (*),
-      schedules (*),
-      booking_questions (*)
-    `)
+        .select('*')
         .eq('id', appointmentId)
         .single()
 
@@ -183,86 +165,64 @@ export async function getAppointmentForEdit(appointmentId: string) {
     return data
 }
 
-// Create/Update schedule
-export async function upsertSchedule(appointmentId: string, schedules: any[]) {
+/**
+ * UPSERT BOOKING QUESTIONS (Stored as JSONB in the appointment)
+ */
+export async function upsertBookingQuestions(appointmentId: string, questions: any[]) {
     const supabase = createClient()
 
-    // Delete existing schedules
-    await supabase
-        .from('schedules')
-        .delete()
-        .eq('appointment_id', appointmentId)
-
-    // Insert new schedules
     const { error } = await supabase
-        .from('schedules')
-        .insert(
-            schedules.map(s => ({
-                appointment_id: appointmentId,
-                day_of_week: s.day_of_week,
-                start_time: s.start_time,
-                end_time: s.end_time,
-                is_active: s.is_working_day,
-            }))
-        )
+        .from('appointments')
+        .update({ questions })
+        .eq('id', appointmentId)
 
     if (error) {
-        return { error: error.message }
+        return { success: false, message: error.message }
     }
 
     revalidatePath(`/appointments/${appointmentId}/edit`)
     return { success: true }
 }
 
-// Create booking question
-export async function createBookingQuestion(appointmentId: string, question: {
-    question_text: string
-    question_type: string
-    options?: string[]
-    is_mandatory: boolean
-    order_index: number
-}) {
+/**
+ * CREATE BOOKING QUESTION
+ */
+export async function createBookingQuestion(appointmentId: string, data: any) {
     const supabase = createClient()
 
     const { error } = await supabase
         .from('booking_questions')
         .insert({
             appointment_id: appointmentId,
-            question_text: question.question_text,
-            question_type: question.question_type as "single_line" | "multi_line" | "phone" | "radio" | "checkbox",
-            options: question.options ? JSON.stringify(question.options) : null,
-            is_mandatory: question.is_mandatory,
-            order_index: question.order_index,
+            ...data
         })
 
-    if (error) {
-        return { error: error.message }
-    }
+    if (error) return { error: error.message }
 
-    revalidatePath(`/appointments/${appointmentId}/edit`)
+    revalidatePath(`/dashboard/appointments/${appointmentId}/questions`)
     return { success: true }
 }
 
-// Update booking question
-export async function updateBookingQuestion(questionId: string, question: any) {
+/**
+ * UPDATE BOOKING QUESTION
+ */
+export async function updateBookingQuestion(questionId: string, data: any) {
     const supabase = createClient()
 
     const { error } = await supabase
         .from('booking_questions')
-        .update({
-            ...question,
-            options: question.options ? JSON.stringify(question.options) : null,
-        })
+        .update(data)
         .eq('id', questionId)
 
-    if (error) {
-        return { error: error.message }
-    }
+    if (error) return { error: error.message }
 
+    revalidatePath('/dashboard/appointments')
     return { success: true }
 }
 
-// Delete booking question
+/**
+ * DELETE BOOKING QUESTION
+ */
 export async function deleteBookingQuestion(questionId: string) {
     const supabase = createClient()
 
@@ -271,36 +231,22 @@ export async function deleteBookingQuestion(questionId: string) {
         .delete()
         .eq('id', questionId)
 
-    if (error) {
-        return { error: error.message }
-    }
+    if (error) return { error: error.message }
 
+    revalidatePath('/dashboard/appointments')
     return { success: true }
 }
 
-// Get bookings for appointment
-export async function getAppointmentBookings(appointmentId: string) {
-    const supabase = createClient()
-
-    const { data, error } = await supabase
-        .from('bookings')
-        .select(`
-      *,
-      users (full_name, email),
-      time_slots (slot_date, start_time, end_time)
-    `)
-        .eq('appointment_id', appointmentId)
-        .order('created_at', { ascending: false })
-
-    if (error) {
-        console.error('Error fetching bookings:', error)
-        return []
-    }
-
-    return data || []
+/**
+ * UPDATE APPOINTMENT SETTINGS (Alias for updateAppointment)
+ */
+export async function updateAppointmentSettings(appointmentId: string, data: any) {
+    return updateAppointment(appointmentId, data)
 }
 
-// Get organizer statistics
+/**
+ * GET ORGANIZER STATISTICS
+ */
 export async function getOrganizerStats(organizerId: string) {
     const supabase = createClient()
 
@@ -310,84 +256,30 @@ export async function getOrganizerStats(organizerId: string) {
         .select('*', { count: 'exact', head: true })
         .eq('organizer_id', organizerId)
 
-    // Published appointments
-    const { count: publishedAppointments } = await supabase
+    // Active appointments
+    const { count: activeAppointments } = await supabase
         .from('appointments')
         .select('*', { count: 'exact', head: true })
         .eq('organizer_id', organizerId)
-        .eq('published', true)
+        .eq('is_active', true)
 
-    // Total bookings
-    const { count: totalBookings } = await supabase
+    // Total bookings 
+    const { data: bookingsData } = await supabase
         .from('bookings')
-        .select('appointment_id, appointments!inner(organizer_id)', { count: 'exact', head: true })
+        .select(`
+            id, 
+            start_time,
+            appointment:appointments!inner(organizer_id)
+        `)
         .eq('appointments.organizer_id', organizerId)
 
-    // Upcoming bookings
-    const { count: upcomingBookings } = await supabase
-        .from('bookings')
-        .select('appointment_id, time_slots!inner(slot_date), appointments!inner(organizer_id)', { count: 'exact', head: true })
-        .eq('appointments.organizer_id', organizerId)
-        .gte('time_slots.slot_date', new Date().toISOString().split('T')[0])
+    const now = new Date().toISOString()
+    const upcomingCount = bookingsData?.filter((b: any) => b.start_time >= now).length || 0
 
     return {
         totalAppointments: totalAppointments || 0,
-        publishedAppointments: publishedAppointments || 0,
-        totalBookings: totalBookings || 0,
-        upcomingBookings: upcomingBookings || 0,
+        publishedAppointments: activeAppointments || 0,
+        totalBookings: bookingsData?.length || 0,
+        upcomingBookings: upcomingCount,
     }
-}
-// Replace all booking questions
-export async function upsertBookingQuestions(appointmentId: string, questions: any[]) {
-    const supabase = createClient()
-
-    // Delete existing questions
-    const { error: deleteError } = await supabase
-        .from('booking_questions')
-        .delete()
-        .eq('appointment_id', appointmentId)
-
-    if (deleteError) {
-        return { error: deleteError.message }
-    }
-
-    // Insert new questions
-    if (questions.length > 0) {
-        const { error: insertError } = await supabase
-            .from('booking_questions')
-            .insert(
-                questions.map((q, index) => ({
-                    appointment_id: appointmentId,
-                    question_text: q.question_text,
-                    question_type: q.question_type,
-                    options: q.options ? q.options : null, // database handles jsonb? or needs stringify?
-                    // Supabase JS client handles array/object to JSON automatically if column is jsonb.
-                    // If column is text, we need stringify. Based on createBookingQuestion it might be text or jsonb.
-                    // Looking at createBookingQuestion line 233: options: question.options ? JSON.stringify(question.options) : null
-                    // So let's assume we need to manage it or it's handled.
-                    // Safest to follow existing pattern but let's check if we can just pass the object if the DB is JSONB.
-                    // Given line 233 uses JSON.stringify, I should probably do the same if the previous dev did it.
-                    // But wait, line 254 also uses JSON.stringify.
-                    // Let's check line 233 again.
-                    // "options: question.options ? JSON.stringify(question.options) : null"
-                    // So I will use JSON.stringify to be safe.
-                    // Actually, if I look at line 19 in `app/book/[id]/form/page.tsx` it expects string[] | null.
-
-                    // Let's just pass the array if the type is jsonb, but if the previous code used stringify, it implies the column might be text or the dev was being extra careful.
-                    // I will replicate the pattern: JSON.stringify if it exists.
-                    // Wait, if it's already a string in the input? The input is likely an object from the UI.
-
-                    // Actually, let's fix the type issue first.
-                    is_mandatory: q.is_mandatory,
-                    order_index: index,
-                }))
-            )
-
-        if (insertError) {
-            return { error: insertError.message }
-        }
-    }
-
-    revalidatePath(`/appointments/${appointmentId}/edit`)
-    return { success: true }
 }

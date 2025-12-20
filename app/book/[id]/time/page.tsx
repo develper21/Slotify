@@ -5,9 +5,10 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { Skeleton } from '@/components/ui/Skeleton'
-import { ChevronLeft, Clock, Users } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Clock, Users, Sun, Sunset, Moon } from 'lucide-react'
 import { cn, formatTime, formatDate } from '@/lib/utils'
 import { getAvailableSlots } from '@/lib/actions/appointments'
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/Tabs'
 
 interface TimeSlotPageProps {
     params: { id: string }
@@ -73,131 +74,144 @@ export default function TimeSlotPage({ params }: TimeSlotPageProps) {
         )
     }
 
-    return (
-        <div className="min-h-screen bg-mongodb-black py-12">
-            <div className="container mx-auto px-4 max-w-3xl">
-                {/* Header */}
-                <div className="mb-8">
+    const groupedSlots = {
+        morning: slots.filter(s => s.start_time < '12:00:00'),
+        afternoon: slots.filter(s => s.start_time >= '12:00:00' && s.start_time < '17:00:00'),
+        evening: slots.filter(s => s.start_time >= '17:00:00')
+    }
+
+    const renderSlotGrid = (periodSlots: TimeSlot[]) => (
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {periodSlots.map((slot) => {
+                const isSelected = selectedSlot?.id === slot.id
+                const isFull = slot.available_capacity === 0
+                return (
                     <button
-                        onClick={() => router.back()}
-                        className="flex items-center gap-2 text-neutral-400 hover:text-white mb-4 transition-colors"
-                    >
-                        <ChevronLeft className="w-5 h-5" />
-                        Back
-                    </button>
-                    <h1 className="text-3xl font-display font-bold text-white mb-2">
-                        Select a Time
-                    </h1>
-                    <p className="text-neutral-400">
-                        Available time slots for {formatDate(new Date(date))}
-                    </p>
-                </div>
-
-                {/* Time Slots */}
-                <Card className="bg-mongodb-slate/50 border-neutral-800">
-                    <CardHeader>
-                        <CardTitle className="text-white">Available Time Slots</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                        {isLoading ? (
-                            <div className="space-y-3">
-                                {[1, 2, 3, 4, 5, 6].map((i) => (
-                                    <Skeleton key={i} className="h-16 w-full bg-neutral-800" />
-                                ))}
-                            </div>
-                        ) : slots.length === 0 ? (
-                            <div className="text-center py-12">
-                                <Clock className="w-16 h-16 mx-auto text-neutral-600 mb-4" />
-                                <h3 className="text-xl font-semibold text-white mb-2">
-                                    No Available Slots
-                                </h3>
-                                <p className="text-neutral-400 mb-4">
-                                    There are no available time slots for this date.
-                                </p>
-                                <Button onClick={() => router.back()} variant="secondary" className="bg-neutral-800 text-white hover:bg-neutral-700">
-                                    Choose Another Date
-                                </Button>
-                            </div>
-                        ) : (
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                                {slots.map((slot) => {
-                                    const isSelected = selectedSlot?.id === slot.id
-                                    const isFull = slot.available_capacity === 0
-                                    const isLowCapacity = slot.available_capacity <= slot.max_capacity * 0.3
-
-                                    return (
-                                        <button
-                                            key={slot.id}
-                                            onClick={() => handleSlotSelect(slot)}
-                                            disabled={isFull}
-                                            className={cn(
-                                                'p-4 rounded-lg border-2 transition-all duration-200 text-left',
-                                                isSelected && 'border-mongodb-spring bg-mongodb-spring/10 shadow-md',
-                                                !isSelected && !isFull && 'border-neutral-700 bg-mongodb-black text-white hover:border-neutral-500 hover:shadow-sm',
-                                                isFull && 'border-neutral-800 bg-neutral-900 opacity-50 cursor-not-allowed'
-                                            )}
-                                        >
-                                            <div className="flex items-center justify-between mb-2">
-                                                <div className="flex items-center gap-2">
-                                                    <Clock className={cn(
-                                                        'w-5 h-5',
-                                                        isSelected ? 'text-mongodb-spring' : 'text-neutral-400'
-                                                    )} />
-                                                    <span className={cn(
-                                                        'font-semibold text-lg',
-                                                        isSelected ? 'text-white' : 'text-white'
-                                                    )}>
-                                                        {formatTime(slot.start_time)}
-                                                    </span>
-                                                </div>
-                                                {isSelected && (
-                                                    <div className="w-6 h-6 rounded-full bg-mongodb-spring flex items-center justify-center">
-                                                        <svg className="w-4 h-4 text-mongodb-black" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                                                        </svg>
-                                                    </div>
-                                                )}
-                                            </div>
-
-                                            <div className="flex items-center gap-4 text-sm">
-                                                <span className="text-neutral-400">
-                                                    to {formatTime(slot.end_time)}
-                                                </span>
-                                                {slot.max_capacity > 1 && (
-                                                    <div className="flex items-center gap-1">
-                                                        <Users className="w-4 h-4 text-neutral-500" />
-                                                        <span className={cn(
-                                                            'font-medium',
-                                                            isLowCapacity ? 'text-orange-500' : 'text-neutral-400'
-                                                        )}>
-                                                            {slot.available_capacity}/{slot.max_capacity} spots
-                                                        </span>
-                                                    </div>
-                                                )}
-                                            </div>
-
-                                            {isFull && (
-                                                <div className="mt-2 text-sm font-medium text-red-500">
-                                                    Fully Booked
-                                                </div>
-                                            )}
-                                        </button>
-                                    )
-                                })}
-                            </div>
+                        key={slot.id}
+                        onClick={() => handleSlotSelect(slot)}
+                        disabled={isFull}
+                        className={cn(
+                            'p-4 rounded-xl border-2 transition-all duration-300 text-left relative group',
+                            isSelected
+                                ? 'border-mongodb-spring bg-mongodb-spring/5 shadow-[0_0_20px_rgba(0,237,100,0.1)]'
+                                : 'border-neutral-800 bg-mongodb-black text-white hover:border-neutral-600',
+                            isFull && 'opacity-30 cursor-not-allowed grayscale'
                         )}
-                    </CardContent>
-                </Card>
+                    >
+                        <div className="flex items-center justify-between mb-2">
+                            <div className="flex items-center gap-3">
+                                <div className={cn(
+                                    "p-2 rounded-lg transition-colors",
+                                    isSelected ? "bg-mongodb-spring/20 text-mongodb-spring" : "bg-neutral-800 text-neutral-400"
+                                )}>
+                                    <Clock className="w-4 h-4" />
+                                </div>
+                                <span className="text-xl font-bold font-display tracking-tight">
+                                    {formatTime(slot.start_time)}
+                                </span>
+                            </div>
+                            {isSelected && (
+                                <div className="w-5 h-5 rounded-full bg-mongodb-spring flex items-center justify-center animate-scale-in">
+                                    <svg className="w-3 h-3 text-mongodb-black" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                                    </svg>
+                                </div>
+                            )}
+                        </div>
+                        <div className="flex items-center justify-between text-sm">
+                            <span className="text-neutral-500">Ends at {formatTime(slot.end_time)}</span>
+                            {slot.max_capacity > 1 && (
+                                <span className={cn(
+                                    "font-medium",
+                                    slot.available_capacity < 3 ? "text-orange-500" : "text-neutral-500"
+                                )}>
+                                    {slot.available_capacity} left
+                                </span>
+                            )}
+                        </div>
+                    </button>
+                )
+            })}
+        </div>
+    )
 
-                {/* Continue Button */}
-                {selectedSlot && (
-                    <div className="mt-6 flex justify-end">
-                        <Button onClick={handleContinue} size="lg" variant="primary">
-                            Continue to Booking Form
-                        </Button>
-                    </div>
-                )}
+    return (
+        <div className="max-w-4xl mx-auto">
+            {/* Header */}
+            <div className="mb-12 text-center">
+                <button
+                    onClick={() => router.back()}
+                    className="inline-flex items-center gap-2 text-neutral-500 hover:text-white mb-6 transition-colors px-4 py-2 rounded-full bg-neutral-900/50 border border-neutral-800"
+                >
+                    <ChevronLeft className="w-4 h-4" />
+                    Go Back
+                </button>
+                <h1 className="text-5xl font-display font-bold text-white mb-4 tracking-tight">
+                    Select a <span className="gradient-text">Time</span>
+                </h1>
+                <p className="text-xl text-neutral-400">
+                    {formatDate(new Date(date))}
+                </p>
             </div>
+
+            {isLoading ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {[1, 2, 4, 5, 6].map(i => <Skeleton key={i} className="h-24 w-full bg-neutral-800/50 rounded-xl" />)}
+                </div>
+            ) : slots.length === 0 ? (
+                <Card className="bg-mongodb-slate/30 border-dashed border-neutral-700 p-12 text-center">
+                    <Clock className="w-16 h-16 mx-auto text-neutral-600 mb-4 opacity-20" />
+                    <h3 className="text-xl font-bold text-white mb-2">No availability</h3>
+                    <p className="text-neutral-500 mb-6">Fully booked or out of working hours.</p>
+                    <Button onClick={() => router.back()} variant="outline">Pick another day</Button>
+                </Card>
+            ) : (
+                <Tabs defaultValue="morning" className="w-full">
+                    <div className="flex justify-center mb-10">
+                        <TabsList className="bg-mongodb-black/80 p-1.5 border-neutral-800">
+                            <TabsTrigger value="morning" className="gap-2 px-6">
+                                <Sun className="w-4 h-4" /> Morning
+                            </TabsTrigger>
+                            <TabsTrigger value="afternoon" className="gap-2 px-6">
+                                <Sunset className="w-4 h-4" /> Afternoon
+                            </TabsTrigger>
+                            <TabsTrigger value="evening" className="gap-2 px-6">
+                                <Moon className="w-4 h-4" /> Evening
+                            </TabsTrigger>
+                        </TabsList>
+                    </div>
+
+                    <TabsContent value="morning">
+                        {groupedSlots.morning.length > 0 ? renderSlotGrid(groupedSlots.morning) : (
+                            <p className="text-center py-12 text-neutral-500 font-medium">No morning slots available</p>
+                        )}
+                    </TabsContent>
+                    <TabsContent value="afternoon">
+                        {groupedSlots.afternoon.length > 0 ? renderSlotGrid(groupedSlots.afternoon) : (
+                            <p className="text-center py-12 text-neutral-500 font-medium">No afternoon slots available</p>
+                        )}
+                    </TabsContent>
+                    <TabsContent value="evening">
+                        {groupedSlots.evening.length > 0 ? renderSlotGrid(groupedSlots.evening) : (
+                            <p className="text-center py-12 text-neutral-500 font-medium">No evening slots available</p>
+                        )}
+                    </TabsContent>
+                </Tabs>
+            )}
+
+            {/* Sticky Footer for Continue */}
+            {selectedSlot && (
+                <div className="fixed bottom-8 left-1/2 -translate-x-1/2 z-50 animate-slide-up">
+                    <Button
+                        onClick={handleContinue}
+                        size="lg"
+                        className="bg-mongodb-spring text-mongodb-black hover:bg-mongodb-spring/90 px-12 h-16 rounded-full text-lg shadow-[0_10px_40px_rgba(0,237,100,0.2)] font-bold"
+                    >
+                        Continue to Details
+                        <ChevronRight className="w-5 h-5 ml-2" />
+                    </Button>
+                </div>
+            )}
         </div>
     )
 }

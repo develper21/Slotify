@@ -3,13 +3,12 @@
 import { Card, CardContent, CardFooter, CardHeader, CardTitle, CardDescription } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { Badge } from '@/components/ui/Badge'
-import { Clock, Users, Globe, Lock, MoreVertical, Edit2, Eye, Trash2 } from 'lucide-react'
+import { Clock, Users, Globe, Lock, MoreVertical, Edit2, Eye } from 'lucide-react'
 import Link from 'next/link'
 import { formatDuration } from '@/lib/utils'
 
 export default function AppointmentCard({ appointment }: { appointment: any }) {
-    const images = appointment.images || []
-    const primaryImage = images.find((img: any) => img.is_primary) || images[0]
+    const primaryImage = appointment.image_url
 
     return (
         <Card hover className="group flex flex-col h-full bg-mongodb-slate/40 border-neutral-700/30 overflow-hidden">
@@ -17,7 +16,7 @@ export default function AppointmentCard({ appointment }: { appointment: any }) {
             <div className="relative h-40 overflow-hidden">
                 {primaryImage ? (
                     <img
-                        src={primaryImage.url}
+                        src={primaryImage}
                         alt={appointment.title}
                         className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                     />
@@ -27,18 +26,18 @@ export default function AppointmentCard({ appointment }: { appointment: any }) {
                     </div>
                 )}
                 <div className="absolute inset-0 bg-gradient-to-t from-mongodb-black/90 via-mongodb-black/20 to-transparent" />
-                
+
                 <div className="absolute top-3 left-3 flex gap-2">
-                    <Badge variant={appointment.is_published ? 'primary' : 'default'} className="backdrop-blur-md bg-mongodb-black/40">
-                        {appointment.is_published ? (
+                    <Badge variant={appointment.is_active ? 'primary' : 'default'} className="backdrop-blur-md bg-mongodb-black/40">
+                        {appointment.is_active ? (
                             <div className="flex items-center gap-1">
                                 <Globe className="w-3 h-3" />
-                                <span>Published</span>
+                                <span>Active</span>
                             </div>
                         ) : (
                             <div className="flex items-center gap-1">
                                 <Lock className="w-3 h-3" />
-                                <span>Draft</span>
+                                <span>Inactive</span>
                             </div>
                         )}
                     </Badge>
@@ -72,7 +71,7 @@ export default function AppointmentCard({ appointment }: { appointment: any }) {
                     <div className="bg-mongodb-black/30 rounded-mongodb p-2 flex flex-col items-center justify-center text-center border border-neutral-700/20">
                         <Users className="w-3.5 h-3.5 text-blue-400 mb-1" />
                         <span className="text-[10px] text-neutral-400 font-bold uppercase tracking-tighter">Capacity</span>
-                        <span className="text-xs text-white font-medium">{appointment.capacity || 'Unlimited'}</span>
+                        <span className="text-xs text-white font-medium">{appointment.max_capacity || '1'}</span>
                     </div>
                 </div>
             </CardContent>
@@ -85,10 +84,10 @@ export default function AppointmentCard({ appointment }: { appointment: any }) {
                             Edit
                         </Button>
                     </Link>
-                    <Link href={`/appointments/${appointment.id}`} className="w-full">
+                    <Link href={`/book/${appointment.id}`} className="w-full">
                         <Button variant="secondary" size="sm" className="w-full text-xs h-9 border-none">
                             <Eye className="w-3 h-3 mr-2" />
-                            Preview
+                            View
                         </Button>
                     </Link>
                 </div>

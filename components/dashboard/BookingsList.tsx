@@ -25,9 +25,9 @@ export function BookingsList({ bookings }: BookingsListProps) {
             render: (booking: any) => (
                 <div>
                     <p className="font-medium text-white">
-                        {booking.users?.full_name || 'N/A'}
+                        {booking.profiles?.full_name || 'N/A'}
                     </p>
-                    <p className="text-xs text-neutral-400">{booking.users?.email || ''}</p>
+                    <p className="text-xs text-neutral-400">{booking.profiles?.email || ''}</p>
                 </div>
             ),
             sortable: true
@@ -35,7 +35,7 @@ export function BookingsList({ bookings }: BookingsListProps) {
         {
             key: 'appointment',
             header: 'Appointment',
-            render: (booking: any) => <span className="text-white">{booking.appointments?.title || 'N/A'}</span>,
+            render: (booking: any) => <span className="text-white">{booking.appointment?.title || 'N/A'}</span>,
             sortable: true
         },
         {
@@ -44,10 +44,10 @@ export function BookingsList({ bookings }: BookingsListProps) {
             render: (booking: any) => (
                 <div>
                     <p className="text-sm text-white">
-                        {booking.time_slots?.slot_date ? format(new Date(booking.time_slots?.slot_date), 'MMM d, yyyy') : 'N/A'}
+                        {booking.start_time ? format(new Date(booking.start_time), 'MMM d, yyyy') : 'N/A'}
                     </p>
                     <p className="text-xs text-neutral-400">
-                        {booking.time_slots?.start_time} - {booking.time_slots?.end_time}
+                        {booking.start_time ? format(new Date(booking.start_time), 'HH:mm') : ''} - {booking.end_time ? format(new Date(booking.end_time), 'HH:mm') : ''}
                     </p>
                 </div>
             ),
