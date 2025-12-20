@@ -52,7 +52,7 @@ export default function QuestionsPage({ params }: { params: { id: string } }) {
         setIsLoading(true)
         try {
             const supabase = createClient()
-            const { data, error } = await supabase
+            const { data, error }: { data: any; error: any } = await supabase
                 .from('appointments')
                 .select(`
           *,
@@ -140,7 +140,7 @@ export default function QuestionsPage({ params }: { params: { id: string } }) {
                 question_type: formData.question_type,
                 options: ['radio', 'checkbox'].includes(formData.question_type)
                     ? formData.options.filter(opt => opt.trim())
-                    : null,
+                    : undefined,
                 is_mandatory: formData.is_mandatory,
                 order_index: editingQuestion ? editingQuestion.order_index : questions.length,
             }
