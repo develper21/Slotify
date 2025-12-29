@@ -28,8 +28,6 @@ export default function SignupPage() {
         const email = formData.get('email') as string
         const password = formData.get('password') as string
         const confirm_password = formData.get('confirm_password') as string
-
-        // Validation
         const newErrors: typeof errors = {}
         if (!full_name) newErrors.full_name = 'Full name is required'
         if (!email) newErrors.email = 'Email is required'
@@ -68,7 +66,7 @@ export default function SignupPage() {
             <form onSubmit={handleSubmit} className="space-y-5">
                 <div className="space-y-2 group">
                     <label className="text-sm font-bold text-neutral-400 ml-1 uppercase tracking-widest flex items-center gap-2">
-                        <User className="w-4 h-4 text-neutral-600 group-focus-within:text-mongodb-spring transition-colors" />
+                        <UserPlus className="w-4 h-4 text-neutral-600 group-focus-within:text-mongodb-spring transition-colors" />
                         Professional Name
                     </label>
                     <input
@@ -78,6 +76,30 @@ export default function SignupPage() {
                         className="w-full px-6 py-4 rounded-2xl bg-mongodb-black border border-neutral-800 text-white placeholder:text-neutral-600 focus:outline-none focus:border-mongodb-spring focus:ring-4 focus:ring-mongodb-spring/10 transition-all font-medium"
                     />
                     {errors.full_name && <p className="text-xs text-red-500 ml-1 font-medium">{errors.full_name}</p>}
+                </div>
+
+                <div className="space-y-4">
+                    <label className="text-sm font-bold text-neutral-400 ml-1 uppercase tracking-widest">
+                        I am signing up as
+                    </label>
+                    <div className="grid grid-cols-2 gap-4">
+                        <label className="relative flex flex-col items-center justify-center p-4 rounded-2xl border border-neutral-800 bg-mongodb-black hover:border-mongodb-spring/50 cursor-pointer transition-all has-[:checked]:border-mongodb-spring has-[:checked]:bg-mongodb-spring/5 group">
+                            <input type="radio" name="role" value="customer" defaultChecked className="hidden" />
+                            <User className="w-6 h-6 text-neutral-500 group-has-[:checked]:text-mongodb-spring mb-2" />
+                            <span className="text-sm font-bold text-neutral-400 group-has-[:checked]:text-white">Individual</span>
+                            <div className="absolute top-2 right-2 w-4 h-4 rounded-full border-2 border-neutral-700 group-has-[:checked]:border-mongodb-spring group-has-[:checked]:bg-mongodb-spring flex items-center justify-center">
+                                <div className="w-1.5 h-1.5 rounded-full bg-mongodb-black" />
+                            </div>
+                        </label>
+                        <label className="relative flex flex-col items-center justify-center p-4 rounded-2xl border border-neutral-800 bg-mongodb-black hover:border-mongodb-spring/50 cursor-pointer transition-all has-[:checked]:border-mongodb-spring has-[:checked]:bg-mongodb-spring/5 group">
+                            <input type="radio" name="role" value="organizer" className="hidden" />
+                            <UserPlus className="w-6 h-6 text-neutral-500 group-has-[:checked]:text-mongodb-spring mb-2" />
+                            <span className="text-sm font-bold text-neutral-400 group-has-[:checked]:text-white">Organizer</span>
+                            <div className="absolute top-2 right-2 w-4 h-4 rounded-full border-2 border-neutral-700 group-has-[:checked]:border-mongodb-spring group-has-[:checked]:bg-mongodb-spring flex items-center justify-center">
+                                <div className="w-1.5 h-1.5 rounded-full bg-mongodb-black" />
+                            </div>
+                        </label>
+                    </div>
                 </div>
 
                 <div className="space-y-2 group">
@@ -128,8 +150,7 @@ export default function SignupPage() {
                         type="submit"
                         size="xl"
                         className="w-full group shadow-[0_10px_30px_rgba(0,237,100,0.15)] rounded-2xl h-16"
-                        isLoading={isLoading}
-                    >
+                        isLoading={isLoading}>
                         Create My Account
                         <ArrowRight className="w-5 h-5 ml-2 transition-transform group-hover:translate-x-1" />
                     </Button>
