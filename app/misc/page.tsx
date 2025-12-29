@@ -1,14 +1,11 @@
 import { redirect } from 'next/navigation'
-import { createClient } from '@/lib/supabase/server'
+import { getSession } from '@/lib/auth'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { Settings, Mail, MessageSquare, Zap } from 'lucide-react'
 
 export default async function MiscPage() {
-    const supabase = createClient()
-
-    // Check authentication
-    const { data: { session } } = await supabase.auth.getSession()
+    const session = await getSession()
     if (!session) {
         redirect('/login')
     }
@@ -16,7 +13,6 @@ export default async function MiscPage() {
     return (
         <div className="min-h-screen bg-mongodb-black py-12">
             <div className="container mx-auto px-4 max-w-4xl">
-                {/* Header */}
                 <div className="mb-8">
                     <h1 className="text-3xl font-display font-bold text-white mb-2">
                         Miscellaneous Settings
@@ -27,7 +23,6 @@ export default async function MiscPage() {
                 </div>
 
                 <div className="space-y-6">
-                    {/* Email Templates */}
                     <Card className="bg-mongodb-slate/50 border-neutral-800">
                         <CardHeader>
                             <div className="flex items-center gap-3">
@@ -45,7 +40,6 @@ export default async function MiscPage() {
                         </CardContent>
                     </Card>
 
-                    {/* SMS Settings */}
                     <Card className="bg-mongodb-slate/50 border-neutral-800">
                         <CardHeader>
                             <div className="flex items-center gap-3">
@@ -63,7 +57,6 @@ export default async function MiscPage() {
                         </CardContent>
                     </Card>
 
-                    {/* Integrations */}
                     <Card className="bg-mongodb-slate/50 border-neutral-800">
                         <CardHeader>
                             <div className="flex items-center gap-3">
@@ -81,7 +74,6 @@ export default async function MiscPage() {
                         </CardContent>
                     </Card>
 
-                    {/* Advanced Options */}
                     <Card className="bg-mongodb-slate/50 border-neutral-800">
                         <CardHeader>
                             <div className="flex items-center gap-3">
