@@ -1,6 +1,6 @@
 import { Suspense } from 'react'
 import { redirect } from 'next/navigation'
-import { createClient } from '@/lib/supabase/server'
+import { getSession } from '@/lib/auth'
 import { getSystemStats } from '@/lib/actions/admin'
 import { Card, CardContent } from '@/components/ui/Card'
 import { Skeleton } from '@/components/ui/Skeleton'
@@ -15,7 +15,6 @@ export const dynamic = 'force-dynamic'
 export default async function AdminDashboard() {
     return (
         <div className="space-y-8">
-            {/* Header - now integrated into the page flow */}
             <div className="flex items-center justify-between">
                 <div>
                     <h1 className="text-3xl font-display font-bold text-white">
@@ -31,7 +30,6 @@ export default async function AdminDashboard() {
                 </div>
             </div>
 
-            {/* Stats */}
             <Suspense fallback={
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
                     {[1, 2, 3, 4].map(i => (
@@ -46,7 +44,6 @@ export default async function AdminDashboard() {
                 <SystemStats />
             </Suspense>
 
-            {/* Management Tabs */}
             <Tabs defaultValue="users">
                 <TabsList className="mb-6 bg-neutral-900 border border-neutral-800">
                     <TabsTrigger value="users" className="data-[state=active]:bg-mongodb-spring data-[state=active]:text-mongodb-black text-neutral-400">
