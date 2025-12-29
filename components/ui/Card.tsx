@@ -17,8 +17,7 @@ const Card = React.forwardRef<HTMLDivElement, CardProps>(
                     hover && 'card-hover cursor-pointer',
                     className
                 )}
-                {...props}
-            >
+                {...props}>
                 {children}
             </div>
         )
