@@ -3,25 +3,22 @@
 import { useEffect, useState } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card'
 import { Badge } from '@/components/ui/Badge'
-import { createClient } from '@/lib/supabase/client'
+import { getOrganizerRecentBookings } from '@/lib/actions/organizer'
 import { formatDate, formatTime } from '@/lib/utils'
 import { Calendar, Clock, User } from 'lucide-react'
 
 interface Booking {
     id: string
     status: string
-    created_at: string
-    users: {
-        full_name: string
-        email: string
+    createdAt: Date
+    customer: {
+        fullName: string | null
+        email: string | null
     }
-    appointments: {
+    appointment: {
         title: string
     }
-    time_slots: {
-        slot_date: string
-        start_time: string
-    }
+    startTime: Date
 }
 
 export default function RecentBookings({ organizerId }: { organizerId: string }) {
@@ -30,38 +27,19 @@ export default function RecentBookings({ organizerId }: { organizerId: string })
 
     useEffect(() => {
         loadRecentBookings()
-    }, [])
+    }, [organizerId])
 
     const loadRecentBookings = async () => {
         setIsLoading(true)
         try {
-            const supabase = createClient()
-
-            // Get appointments
-            const { data: appointments } = await supabase
-                .from('appointments')
-                .select('id')
-                .eq('organizer_id', organizerId)
-
-            const appointmentIds = appointments?.map((a: { id: string }) => a.id) || []
-
-            // Get recent bookings
-            const { data } = await supabase
-                .from('bookings')
-                .select(
-                    `id, status, created_at, users (full_name, email), appointments (title), time_slots (slot_date, start_time)`
-                )
-                .in('appointment_id', appointmentIds)
-                .order('created_at', { ascending: false })
-                .limit(10)
-
+            const data = await getOrganizerRecentBookings(organizerId)
             const normalized = (data || []).map((booking: any) => ({
                 id: booking.id,
                 status: booking.status,
-                created_at: booking.created_at,
-                users: booking.users?.[0] ?? booking.users ?? { full_name: '', email: '' },
-                appointments: booking.appointments?.[0] ?? booking.appointments ?? { title: '' },
-                time_slots: booking.time_slots?.[0] ?? booking.time_slots ?? { slot_date: '', start_time: '' },
+                createdAt: new Date(booking.createdAt),
+                customer: booking.customer ?? { fullName: '', email: '' },
+                appointment: booking.appointment ?? { title: '' },
+                startTime: new Date(booking.startTime),
             })) as Booking[]
 
             setBookings(normalized)
@@ -112,17 +90,16 @@ export default function RecentBookings({ organizerId }: { organizerId: string })
                     {bookings.map((booking) => (
                         <div
                             key={booking.id}
-                            className="p-4 border border-neutral-200 rounded-lg hover:border-primary-300 transition-colors"
-                        >
+                            className="p-4 border border-neutral-200 rounded-lg hover:border-primary-300 transition-colors">
                             <div className="flex items-start justify-between mb-2">
                                 <div className="flex-1">
                                     <h4 className="font-semibold text-neutral-900">
-                                        {booking.appointments.title}
+                                        {booking.appointment.title}
                                     </h4>
                                     <div className="flex items-center gap-2 mt-1">
                                         <User className="w-3 h-3 text-neutral-500" />
                                         <p className="text-sm text-neutral-600">
-                                            {booking.users.full_name || booking.users.email}
+                                            {booking.customer.fullName || booking.customer.email}
                                         </p>
                                     </div>
                                 </div>
@@ -131,19 +108,18 @@ export default function RecentBookings({ organizerId }: { organizerId: string })
                                         booking.status === 'confirmed' ? 'success' :
                                             booking.status === 'cancelled' ? 'danger' :
                                                 'warning'
-                                    }
-                                >
+                                    }>
                                     {booking.status}
                                 </Badge>
                             </div>
                             <div className="flex items-center gap-4 text-sm text-neutral-600">
                                 <div className="flex items-center gap-1">
                                     <Calendar className="w-3 h-3" />
-                                    <span>{formatDate(new Date(booking.time_slots.slot_date))}</span>
+                                    <span>{formatDate(booking.startTime)}</span>
                                 </div>
                                 <div className="flex items-center gap-1">
                                     <Clock className="w-3 h-3" />
-                                    <span>{formatTime(booking.time_slots.start_time)}</span>
+                                    <span>{formatTime(new Date(booking.startTime).toTimeString().slice(0, 5))}</span>
                                 </div>
                             </div>
                         </div>
