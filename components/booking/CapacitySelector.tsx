@@ -51,8 +51,7 @@ export function CapacitySelector({
                     size="lg"
                     onClick={handleDecrease}
                     disabled={capacity <= minCapacity}
-                    className="!w-14 !h-14 !p-0 rounded-full border-neutral-700 bg-neutral-900 text-white hover:bg-neutral-800"
-                >
+                    className="!w-14 !h-14 !p-0 rounded-full border-neutral-700 bg-neutral-900 text-white hover:bg-neutral-800">
                     <Minus className="w-6 h-6" />
                 </Button>
 
@@ -70,8 +69,7 @@ export function CapacitySelector({
                     size="lg"
                     onClick={handleIncrease}
                     disabled={capacity >= maxCapacity}
-                    className="!w-14 !h-14 !p-0 rounded-full border-neutral-700 bg-neutral-900 text-white hover:bg-neutral-800"
-                >
+                    className="!w-14 !h-14 !p-0 rounded-full border-neutral-700 bg-neutral-900 text-white hover:bg-neutral-800">
                     <Plus className="w-6 h-6" />
                 </Button>
             </div>
