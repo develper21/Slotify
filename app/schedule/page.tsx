@@ -1,5 +1,5 @@
 import { redirect } from 'next/navigation'
-import { createClient } from '@/lib/supabase/server'
+import { getSession } from '@/lib/auth'
 import { getOrganizerId } from '@/lib/actions/organizer'
 import { getOrganizerBookings } from '@/lib/actions/bookings'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card'
@@ -10,37 +10,22 @@ import { format, isToday, isTomorrow, parseISO } from 'date-fns'
 export const dynamic = 'force-dynamic'
 
 export default async function SchedulePage() {
-    const supabase = createClient()
-
-    // Check authentication
-    const { data: { session } } = await supabase.auth.getSession()
+    const session = await getSession()
     if (!session) {
         redirect('/login')
     }
 
     const organizerId = await getOrganizerId(session.user.id)
     if (!organizerId) {
-        redirect('/dashboard') // Or onscreen error
+        redirect('/dashboard')
     }
 
-    // Fetch confirmed bookings
-    // We get all and filter for "confirmed" and "future" manually for now or via action if supported
-    let bookings = await getOrganizerBookings(organizerId, { status: 'confirmed' })
+    let bookingsData = await getOrganizerBookings(organizerId, { status: 'confirmed' })
 
-    // Filter for future only (simple check)
-    const now = new Date()
-    // bookings = bookings.filter((b: any) => new Date(b.time_slots.slot_date + 'T' + b.time_slots.start_time) >= now)
-    // Actually getOrganizerBookings might return past.
-    // Let's sort them.
-    bookings.sort((a: any, b: any) =>
-        new Date(a.time_slots.slot_date + 'T' + a.time_slots.start_time).getTime() -
-        new Date(b.time_slots.slot_date + 'T' + b.time_slots.start_time).getTime()
-    )
-
-    // Group by Date
     const groupedBookings: Record<string, any[]> = {}
-    bookings.forEach((booking: any) => {
-        const date = booking.time_slots.slot_date
+
+    bookingsData.forEach((booking: any) => {
+        const date = new Date(booking.startTime).toISOString().split('T')[0]
         if (!groupedBookings[date]) {
             groupedBookings[date] = []
         }
@@ -52,7 +37,6 @@ export default async function SchedulePage() {
     return (
         <div className="min-h-screen bg-mongodb-black py-12">
             <div className="container mx-auto px-4 max-w-4xl animate-in fade-in duration-500">
-                {/* Header */}
                 <div className="mb-8 flex items-center justify-between">
                     <div>
                         <h1 className="text-3xl font-display font-bold text-white mb-2">
@@ -62,7 +46,6 @@ export default async function SchedulePage() {
                             Upcoming appointments and agenda
                         </p>
                     </div>
-                    {/* Could add a 'Sync Calendar' button here later */}
                 </div>
 
                 {sortedDates.length === 0 ? (
@@ -87,31 +70,29 @@ export default async function SchedulePage() {
                                     <div className="space-y-4">
                                         {groupedBookings[date].map((booking: any) => (
                                             <div key={booking.id} className="bg-mongodb-black border border-neutral-800 rounded-lg p-4 flex flex-col sm:flex-row gap-4 hover:border-neutral-700 transition-colors">
-                                                {/* Time Column */}
-                                                <div className="w-32 flex-shrink-0 flex flex-col justify-center border-r border-neutral-800 pr-4">
-                                                    <p className="text-lg font-bold text-white">{booking.time_slots.start_time.slice(0, 5)}</p>
-                                                    <p className="text-sm text-neutral-500">{booking.time_slots.end_time.slice(0, 5)}</p>
+                                                <div className="w-40 flex-shrink-0 flex flex-col justify-center border-r border-neutral-800 pr-4">
+                                                    <p className="text-lg font-bold text-white">
+                                                        {format(new Date(booking.startTime), 'HH:mm')} - {format(new Date(booking.endTime), 'HH:mm')}
+                                                    </p>
                                                 </div>
 
-                                                {/* Details Column */}
                                                 <div className="flex-1">
-                                                    <h4 className="text-lg font-medium text-white mb-1">{booking.appointments?.title}</h4>
+                                                    <h4 className="text-lg font-medium text-white mb-1">{booking.appointment?.title}</h4>
 
                                                     <div className="flex flex-wrap gap-4 text-sm text-neutral-400 mt-2">
                                                         <div className="flex items-center gap-1.5">
                                                             <User className="w-4 h-4" />
-                                                            <span>{booking.users?.full_name || booking.guest_email || 'Guest'}</span>
+                                                            <span>{booking.customer?.fullName || 'Guest'}</span>
                                                         </div>
-                                                        {booking.appointments?.location_details && (
+                                                        {booking.appointment?.locationDetails && (
                                                             <div className="flex items-center gap-1.5">
                                                                 <MapPin className="w-4 h-4" />
-                                                                <span>{booking.appointments.location_details}</span>
+                                                                <span>{booking.appointment.locationDetails}</span>
                                                             </div>
                                                         )}
                                                     </div>
                                                 </div>
 
-                                                {/* Action Column */}
                                                 <div className="flex flex-col justify-center pl-2">
                                                     <Button variant="outline" size="sm" className="border-neutral-700 text-neutral-300 hover:text-white">
                                                         Details
