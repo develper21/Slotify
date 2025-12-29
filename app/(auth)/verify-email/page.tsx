@@ -11,7 +11,7 @@ import Link from 'next/link'
 export default function VerifyEmailPage() {
     const router = useRouter()
     const [isLoading, setIsLoading] = useState(false)
-    const [otp, setOtp] = useState(['', '', '', '', '', ''])
+    const [otp, setOtp] = useState(['', '', '', '', '', '', '', ''])
     const [email, setEmail] = useState('')
 
     async function handleVerify() {
@@ -29,7 +29,10 @@ export default function VerifyEmailPage() {
                 toast.error((result as any).message || 'Verification failed')
             } else {
                 toast.success('Email verified successfully!')
-                router.push('/login')
+                const role = (result as any).role
+                if (role === 'admin') router.push('/dashboard/admin')
+                else if (role === 'organizer') router.push('/dashboard/organizer')
+                else router.push('/dashboard/customer')
             }
         } catch (error) {
             toast.error('Verification failed. Please try again.')
@@ -45,8 +48,7 @@ export default function VerifyEmailPage() {
         newOtp[index] = value
         setOtp(newOtp)
 
-        // Auto-focus next input
-        if (value && index < 5) {
+        if (value && index < 7) {
             const nextInput = document.getElementById(`otp-${index + 1}`)
             nextInput?.focus()
         }
@@ -59,7 +61,7 @@ export default function VerifyEmailPage() {
                     <Mail className="w-6 h-6 text-mongodb-spring" />
                 </div>
                 <h1 className="text-4xl font-display font-bold text-white tracking-tight">Check Mail</h1>
-                <p className="text-neutral-500 text-lg">We've sent a 6-digit code to your inbox.</p>
+                <p className="text-neutral-500 text-lg">We've sent an 8-digit code to your inbox.</p>
             </div>
 
             <div className="space-y-6">
@@ -101,8 +103,7 @@ export default function VerifyEmailPage() {
                         onClick={handleVerify}
                         size="xl"
                         className="w-full group shadow-[0_10px_30px_rgba(0,237,100,0.15)] rounded-2xl h-16"
-                        isLoading={isLoading}
-                    >
+                        isLoading={isLoading}>
                         Verify Identity
                         <CheckCircle className="w-5 h-5 ml-2 transition-transform group-hover:scale-110" />
                     </Button>
