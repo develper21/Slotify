@@ -9,7 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/Tabs'
 import { Skeleton } from '@/components/ui/Skeleton'
 import { Calendar, Clock, MapPin, X } from 'lucide-react'
 import { getUserBookings, cancelBooking } from '@/lib/actions/appointments'
-import { createClient } from '@/lib/supabase/client'
+import { getCurrentUser } from '@/lib/actions/auth'
 import { toast } from 'sonner'
 import { formatDate } from '@/lib/utils'
 import { format } from 'date-fns'
@@ -17,12 +17,12 @@ import { format } from 'date-fns'
 interface Booking {
     id: string
     status: string
-    created_at: string
-    start_time: string
-    end_time: string
+    createdAt: string
+    startTime: Date | string
+    endTime: Date | string
     appointment: {
         title: string
-        location_details: string
+        locationDetails: string
     }
 }
 
@@ -39,17 +39,16 @@ export default function ProfilePage() {
     const loadUserAndBookings = async () => {
         setIsLoading(true)
         try {
-            const supabase = createClient()
-            const { data: { user } } = await supabase.auth.getUser()
+            const userData = await getCurrentUser()
 
-            if (!user) {
+            if (!userData) {
                 router.push('/login')
                 return
             }
 
-            setUser(user)
-            const bookingsData = await getUserBookings(user.id)
-            setBookings(bookingsData as Booking[])
+            setUser(userData)
+            const bookingsData = await getUserBookings(userData.id)
+            setBookings(bookingsData as any[])
         } catch (error) {
             console.error('Error loading data:', error)
             toast.error('Failed to load bookings')
@@ -77,12 +76,12 @@ export default function ProfilePage() {
     }
 
     const upcomingBookings = bookings.filter(b => {
-        const bookingDate = new Date(b.start_time)
+        const bookingDate = new Date(b.startTime)
         return bookingDate >= new Date() && b.status !== 'cancelled'
     })
 
     const pastBookings = bookings.filter(b => {
-        const bookingDate = new Date(b.start_time)
+        const bookingDate = new Date(b.startTime)
         return bookingDate < new Date() || b.status === 'cancelled'
     })
 
@@ -108,11 +107,7 @@ export default function ProfilePage() {
                             {booking.appointment?.title || 'Appointment'}
                         </h3>
                         <div className="flex items-center gap-2">
-                            <Badge variant={
-                                booking.status === 'confirmed' ? 'success' :
-                                    booking.status === 'cancelled' ? 'danger' :
-                                        'warning'
-                            }>
+                            <Badge variant={(booking.status === 'confirmed' ? 'success' : booking.status === 'cancelled' ? 'danger' : 'warning') as any}>
                                 {booking.status.charAt(0).toUpperCase() + booking.status.slice(1)}
                             </Badge>
                         </div>
@@ -122,8 +117,7 @@ export default function ProfilePage() {
                             variant="ghost"
                             size="sm"
                             onClick={() => handleCancelBooking(booking.id)}
-                            className="text-red-500 hover:text-red-400 hover:bg-red-500/10"
-                        >
+                            className="text-red-500 hover:text-red-400 hover:bg-red-500/10">
                             <X className="w-4 h-4 mr-1" />
                             Cancel
                         </Button>
@@ -133,42 +127,40 @@ export default function ProfilePage() {
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-sm text-neutral-400">
                     <div className="flex items-center gap-2 bg-mongodb-black/30 p-2 rounded-lg border border-neutral-700/50">
                         <Calendar className="w-4 h-4 text-mongodb-spring" />
-                        <span>{formatDate(booking.start_time)}</span>
+                        <span>{formatDate(booking.startTime.toString())}</span>
                     </div>
                     <div className="flex items-center gap-2 bg-mongodb-black/30 p-2 rounded-lg border border-neutral-700/50">
                         <Clock className="w-4 h-4 text-mongodb-spring" />
                         <span>
-                            {format(new Date(booking.start_time), 'hh:mm a')} - {format(new Date(booking.end_time), 'hh:mm a')}
+                            {format(new Date(booking.startTime), 'hh:mm a')} - {format(new Date(booking.endTime), 'hh:mm a')}
                         </span>
                     </div>
                     <div className="flex items-center gap-2 bg-mongodb-black/30 p-2 rounded-lg border border-neutral-700/50">
                         <MapPin className="w-4 h-4 text-mongodb-spring" />
-                        <span className="truncate">{booking.appointment?.location_details || 'Online'}</span>
+                        <span className="truncate">{booking.appointment?.locationDetails || 'Online'}</span>
                     </div>
                 </div>
             </CardContent>
-        </Card>
+        </Card >
     )
 
     return (
         <div className="max-w-4xl animate-in fade-in duration-500">
-            {/* Header */}
             <div className="mb-8">
                 <h1 className="text-4xl font-display font-bold text-white mb-6">
                     Account <span className="gradient-text">Profile</span>
                 </h1>
 
-                {/* User Info */}
                 <Card className="bg-mongodb-slate/30 border-neutral-800 relative overflow-hidden group">
                     <div className="absolute top-0 right-0 w-32 h-32 bg-mongodb-spring/5 blur-3xl -mr-16 -mt-16 transition-transform group-hover:scale-110" />
                     <CardContent className="py-6 relative z-10">
                         <div className="flex items-center gap-6">
                             <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-mongodb-spring to-teal-600 flex items-center justify-center text-white font-bold text-3xl shadow-lg shadow-mongodb-spring/20 rotate-3 group-hover:rotate-0 transition-transform">
-                                {user?.user_metadata?.full_name?.charAt(0).toUpperCase() || user?.email?.charAt(0).toUpperCase()}
+                                {user?.fullName?.charAt(0).toUpperCase() || user?.email?.charAt(0).toUpperCase()}
                             </div>
                             <div>
                                 <h2 className="text-2xl font-bold text-white mb-1">
-                                    {user?.user_metadata?.full_name || 'User'}
+                                    {user?.fullName || 'User'}
                                 </h2>
                                 <p className="text-neutral-400 font-medium">{user?.email}</p>
                                 <div className="mt-2 text-xs font-bold text-neutral-500 uppercase tracking-widest bg-neutral-800/50 inline-block px-2 py-1 rounded">
@@ -180,7 +172,6 @@ export default function ProfilePage() {
                 </Card>
             </div>
 
-            {/* Bookings Tabs */}
             <Tabs defaultValue="upcoming" className="w-full">
                 <div className="flex justify-between items-center mb-8 border-b border-neutral-800 pb-2">
                     <TabsList className="bg-transparent border-none">
