@@ -1,34 +1,23 @@
 'use server'
 
-import { createClient } from '@/lib/supabase/server'
-import { OTPPurpose } from '@/lib/otp'
+import { verifyOTP } from '@/lib/otp'
 
-/**
- * Verify OTP (Server Action)
- */
 export async function verifyOTPAction(
     email: string,
     otp: string,
-    purpose: OTPPurpose
+    purpose: string
 ) {
     try {
-        const supabase = createClient()
+        const isValid = await verifyOTP(email, otp, purpose)
 
-        const { data, error } = await (supabase.rpc as any)('verify_otp', {
-            p_email: email.toLowerCase(),
-            p_otp: otp,
-            p_purpose: purpose,
-        })
-
-        if (error) {
-            console.error('Error verifying OTP:', error)
+        if (!isValid) {
             return {
                 valid: false,
-                error: 'Verification failed'
+                error: 'Invalid or expired code'
             }
         }
 
-        return data
+        return { valid: true }
     } catch (error) {
         console.error('Exception verifying OTP:', error)
         return {
