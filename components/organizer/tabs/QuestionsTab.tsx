@@ -10,13 +10,11 @@ import { updateAppointment } from '@/lib/actions/organizer'
 export default function QuestionsTab({ appointment }: { appointment: any }) {
     const [isSubmitting, setIsSubmitting] = useState(false)
     const [questions, setQuestions] = useState(() => {
-        // Default system questions
         const systemQuestions = [
             { id: 'sys-1', label: 'Full Name', type: 'text', required: true, system: true },
             { id: 'sys-2', label: 'Email Address', type: 'email', required: true, system: true },
         ]
 
-        // Custom questions from JSONB
         const existing = appointment.questions || []
         return [...systemQuestions, ...existing]
     })
@@ -26,7 +24,6 @@ export default function QuestionsTab({ appointment }: { appointment: any }) {
         setIsSubmitting(true)
 
         try {
-            // Only save custom (non-system) questions to JSONB
             const customQuestions = questions.filter(q => !q.system)
 
             const result = await updateAppointment(appointment.id, { questions: customQuestions })
@@ -78,8 +75,7 @@ export default function QuestionsTab({ appointment }: { appointment: any }) {
                         type="button"
                         onClick={addQuestion}
                         variant="primary"
-                        className="rounded-xl h-11 px-6 font-bold shadow-mongodb-spring/10 shadow-lg text-mongodb-black"
-                    >
+                        className="rounded-xl h-11 px-6 font-bold shadow-mongodb-spring/10 shadow-lg text-mongodb-black">
                         <Plus className="w-4 h-4 mr-2" />
                         Add Field
                     </Button>
@@ -112,13 +108,11 @@ export default function QuestionsTab({ appointment }: { appointment: any }) {
                             </div>
 
                             <div className="flex items-center gap-4 bg-mongodb-black/40 p-2 rounded-xl border border-neutral-800">
-                                {/* Type Select */}
                                 {!question.system && (
                                     <select
                                         value={question.type}
                                         onChange={(e) => updateQuestion(question.id, 'type', e.target.value)}
-                                        className="bg-transparent text-neutral-400 text-xs font-bold uppercase tracking-wider outline-none border-none py-1 px-2 focus:text-white"
-                                    >
+                                        className="bg-transparent text-neutral-400 text-xs font-bold uppercase tracking-wider outline-none border-none py-1 px-2 focus:text-white">
                                         <option value="text">Short Answer</option>
                                         <option value="textarea">Paragraph</option>
                                         <option value="phone">Phone Number</option>
@@ -152,8 +146,7 @@ export default function QuestionsTab({ appointment }: { appointment: any }) {
                                         <button
                                             type="button"
                                             onClick={() => removeQuestion(question.id)}
-                                            className="text-neutral-600 hover:text-red-500 transition-colors px-2"
-                                        >
+                                            className="text-neutral-600 hover:text-red-500 transition-colors px-2">
                                             <Trash2 className="w-4 h-4" />
                                         </button>
                                     </>
@@ -167,8 +160,7 @@ export default function QuestionsTab({ appointment }: { appointment: any }) {
                             type="submit"
                             isLoading={isSubmitting}
                             variant="primary"
-                            className="rounded-xl px-12 h-12 shadow-lg shadow-mongodb-spring/10 font-black h-14"
-                        >
+                            className="rounded-xl px-12 h-14 shadow-lg shadow-mongodb-spring/10 font-black">
                             Save Booking Form
                         </Button>
                     </div>
