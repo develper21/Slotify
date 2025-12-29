@@ -1,4 +1,4 @@
-        'use client'
+'use client'
 
 import { useState } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card'
@@ -8,17 +8,16 @@ import { updateAppointmentSettings } from '@/lib/actions/organizer'
 import { toast } from 'sonner'
 
 export default function BookTab({ appointment }: { appointment: any }) {
-    const settings = appointment.appointment_settings || {}
     const [isSubmitting, setIsSubmitting] = useState(false)
     const [formData, setFormData] = useState({
-        manual_confirmation: settings.manual_confirmation || false,
-        paid_booking: settings.paid_booking || false,
-        price: settings.price || 0,
-        introduction_message: settings.introduction_message || '',
-        confirmation_message: settings.confirmation_message || '',
-        meeting_type: settings.meeting_type || 'online',
-        meeting_instructions: settings.meeting_instructions || '',
-        venue_details: settings.venue_details || '',
+        manualConfirmation: appointment.manualConfirmation || false,
+        paidBooking: Number(appointment.price) > 0,
+        price: Number(appointment.price) || 0,
+        introductionMessage: appointment.introductionMessage || '',
+        confirmationMessage: appointment.confirmationMessage || '',
+        meetingType: appointment.meetingType || 'online',
+        meetingInstructions: appointment.meetingInstructions || '',
+        venueDetails: appointment.venueDetails || '',
     })
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -27,8 +26,8 @@ export default function BookTab({ appointment }: { appointment: any }) {
 
         try {
             const result = await updateAppointmentSettings(appointment.id, formData)
-            if (result.error) {
-                toast.error(result.error)
+            if (!result.success) {
+                toast.error(result.message || 'Failed to update settings')
             } else {
                 toast.success('Settings updated successfully!')
             }
@@ -42,7 +41,6 @@ export default function BookTab({ appointment }: { appointment: any }) {
     return (
         <form onSubmit={handleSubmit}>
             <div className="space-y-6">
-                {/* Booking Settings */}
                 <Card className="bg-mongodb-slate/50 border-neutral-800">
                     <CardHeader>
                         <CardTitle className="text-white">Booking Settings</CardTitle>
@@ -51,8 +49,8 @@ export default function BookTab({ appointment }: { appointment: any }) {
                         <label className="flex items-center gap-3 cursor-pointer">
                             <input
                                 type="checkbox"
-                                checked={formData.manual_confirmation}
-                                onChange={(e) => setFormData(prev => ({ ...prev, manual_confirmation: e.target.checked }))}
+                                checked={formData.manualConfirmation}
+                                onChange={(e) => setFormData(prev => ({ ...prev, manualConfirmation: e.target.checked }))}
                                 className="w-5 h-5 rounded border-neutral-700 bg-mongodb-black text-mongodb-spring focus:ring-mongodb-spring"
                             />
                             <div>
@@ -64,8 +62,8 @@ export default function BookTab({ appointment }: { appointment: any }) {
                         <label className="flex items-center gap-3 cursor-pointer">
                             <input
                                 type="checkbox"
-                                checked={formData.paid_booking}
-                                onChange={(e) => setFormData(prev => ({ ...prev, paid_booking: e.target.checked }))}
+                                checked={formData.paidBooking}
+                                onChange={(e) => setFormData(prev => ({ ...prev, paidBooking: e.target.checked }))}
                                 className="w-5 h-5 rounded border-neutral-700 bg-mongodb-black text-mongodb-spring focus:ring-mongodb-spring"
                             />
                             <div>
@@ -74,7 +72,7 @@ export default function BookTab({ appointment }: { appointment: any }) {
                             </div>
                         </label>
 
-                        {formData.paid_booking && (
+                        {formData.paidBooking && (
                             <Input
                                 label="Price ($)"
                                 type="number"
@@ -89,7 +87,6 @@ export default function BookTab({ appointment }: { appointment: any }) {
                     </CardContent>
                 </Card>
 
-                {/* Messages */}
                 <Card className="bg-mongodb-slate/50 border-neutral-800">
                     <CardHeader>
                         <CardTitle className="text-white">Messages</CardTitle>
@@ -100,8 +97,8 @@ export default function BookTab({ appointment }: { appointment: any }) {
                                 Introduction Message
                             </label>
                             <textarea
-                                value={formData.introduction_message}
-                                onChange={(e) => setFormData(prev => ({ ...prev, introduction_message: e.target.value }))}
+                                value={formData.introductionMessage}
+                                onChange={(e) => setFormData(prev => ({ ...prev, introductionMessage: e.target.value }))}
                                 rows={3}
                                 className="w-full px-4 py-3 rounded-lg border border-neutral-700 bg-mongodb-black text-white focus:border-mongodb-spring focus:ring-1 focus:ring-mongodb-spring transition-all outline-none resize-none placeholder:text-neutral-500"
                                 placeholder="Message shown before booking..."
@@ -113,8 +110,8 @@ export default function BookTab({ appointment }: { appointment: any }) {
                                 Confirmation Message
                             </label>
                             <textarea
-                                value={formData.confirmation_message}
-                                onChange={(e) => setFormData(prev => ({ ...prev, confirmation_message: e.target.value }))}
+                                value={formData.confirmationMessage}
+                                onChange={(e) => setFormData(prev => ({ ...prev, confirmationMessage: e.target.value }))}
                                 rows={3}
                                 className="w-full px-4 py-3 rounded-lg border border-neutral-700 bg-mongodb-black text-white focus:border-mongodb-spring focus:ring-1 focus:ring-mongodb-spring transition-all outline-none resize-none placeholder:text-neutral-500"
                                 placeholder="Message shown after booking..."
@@ -123,7 +120,6 @@ export default function BookTab({ appointment }: { appointment: any }) {
                     </CardContent>
                 </Card>
 
-                {/* Meeting Details */}
                 <Card className="bg-mongodb-slate/50 border-neutral-800">
                     <CardHeader>
                         <CardTitle className="text-white">Meeting Details</CardTitle>
@@ -134,10 +130,9 @@ export default function BookTab({ appointment }: { appointment: any }) {
                                 Meeting Type
                             </label>
                             <select
-                                value={formData.meeting_type}
-                                onChange={(e) => setFormData(prev => ({ ...prev, meeting_type: e.target.value }))}
-                                className="w-full px-4 py-3 rounded-lg border border-neutral-700 bg-mongodb-black text-white focus:border-mongodb-spring focus:ring-1 focus:ring-mongodb-spring transition-all outline-none"
-                            >
+                                value={formData.meetingType}
+                                onChange={(e) => setFormData(prev => ({ ...prev, meetingType: e.target.value }))}
+                                className="w-full px-4 py-3 rounded-lg border border-neutral-700 bg-mongodb-black text-white focus:border-mongodb-spring focus:ring-1 focus:ring-mongodb-spring transition-all outline-none">
                                 <option value="online">Online</option>
                                 <option value="offline">In-Person</option>
                             </select>
@@ -148,22 +143,22 @@ export default function BookTab({ appointment }: { appointment: any }) {
                                 Meeting Instructions
                             </label>
                             <textarea
-                                value={formData.meeting_instructions}
-                                onChange={(e) => setFormData(prev => ({ ...prev, meeting_instructions: e.target.value }))}
+                                value={formData.meetingInstructions}
+                                onChange={(e) => setFormData(prev => ({ ...prev, meetingInstructions: e.target.value }))}
                                 rows={3}
                                 className="w-full px-4 py-3 rounded-lg border border-neutral-700 bg-mongodb-black text-white focus:border-mongodb-spring focus:ring-1 focus:ring-mongodb-spring transition-all outline-none resize-none placeholder:text-neutral-500"
-                                placeholder={formData.meeting_type === 'online' ? 'e.g., Zoom link will be sent after booking' : 'e.g., Please arrive 5 minutes early'}
+                                placeholder={formData.meetingType === 'online' ? 'e.g., Zoom link will be sent after booking' : 'e.g., Please arrive 5 minutes early'}
                             />
                         </div>
 
-                        {formData.meeting_type === 'offline' && (
+                        {formData.meetingType === 'offline' && (
                             <div>
                                 <label className="block text-sm font-medium text-neutral-400 mb-2">
                                     Venue Details
                                 </label>
                                 <textarea
-                                    value={formData.venue_details}
-                                    onChange={(e) => setFormData(prev => ({ ...prev, venue_details: e.target.value }))}
+                                    value={formData.venueDetails}
+                                    onChange={(e) => setFormData(prev => ({ ...prev, venueDetails: e.target.value }))}
                                     rows={3}
                                     className="w-full px-4 py-3 rounded-lg border border-neutral-700 bg-mongodb-black text-white focus:border-mongodb-spring focus:ring-1 focus:ring-mongodb-spring transition-all outline-none resize-none placeholder:text-neutral-500"
                                     placeholder="Full address and directions..."
