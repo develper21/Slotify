@@ -1,7 +1,6 @@
 'use server'
 
 import { stripe } from '@/lib/stripe'
-import { createClient } from '@/lib/supabase/server'
 import { headers } from 'next/headers'
 import { redirect } from 'next/navigation'
 
@@ -11,7 +10,6 @@ export async function createCheckoutSession(data: {
     price: number
     title: string
 }) {
-    const supabase = createClient()
     const origin = headers().get('origin')
 
     try {
@@ -25,7 +23,7 @@ export async function createCheckoutSession(data: {
                             name: data.title,
                             description: `Booking ID: ${data.bookingId}`,
                         },
-                        unit_amount: Math.round(data.price * 100), // Stripe uses cents
+                        unit_amount: Math.round(data.price * 100),
                     },
                     quantity: 1,
                 },
