@@ -10,11 +10,11 @@ import { formatDate } from '@/lib/utils'
 
 interface User {
     id: string
-    full_name: string
-    email: string
-    role: string
-    status: string
-    created_at: string
+    fullName: string | null
+    email: string | null
+    role: string | null
+    status: string | null
+    createdAt: Date | null
 }
 
 export default function UsersManagement() {
@@ -37,7 +37,7 @@ export default function UsersManagement() {
         }
     }
 
-    const handleStatusChange = async (userId: string, newStatus: 'active' | 'inactive') => {
+    const handleStatusChange = async (userId: string, newStatus: 'active' | 'suspended') => {
         try {
             const result = await updateUserStatus(userId, newStatus)
             if (result.error) {
@@ -103,14 +103,13 @@ export default function UsersManagement() {
                         <tbody>
                             {users.map((user) => (
                                 <tr key={user.id} className="border-b border-neutral-800 hover:bg-neutral-800/50">
-                                    <td className="py-3 px-4 text-white">{user.full_name}</td>
+                                    <td className="py-3 px-4 text-white">{user.fullName}</td>
                                     <td className="py-3 px-4 text-neutral-400">{user.email}</td>
                                     <td className="py-3 px-4">
                                         <select
-                                            value={user.role}
+                                            value={user.role || 'customer'}
                                             onChange={(e) => handleRoleChange(user.id, e.target.value as any)}
-                                            className="px-3 py-1 rounded border border-neutral-700 bg-neutral-900 text-white text-sm focus:border-mongodb-spring focus:ring-1 focus:ring-mongodb-spring outline-none"
-                                        >
+                                            className="px-3 py-1 rounded border border-neutral-700 bg-neutral-900 text-white text-sm focus:border-mongodb-spring focus:ring-1 focus:ring-mongodb-spring outline-none">
                                             <option value="customer">Customer</option>
                                             <option value="organizer">Organizer</option>
                                             <option value="admin">Admin</option>
@@ -122,7 +121,7 @@ export default function UsersManagement() {
                                         </Badge>
                                     </td>
                                     <td className="py-3 px-4 text-neutral-400 text-sm">
-                                        {formatDate(new Date(user.created_at))}
+                                        {user.createdAt ? formatDate(user.createdAt) : '-'}
                                     </td>
                                     <td className="py-3 px-4">
                                         <Button
@@ -130,10 +129,9 @@ export default function UsersManagement() {
                                             variant={user.status === 'active' ? 'danger' : 'secondary'}
                                             onClick={() => handleStatusChange(
                                                 user.id,
-                                                user.status === 'active' ? 'inactive' : 'active'
+                                                user.status === 'active' ? 'suspended' : 'active'
                                             )}
-                                            className={user.status === 'active' ? "" : "bg-neutral-800 text-white hover:bg-neutral-700"}
-                                        >
+                                            className={user.status === 'active' ? "" : "bg-neutral-800 text-white hover:bg-neutral-700"}>
                                             {user.status === 'active' ? 'Deactivate' : 'Activate'}
                                         </Button>
                                     </td>

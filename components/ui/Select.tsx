@@ -67,7 +67,6 @@ export function Select({
                 </label>
             )}
 
-            {/* Select Button */}
             <button
                 type="button"
                 onClick={() => !disabled && setIsOpen(!isOpen)}
@@ -77,8 +76,7 @@ export function Select({
                     disabled && 'opacity-50 cursor-not-allowed bg-neutral-800',
                     error && 'border-red-500/50 focus:border-red-500 focus:ring-red-500/20',
                     isOpen && 'border-mongodb-spring ring-1 ring-mongodb-spring/50'
-                )}
-            >
+                )}>
                 <span className={selectedOption ? 'text-white' : 'text-neutral-500'}>
                     {selectedOption?.label || placeholder}
                 </span>
@@ -90,10 +88,8 @@ export function Select({
                 />
             </button>
 
-            {/* Dropdown */}
             {isOpen && (
                 <div className="absolute z-50 w-full mt-2 bg-mongodb-slate border border-neutral-700/50 rounded-mongodb shadow-xl overflow-hidden animate-scale-in">
-                    {/* Search Input */}
                     {options.length > 5 && (
                         <div className="p-2 border-b border-neutral-700/50 bg-mongodb-black/30">
                             <input
@@ -107,7 +103,6 @@ export function Select({
                         </div>
                     )}
 
-                    {/* Options List */}
                     <div className="max-h-60 overflow-y-auto scrollbar-thin">
                         {filteredOptions.length === 0 ? (
                             <div className="px-4 py-3 text-sm text-neutral-500 text-center">
@@ -126,8 +121,7 @@ export function Select({
                                         option.value === value
                                             ? 'bg-mongodb-spring/10 text-mongodb-spring'
                                             : 'text-neutral-300 hover:bg-white/5 hover:text-white'
-                                    )}
-                                >
+                                    )}>
                                     <span className="text-sm font-medium">{option.label}</span>
                                     {option.value === value && (
                                         <Check className="w-4 h-4 text-mongodb-spring" />
@@ -138,8 +132,6 @@ export function Select({
                     </div>
                 </div>
             )}
-
-            {/* Error Message */}
             {error && (
                 <p className="mt-1.5 text-sm text-red-500 font-medium animate-slide-up ml-1">{error}</p>
             )}

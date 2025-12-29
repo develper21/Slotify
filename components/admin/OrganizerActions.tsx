@@ -47,8 +47,7 @@ export function ApprovalActions({ organizerId }: { organizerId: string }) {
                 variant="secondary"
                 size="sm"
                 onClick={handleApprove}
-                isLoading={loading}
-            >
+                isLoading={loading}>
                 <CheckCircle className="w-4 h-4 mr-1" />
                 Approve
             </Button>
@@ -56,8 +55,7 @@ export function ApprovalActions({ organizerId }: { organizerId: string }) {
                 variant="danger"
                 size="sm"
                 onClick={handleReject}
-                isLoading={loading}
-            >
+                isLoading={loading}>
                 <XCircle className="w-4 h-4 mr-1" />
                 Reject
             </Button>
@@ -91,8 +89,7 @@ export function DisableButton({ organizerId }: { organizerId: string }) {
             variant="danger"
             size="sm"
             onClick={handleDisable}
-            isLoading={loading}
-        >
+            isLoading={loading}>
             Disable
         </Button>
     )

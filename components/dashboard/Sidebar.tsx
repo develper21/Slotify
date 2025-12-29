@@ -76,7 +76,6 @@ export function Sidebar({ className, userRole = 'organizer' }: SidebarProps) {
 
     return (
         <div className={cn("hidden md:flex w-64 h-screen bg-mongodb-black/95 border-r border-neutral-800 flex-col fixed left-0 top-0 z-50", className)}>
-            {/* Logo */}
             <div className="h-16 flex items-center px-6 border-b border-neutral-800">
                 <Link href="/" className="flex items-center gap-2">
                     <div className="w-8 h-8 bg-mongodb-spring rounded-lg flex items-center justify-center">
@@ -88,7 +87,6 @@ export function Sidebar({ className, userRole = 'organizer' }: SidebarProps) {
                 </Link>
             </div>
 
-            {/* Nav Items */}
             <div className="flex-1 overflow-y-auto py-6 px-3 space-y-1">
                 {filteredNavItems.map((item) => {
                     const Icon = item.icon
@@ -110,8 +108,6 @@ export function Sidebar({ className, userRole = 'organizer' }: SidebarProps) {
                     )
                 })}
             </div>
-
-            {/* Footer / Logout */}
             <div className="p-4 border-t border-neutral-800">
                 <Button 
                     variant="ghost" 

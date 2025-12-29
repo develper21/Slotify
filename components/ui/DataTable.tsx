@@ -37,7 +37,6 @@ export function DataTable<T extends Record<string, any>>({
     const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc')
     const [currentPage, setCurrentPage] = useState(1)
 
-    // Sorting
     const sortedData = [...data].sort((a, b) => {
         if (!sortKey) return 0
 
@@ -50,7 +49,6 @@ export function DataTable<T extends Record<string, any>>({
         return sortOrder === 'asc' ? comparison : -comparison
     })
 
-    // Pagination
     const totalPages = Math.ceil(sortedData.length / pageSize)
     const startIndex = (currentPage - 1) * pageSize
     const endIndex = startIndex + pageSize
@@ -79,7 +77,6 @@ export function DataTable<T extends Record<string, any>>({
 
     return (
         <div className={`bg-mongodb-slate/50 rounded-xl shadow-sm overflow-hidden border border-neutral-800 ${className}`}>
-            {/* Table */}
             <div className="overflow-x-auto">
                 <table className="w-full">
                     <thead className="bg-mongodb-black border-b border-neutral-800">
@@ -92,8 +89,7 @@ export function DataTable<T extends Record<string, any>>({
                                         ${column.sortable ? 'cursor-pointer hover:bg-neutral-800/50' : ''}
                                         ${column.width || ''}
                                     `}
-                                    onClick={() => column.sortable && handleSort(column.key)}
-                                >
+                                    onClick={() => column.sortable && handleSort(column.key)}>
                                     <div className="flex items-center gap-2">
                                         {column.header}
                                         {column.sortable && (
@@ -130,8 +126,7 @@ export function DataTable<T extends Record<string, any>>({
                                 className={`
                                     transition-colors duration-150
                                     ${onRowClick ? 'cursor-pointer hover:bg-neutral-800/30' : 'hover:bg-neutral-800/10'}
-                                `}
-                            >
+                                `}>
                                 {columns.map((column) => (
                                     <td key={column.key} className="px-6 py-4 text-sm text-neutral-300">
                                         {column.render ? column.render(item) : item[column.key]}
@@ -150,7 +145,6 @@ export function DataTable<T extends Record<string, any>>({
                 </table>
             </div>
 
-            {/* Pagination */}
             {totalPages > 1 && (
                 <div className="px-6 py-4 border-t border-neutral-800 flex items-center justify-between bg-mongodb-black/30">
                     <div className="text-sm text-neutral-400">
@@ -162,13 +156,11 @@ export function DataTable<T extends Record<string, any>>({
                             size="sm"
                             onClick={() => handlePageChange(currentPage - 1)}
                             disabled={currentPage === 1}
-                            className="text-neutral-400 hover:text-white hover:bg-neutral-800"
-                        >
+                            className="text-neutral-400 hover:text-white hover:bg-neutral-800">
                             <ChevronLeft className="w-4 h-4" />
                         </Button>
 
                         {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => {
-                            // Show first page, last page, current page, and pages around current
                             if (
                                 page === 1 ||
                                 page === totalPages ||
@@ -180,8 +172,7 @@ export function DataTable<T extends Record<string, any>>({
                                         variant={page === currentPage ? 'primary' : 'ghost'}
                                         size="sm"
                                         onClick={() => handlePageChange(page)}
-                                        className={`min-w-[2.5rem] ${page !== currentPage ? 'text-neutral-400 hover:text-white hover:bg-neutral-800' : ''}`}
-                                    >
+                                        className={`min-w-[2.5rem] ${page !== currentPage ? 'text-neutral-400 hover:text-white hover:bg-neutral-800' : ''}`}>
                                         {page}
                                     </Button>
                                 )
@@ -196,8 +187,7 @@ export function DataTable<T extends Record<string, any>>({
                             size="sm"
                             onClick={() => handlePageChange(currentPage + 1)}
                             disabled={currentPage === totalPages}
-                            className="text-neutral-400 hover:text-white hover:bg-neutral-800"
-                        >
+                            className="text-neutral-400 hover:text-white hover:bg-neutral-800">
                             <ChevronRight className="w-4 h-4" />
                         </Button>
                     </div>

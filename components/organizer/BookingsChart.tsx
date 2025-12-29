@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card'
-import { createClient } from '@/lib/supabase/client'
+import { getOrganizerBookingsChartData } from '@/lib/actions/organizer'
 import { formatDate } from '@/lib/utils'
 
 interface ChartData {
@@ -16,45 +16,12 @@ export default function BookingsChart({ organizerId }: { organizerId: string }) 
 
     useEffect(() => {
         loadChartData()
-    }, [])
+    }, [organizerId])
 
     const loadChartData = async () => {
         setIsLoading(true)
         try {
-            const supabase = createClient()
-
-            // Get appointments
-            const { data: appointments }: { data: any[] | null } = await supabase
-                .from('appointments')
-                .select('id')
-                .eq('organizer_id', organizerId)
-
-            const appointmentIds = appointments?.map(a => a.id) || []
-
-            // Get bookings from last 30 days
-            const thirtyDaysAgo = new Date()
-            thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30)
-
-            const { data: bookings } = await supabase
-                .from('bookings')
-                .select('created_at')
-                .in('appointment_id', appointmentIds)
-                .gte('created_at', thirtyDaysAgo.toISOString())
-                .order('created_at', { ascending: true })
-
-            // Group by date
-            const grouped: { [key: string]: number } = {}
-            bookings?.forEach((booking: any) => {
-                const date = new Date(booking.created_at).toISOString().split('T')[0]
-                grouped[date] = (grouped[date] || 0) + 1
-            })
-
-            // Convert to array
-            const chartData = Object.entries(grouped).map(([date, count]) => ({
-                date,
-                bookings: count,
-            }))
-
+            const chartData = await getOrganizerBookingsChartData(organizerId)
             setData(chartData)
         } catch (error) {
             console.error('Error loading chart data:', error)

@@ -36,10 +36,10 @@ export function UserActions({
     }
 
     const handleStatusToggle = async () => {
-        const newStatus = currentStatus === 'active' ? 'inactive' : 'active'
+        const newStatus = currentStatus === 'active' ? 'suspended' : 'active'
 
         setLoading(true)
-        const result = await updateUserStatus(userId, newStatus)
+        const result = await updateUserStatus(userId, newStatus as any)
 
         if (result.error) {
             toast.error(result.error)
@@ -67,8 +67,7 @@ export function UserActions({
                 variant={currentStatus === 'active' ? 'danger' : 'secondary'}
                 size="sm"
                 onClick={handleStatusToggle}
-                isLoading={loading}
-            >
+                isLoading={loading}>
                 {currentStatus === 'active' ? 'Deactivate' : 'Activate'}
             </Button>
         </div>

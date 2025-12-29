@@ -25,9 +25,9 @@ export function BookingsList({ bookings }: BookingsListProps) {
             render: (booking: any) => (
                 <div>
                     <p className="font-medium text-white">
-                        {booking.profiles?.full_name || 'N/A'}
+                        {booking.customer?.fullName || 'N/A'}
                     </p>
-                    <p className="text-xs text-neutral-400">{booking.profiles?.email || ''}</p>
+                    <p className="text-xs text-neutral-400">{booking.customer?.email || ''}</p>
                 </div>
             ),
             sortable: true
@@ -44,10 +44,10 @@ export function BookingsList({ bookings }: BookingsListProps) {
             render: (booking: any) => (
                 <div>
                     <p className="text-sm text-white">
-                        {booking.start_time ? format(new Date(booking.start_time), 'MMM d, yyyy') : 'N/A'}
+                        {booking.startTime ? format(new Date(booking.startTime), 'MMM d, yyyy') : 'N/A'}
                     </p>
                     <p className="text-xs text-neutral-400">
-                        {booking.start_time ? format(new Date(booking.start_time), 'HH:mm') : ''} - {booking.end_time ? format(new Date(booking.end_time), 'HH:mm') : ''}
+                        {booking.startTime ? format(new Date(booking.startTime), 'HH:mm') : ''} - {booking.endTime ? format(new Date(booking.endTime), 'HH:mm') : ''}
                     </p>
                 </div>
             ),
@@ -62,7 +62,7 @@ export function BookingsList({ bookings }: BookingsListProps) {
                         booking.status === 'confirmed' ? 'success' :
                             booking.status === 'pending' ? 'warning' :
                                 booking.status === 'cancelled' ? 'danger' :
-                                    'default'
+                                    'default' as any
                     }
                 >
                     {booking.status}

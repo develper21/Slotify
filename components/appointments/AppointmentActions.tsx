@@ -36,8 +36,7 @@ export function TogglePublishButton({
             onClick={handleToggle}
             isLoading={loading}
             className="w-10 h-10 p-0 rounded-full hover:bg-neutral-800 transition-colors"
-            title={currentStatus ? "Hide Appointment" : "Show Appointment"}
-        >
+            title={currentStatus ? "Hide Appointment" : "Show Appointment"}>
             {currentStatus ? (
                 <EyeOff className="w-5 h-5 text-mongodb-spring" />
             ) : (
@@ -74,8 +73,7 @@ export function DeleteButton({ appointmentId }: { appointmentId: string }) {
             onClick={handleDelete}
             isLoading={loading}
             className="w-10 h-10 p-0 rounded-full text-neutral-600 hover:text-red-500 hover:bg-red-500/10 transition-colors"
-            title="Delete Appointment"
-        >
+            title="Delete Appointment">
             <Trash2 className="w-4 h-4" />
         </Button>
     )

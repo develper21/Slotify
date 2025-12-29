@@ -11,14 +11,11 @@ import { CheckCircle, XCircle } from 'lucide-react'
 
 interface Organizer {
     id: string
-    business_name: string | null
-    approved: boolean
-    created_at: string
-    users: {
-        full_name: string
-        email: string
-        status: string
-    }
+    fullName: string | null
+    email: string | null
+    businessName: string | null
+    status: string | null
+    createdAt: Date | null
 }
 
 export default function OrganizersManagement() {
@@ -100,7 +97,6 @@ export default function OrganizersManagement() {
                                 <th className="text-left py-3 px-4 font-semibold text-neutral-400">Business</th>
                                 <th className="text-left py-3 px-4 font-semibold text-neutral-400">Email</th>
                                 <th className="text-left py-3 px-4 font-semibold text-neutral-400">Status</th>
-                                <th className="text-left py-3 px-4 font-semibold text-neutral-400">Approval</th>
                                 <th className="text-left py-3 px-4 font-semibold text-neutral-400">Registered</th>
                                 <th className="text-left py-3 px-4 font-semibold text-neutral-400">Actions</th>
                             </tr>
@@ -108,50 +104,33 @@ export default function OrganizersManagement() {
                         <tbody>
                             {organizers.map((organizer) => (
                                 <tr key={organizer.id} className="border-b border-neutral-800 hover:bg-neutral-800/50">
-                                    <td className="py-3 px-4 text-white">{organizer.users.full_name}</td>
+                                    <td className="py-3 px-4 text-white">{organizer.fullName}</td>
                                     <td className="py-3 px-4 text-neutral-400">
-                                        {organizer.business_name || '-'}
+                                        {organizer.businessName || '-'}
                                     </td>
-                                    <td className="py-3 px-4 text-neutral-400">{organizer.users.email}</td>
+                                    <td className="py-3 px-4 text-neutral-400">{organizer.email}</td>
                                     <td className="py-3 px-4">
-                                        <Badge variant={organizer.users.status === 'active' ? 'success' : 'danger'}>
-                                            {organizer.users.status}
-                                        </Badge>
-                                    </td>
-                                    <td className="py-3 px-4">
-                                        <Badge variant={organizer.approved ? 'success' : 'warning'}>
-                                            {organizer.approved ? (
-                                                <span className="flex items-center gap-1">
-                                                    <CheckCircle className="w-3 h-3" />
-                                                    Approved
-                                                </span>
-                                            ) : (
-                                                <span className="flex items-center gap-1">
-                                                    <XCircle className="w-3 h-3" />
-                                                    Pending
-                                                </span>
-                                            )}
+                                        <Badge variant={organizer.status === 'active' ? 'success' : 'danger'}>
+                                            {organizer.status}
                                         </Badge>
                                     </td>
                                     <td className="py-3 px-4 text-neutral-400 text-sm">
-                                        {formatDate(new Date(organizer.created_at))}
+                                        {organizer.createdAt ? formatDate(organizer.createdAt) : '-'}
                                     </td>
                                     <td className="py-3 px-4">
                                         <div className="flex gap-2">
-                                            {!organizer.approved ? (
+                                            {organizer.status !== 'active' ? (
                                                 <Button
                                                     size="sm"
                                                     onClick={() => handleApprove(organizer.id)}
-                                                    className="bg-mongodb-spring text-mongodb-black hover:bg-mongodb-spring/90"
-                                                >
-                                                    Approve
+                                                    className="bg-mongodb-spring text-mongodb-black hover:bg-mongodb-spring/90">
+                                                    Activate
                                                 </Button>
                                             ) : (
                                                 <Button
                                                     size="sm"
                                                     variant="danger"
-                                                    onClick={() => handleDisable(organizer.id)}
-                                                >
+                                                    onClick={() => handleDisable(organizer.id)}>
                                                     Disable
                                                 </Button>
                                             )}

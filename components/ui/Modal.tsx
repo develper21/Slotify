@@ -36,20 +36,15 @@ export function Modal({ isOpen, onClose, title, description, children, size = 'm
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 animate-fade-in">
-            {/* Backdrop */}
             <div
                 className="absolute inset-0 bg-black/50 backdrop-blur-sm"
                 onClick={onClose}
             />
-
-            {/* Modal */}
             <div
                 className={cn(
                     'relative w-full bg-white rounded-2xl shadow-xl animate-scale-in',
                     sizes[size]
-                )}
-            >
-                {/* Header */}
+                )}>
                 {(title || description) && (
                     <div className="px-6 py-4 border-b border-neutral-200">
                         <div className="flex items-start justify-between">
@@ -63,15 +58,12 @@ export function Modal({ isOpen, onClose, title, description, children, size = 'm
                             </div>
                             <button
                                 onClick={onClose}
-                                className="ml-4 p-2 rounded-lg hover:bg-neutral-100 transition-colors"
-                            >
+                                className="ml-4 p-2 rounded-lg hover:bg-neutral-100 transition-colors">
                                 <X className="w-5 h-5" />
                             </button>
                         </div>
                     </div>
                 )}
-
-                {/* Content */}
                 <div className="px-6 py-4 max-h-[calc(100vh-200px)] overflow-y-auto scrollbar-thin">
                     {children}
                 </div>
