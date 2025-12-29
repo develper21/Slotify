@@ -12,7 +12,6 @@ export default function AppointmentCard({ appointment }: { appointment: any }) {
 
     return (
         <Card hover className="group flex flex-col h-full bg-mongodb-slate/40 border-neutral-700/30 overflow-hidden">
-            {/* Header/Image Area */}
             <div className="relative h-40 overflow-hidden">
                 {primaryImage ? (
                     <img
