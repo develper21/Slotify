@@ -77,8 +77,7 @@ function ForgotPasswordContent() {
                         type="submit"
                         size="xl"
                         className="w-full group shadow-[0_10px_30px_rgba(0,237,100,0.15)] rounded-2xl h-16"
-                        isLoading={isLoading}
-                    >
+                        isLoading={isLoading}>
                         Send Reset Link
                         <ArrowRight className="w-5 h-5 ml-2 transition-transform group-hover:translate-x-1" />
                     </Button>

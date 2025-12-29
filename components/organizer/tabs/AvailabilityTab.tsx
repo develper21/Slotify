@@ -45,7 +45,6 @@ export default function AvailabilityTab({ appointment }: { appointment: any }) {
             const dayConfig = { ...prev[day] }
             const lastSlot = dayConfig.slots[dayConfig.slots.length - 1]
             const newStart = lastSlot ? lastSlot.end : DEFAULT_START
-            // simple logic: add 1 hour
             const [h, m] = newStart.split(':').map(Number)
             const newEnd = `${String((h + 1) % 24).padStart(2, '0')}:${String(m).padStart(2, '0')}`
             return {
@@ -102,8 +101,7 @@ export default function AvailabilityTab({ appointment }: { appointment: any }) {
                         type="submit"
                         isLoading={isSubmitting}
                         variant="primary"
-                        className="rounded-xl h-11 px-8 font-bold shadow-mongodb-spring/10 shadow-lg"
-                    >
+                        className="rounded-xl h-11 px-8 font-bold shadow-mongodb-spring/10 shadow-lg">
                         Save Schedule
                     </Button>
                 </CardHeader>
@@ -111,13 +109,11 @@ export default function AvailabilityTab({ appointment }: { appointment: any }) {
                     <div className="divide-y divide-neutral-800/50">
                         {DAYS.map((day) => (
                             <div key={day} className={`group flex flex-col md:flex-row p-6 transition-colors ${availability[day].active ? 'bg-transparent' : 'bg-neutral-900/20'}`}>
-                                {/* Day Selector */}
                                 <div className="md:w-48 flex items-center gap-3 mb-4 md:mb-0">
                                     <button
                                         type="button"
                                         onClick={() => toggleDay(day)}
-                                        className={`w-12 h-6 rounded-full relative transition-colors duration-300 flex items-center px-1 ${availability[day].active ? 'bg-mongodb-spring' : 'bg-neutral-700'}`}
-                                    >
+                                        className={`w-12 h-6 rounded-full relative transition-colors duration-300 flex items-center px-1 ${availability[day].active ? 'bg-mongodb-spring' : 'bg-neutral-700'}`}>
                                         <div className={`w-4 h-4 bg-white rounded-full transition-transform duration-300 ${availability[day].active ? 'translate-x-6' : 'translate-x-0'}`} />
                                     </button>
                                     <span className={`text-sm font-bold uppercase tracking-wider ${availability[day].active ? 'text-white' : 'text-neutral-600'}`}>
@@ -125,7 +121,6 @@ export default function AvailabilityTab({ appointment }: { appointment: any }) {
                                     </span>
                                 </div>
 
-                                {/* Slots Area */}
                                 <div className="flex-1 space-y-3">
                                     {availability[day].active ? (
                                         <div className="space-y-3">
@@ -150,8 +145,7 @@ export default function AvailabilityTab({ appointment }: { appointment: any }) {
                                                     <button
                                                         type="button"
                                                         onClick={() => removeSlot(day, idx)}
-                                                        className="w-10 h-10 flex items-center justify-center text-neutral-500 hover:text-red-500 hover:bg-red-500/10 rounded-xl transition-all"
-                                                    >
+                                                        className="w-10 h-10 flex items-center justify-center text-neutral-500 hover:text-red-500 hover:bg-red-500/10 rounded-xl transition-all">
                                                         <Trash2 className="w-4 h-4" />
                                                     </button>
                                                 </div>
@@ -161,8 +155,7 @@ export default function AvailabilityTab({ appointment }: { appointment: any }) {
                                                 variant="ghost"
                                                 size="sm"
                                                 onClick={() => addSlot(day)}
-                                                className="text-[10px] font-black uppercase tracking-widest text-neutral-500 hover:text-mongodb-spring h-8 px-0 border-none bg-transparent"
-                                            >
+                                                className="text-[10px] font-black uppercase tracking-widest text-neutral-500 hover:text-mongodb-spring h-8 px-0 border-none bg-transparent">
                                                 + Add Time Slot
                                             </Button>
                                         </div>

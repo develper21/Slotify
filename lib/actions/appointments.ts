@@ -1,194 +1,177 @@
 'use server'
 
-import { createClient } from '@/lib/supabase/server'
+import { db } from '@/lib/db'
+import { appointments, bookings, profiles } from '@/lib/db/schema'
+import { eq, and, or, ilike, gte, lte, ne, sql } from 'drizzle-orm'
 import { revalidatePath } from 'next/cache'
+import { redis } from '@/lib/redis'
 
-/**
- * FETCHES ALL PUBLISHED APPOINTMENTS
- * Includes organizer profiles using a single optimized join
- */
 export async function getPublishedAppointments(searchQuery?: string) {
-    const supabase = createClient()
+    try {
+        const results = await db.query.appointments.findMany({
+            where: and(
+                eq(appointments.isActive, true),
+                searchQuery
+                    ? or(
+                        ilike(appointments.title, `%${searchQuery}%`),
+                        ilike(appointments.description, `%${searchQuery}%`)
+                    )
+                    : undefined
+            ),
+            with: {
+                organizer: {
+                    columns: {
+                        businessName: true,
+                        avatarUrl: true,
+                        fullName: true,
+                        role: true,
+                    }
+                }
+            },
+            orderBy: (appointments, { desc }) => [desc(appointments.createdAt)]
+        })
 
-    let query = supabase
-        .from('appointments')
-        .select(`
-            *,
-            profiles:organizer_id (
-                business_name,
-                avatar_url,
-                full_name,
-                role
-            )
-        `)
-        .eq('is_active', true)
-
-    if (searchQuery) {
-        query = query.or(`title.ilike.%${searchQuery}%,description.ilike.%${searchQuery}%`)
-    }
-
-    const { data, error } = await query.order('created_at', { ascending: false })
-
-    if (error) {
+        return results
+    } catch (error) {
         console.error('Error fetching appointments:', error)
         return []
     }
-
-    return data
 }
 
-/**
- * FETCHES A SINGLE APPOINTMENT BY ID
- */
 export async function getAppointmentById(id: string) {
-    const supabase = createClient()
+    try {
+        const result = await db.query.appointments.findFirst({
+            where: eq(appointments.id, id),
+            with: {
+                organizer: {
+                    columns: {
+                        businessName: true,
+                        businessDescription: true,
+                        avatarUrl: true,
+                        fullName: true,
+                        websiteUrl: true,
+                    }
+                }
+            }
+        })
 
-    const { data, error } = await supabase
-        .from('appointments')
-        .select(`
-            *,
-            profiles:organizer_id (
-                business_name,
-                business_description,
-                avatar_url,
-                full_name,
-                website_url
-            )
-        `)
-        .eq('id', id)
-        .single()
-
-    if (error) {
+        return result
+    } catch (error) {
         console.error('Error fetching appointment:', error)
         return null
     }
-
-    return data
 }
 
-/**
- * FETCHES BOOKING QUESTIONS STORED AS JSONB IN THE APPOINTMENT TABLE
- */
 export async function getBookingQuestions(appointmentId: string) {
-    const supabase = createClient()
+    try {
+        const result = await db.query.appointments.findFirst({
+            where: eq(appointments.id, appointmentId),
+            columns: {
+                questions: true,
+            }
+        })
 
-    const { data, error } = await supabase
-        .from('appointments')
-        .select('questions')
-        .eq('id', appointmentId)
-        .single()
-
-    if (error) {
+        const questions = result?.questions || []
+        return Array.isArray(questions) ? questions : []
+    } catch (error) {
         console.error('Error fetching questions:', error)
         return []
     }
-
-    // Sort questions by order_index if they are objects in the array
-    const questions = data.questions || []
-    return Array.isArray(questions) ? questions : []
 }
 
-/**
- * GENERATES AVAILABLE SLOTS ON THE FLY
- * Avoids having a dedicated "slots" table to maintain high performance.
- * Calculates availability by checking the 'bookings' table.
- */
 export async function getAvailableSlots(appointmentId: string, date: string) {
-    const supabase = createClient()
-
-    // 1. Get Appointment details including working hours (availability JSONB)
-    const { data: appointment, error: aptError } = await supabase
-        .from('appointments')
-        .select('duration, max_capacity, availability')
-        .eq('id', appointmentId)
-        .single()
-
-    if (aptError || !appointment) return []
-
-    // 2. Determine Day of Week
-    const dayName = new Date(date).toLocaleDateString('en-US', { weekday: 'long' }).toLowerCase()
-    const dayConfig = appointment.availability?.[dayName]
-
-    if (!dayConfig || !dayConfig.active || !dayConfig.slots) return []
-
-    // 3. Get existing bookings for overlapping
-    const startOfDay = new Date(date)
-    startOfDay.setHours(0, 0, 0, 0)
-    const endOfDay = new Date(date)
-    endOfDay.setHours(23, 59, 59, 999)
-
-    const { data: bookings, error: bookingsError } = await supabase
-        .from('bookings')
-        .select('start_time, end_time')
-        .eq('appointment_id', appointmentId)
-        .gte('start_time', startOfDay.toISOString())
-        .lte('start_time', endOfDay.toISOString())
-        .neq('status', 'cancelled')
-
-    if (bookingsError) return []
-
-    // 4. Generate slots based on the organizer's custom configuration for THIS specific day
-    const slots = []
-    const duration = appointment.duration || 60
-    const maxCapacity = appointment.max_capacity || 1
-
-    for (const range of dayConfig.slots) {
-        let currentTime = new Date(date)
-        const [startH, startM] = range.start.split(':').map(Number)
-        const [endH, endM] = range.end.split(':').map(Number)
-
-        currentTime.setHours(startH, startM, 0, 0)
-        const rangeEndTime = new Date(date)
-        rangeEndTime.setHours(endH, endM, 0, 0)
-
-        while (currentTime < rangeEndTime) {
-            const slotEnd = new Date(currentTime.getTime() + duration * 60000)
-            if (slotEnd > rangeEndTime) break
-
-            const currentSlotStart = currentTime.toISOString()
-            const currentSlotEnd = slotEnd.toISOString()
-
-            const overlappingCount = bookings.filter((b: any) => {
-                return (currentSlotStart < b.end_time && currentSlotEnd > b.start_time)
-            }).length
-
-            if (overlappingCount < maxCapacity) {
-                slots.push({
-                    id: currentSlotStart,
-                    start_time: currentTime.toTimeString().split(' ')[0],
-                    end_time: slotEnd.toTimeString().split(' ')[0],
-                    available_capacity: maxCapacity - overlappingCount,
-                    max_capacity: maxCapacity,
-                    full_start_time: currentSlotStart,
-                    full_end_time: currentSlotEnd
-                })
+    try {
+        const appointment = await db.query.appointments.findFirst({
+            where: eq(appointments.id, appointmentId),
+            columns: {
+                duration: true,
+                maxCapacity: true,
+                availability: true,
             }
-            currentTime = new Date(currentTime.getTime() + duration * 60000)
-        }
-    }
+        })
 
-    return slots
+        if (!appointment) return []
+
+        const dayName = new Date(date).toLocaleDateString('en-US', { weekday: 'long' }).toLowerCase()
+        const availability = appointment.availability as any
+        const dayConfig = availability?.[dayName]
+
+        if (!dayConfig || !dayConfig.active || !dayConfig.slots) return []
+
+        const startOfDay = new Date(date)
+        startOfDay.setHours(0, 0, 0, 0)
+        const endOfDay = new Date(date)
+        endOfDay.setHours(23, 59, 59, 999)
+
+        const existingBookings = await db.query.bookings.findMany({
+            where: and(
+                eq(bookings.appointmentId, appointmentId),
+                gte(bookings.startTime, startOfDay),
+                lte(bookings.startTime, endOfDay),
+                ne(bookings.status, 'cancelled')
+            ),
+            columns: {
+                startTime: true,
+                endTime: true,
+            }
+        })
+
+        const slots = []
+        const duration = appointment.duration || 60
+        const maxCapacity = appointment.maxCapacity || 1
+
+        for (const range of dayConfig.slots) {
+            let currentTime = new Date(date)
+            const [startH, startM] = range.start.split(':').map(Number)
+            const [endH, endM] = range.end.split(':').map(Number)
+
+            currentTime.setHours(startH, startM, 0, 0)
+            const rangeEndTime = new Date(date)
+            rangeEndTime.setHours(endH, endM, 0, 0)
+
+            while (currentTime < rangeEndTime) {
+                const slotEnd = new Date(currentTime.getTime() + duration * 60000)
+                if (slotEnd > rangeEndTime) break
+
+                const currentSlotStart = currentTime.toISOString()
+                const currentSlotEnd = slotEnd.toISOString()
+
+                const overlappingCount = existingBookings.filter((b: any) => {
+                    const bStart = new Date(b.startTime).toISOString()
+                    const bEnd = new Date(b.endTime).toISOString()
+                    return (currentSlotStart < bEnd && currentSlotEnd > bStart)
+                }).length
+
+                if (overlappingCount < maxCapacity) {
+                    slots.push({
+                        id: currentSlotStart,
+                        startTime: currentSlotStart,
+                        endTime: currentSlotEnd,
+                        availableCapacity: maxCapacity - overlappingCount,
+                        maxCapacity: maxCapacity
+                    })
+                }
+                currentTime = new Date(currentTime.getTime() + duration * 60000)
+            }
+        }
+
+        return slots
+    } catch (error) {
+        console.error('Error getting available slots:', error)
+        return []
+    }
 }
 
-import { redis } from '@/lib/redis'
-
-/**
- * CREATES A NEW BOOKING
- */
 export async function createBooking(bookingData: {
     appointmentId: string
     userId: string
-    slotId: string // This is the start_time ISO string
+    slotId: string
     answers: any
 }) {
-    const supabase = createClient()
-
-    // 1. Concurrency Control: Try to acquire a lock for this specific slot
     const lockKey = `lock:booking:${bookingData.appointmentId}:${bookingData.slotId}`
     let lockAcquired = false
 
     try {
-        // Only attempt redis if configured
         if (process.env.UPSTASH_REDIS_REST_URL) {
             const result = await redis.set(lockKey, 'locked', { nx: true, ex: 15 })
             if (!result) {
@@ -197,123 +180,106 @@ export async function createBooking(bookingData: {
             lockAcquired = true
         }
 
-        // 2. Double-Check Availability in Supabase (inside the lock)
-        const { data: appointment, error: aptError } = await supabase
-            .from('appointments')
-            .select('title, duration, price, max_capacity')
-            .eq('id', bookingData.appointmentId)
-            .single()
+        const appointment = await db.query.appointments.findFirst({
+            where: eq(appointments.id, bookingData.appointmentId),
+            columns: {
+                title: true,
+                duration: true,
+                price: true,
+                maxCapacity: true,
+            }
+        })
 
-        if (aptError || !appointment) {
+        if (!appointment) {
             return { success: false, message: 'Appointment not found' }
         }
 
         const startTime = new Date(bookingData.slotId)
         const endTime = new Date(startTime.getTime() + (appointment.duration || 60) * 60000)
 
-        // Count existing confirmed bookings for this exact slot
-        const { count: existingCount, error: countError } = await supabase
-            .from('bookings')
-            .select('*', { count: 'exact', head: true })
-            .eq('appointment_id', bookingData.appointmentId)
-            .eq('start_time', startTime.toISOString())
-            .neq('status', 'cancelled')
+        const existingCountResult = await db.select({ count: sql<number>`count(*)` })
+            .from(bookings)
+            .where(
+                and(
+                    eq(bookings.appointmentId, bookingData.appointmentId),
+                    eq(bookings.startTime, startTime),
+                    ne(bookings.status, 'cancelled')
+                )
+            )
 
-        if (countError) throw countError
+        const existingCount = Number(existingCountResult[0]?.count || 0)
 
-        if ((existingCount || 0) >= (appointment.max_capacity || 1)) {
+        if (existingCount >= (appointment.maxCapacity || 1)) {
             return { success: false, message: 'Sorry, this slot just got fully booked.' }
         }
 
-        // 3. Perform the Booking
-        const isPaid = (appointment.price || 0) > 0
+        const isPaid = Number(appointment.price || 0) > 0
         const initialStatus = isPaid ? 'pending_payment' : 'confirmed'
 
-        const { data, error } = await supabase
-            .from('bookings')
-            .insert({
-                appointment_id: bookingData.appointmentId,
-                customer_id: bookingData.userId,
-                start_time: startTime.toISOString(),
-                end_time: endTime.toISOString(),
-                answers: bookingData.answers,
-                total_price: appointment.price || 0,
-                status: initialStatus
-            })
-            .select()
-            .single()
-
-        if (error) {
-            console.error('Booking creation error:', error)
-            return { success: false, message: error.message }
-        }
+        const [newBooking] = await db.insert(bookings).values({
+            appointmentId: bookingData.appointmentId,
+            customerId: bookingData.userId,
+            startTime: startTime,
+            endTime: endTime,
+            answers: bookingData.answers,
+            totalPrice: appointment.price || '0.00',
+            status: initialStatus as any
+        }).returning()
 
         revalidatePath('/dashboard/bookings')
 
         return {
             success: true,
-            bookingId: data.id,
+            bookingId: newBooking.id,
             requiresPayment: isPaid,
             price: appointment.price,
             title: appointment.title
         }
 
     } catch (err: any) {
-        console.error('Race condition check failed:', err)
+        console.error('Race condition check or booking failed:', err)
         return { success: false, message: 'An error occurred during booking. Please try again.' }
     } finally {
-        // 4. Release lock
         if (lockAcquired) {
             await redis.del(lockKey)
         }
     }
 }
 
-/**
- * FETCHES BOOKINGS FOR A LOGGED-IN USER
- */
 export async function getUserBookings(userId: string) {
-    const supabase = createClient()
+    try {
+        const results = await db.query.bookings.findMany({
+            where: eq(bookings.customerId, userId),
+            with: {
+                appointment: {
+                    with: {
+                        organizer: {
+                            columns: {
+                                businessName: true
+                            }
+                        }
+                    }
+                }
+            },
+            orderBy: (bookings, { desc }) => [desc(bookings.startTime)]
+        })
 
-    const { data, error } = await supabase
-        .from('bookings')
-        .select(`
-            *,
-            appointment:appointment_id (
-                title,
-                duration,
-                image_url,
-                profiles:organizer_id (
-                    business_name
-                )
-            )
-        `)
-        .eq('customer_id', userId)
-        .order('start_time', { ascending: false })
-
-    if (error) {
+        return results
+    } catch (error) {
         console.error('Error fetching user bookings:', error)
         return []
     }
-
-    return data
 }
 
-/**
- * CANCEL A BOOKING
- */
 export async function cancelBooking(bookingId: string) {
-    const supabase = createClient()
+    try {
+        await db.update(bookings)
+            .set({ status: 'cancelled' })
+            .where(eq(bookings.id, bookingId))
 
-    const { error } = await supabase
-        .from('bookings')
-        .update({ status: 'cancelled' })
-        .eq('id', bookingId)
-
-    if (error) {
+        revalidatePath('/dashboard/bookings')
+        return { success: true }
+    } catch (error: any) {
         return { success: false, message: error.message }
     }
-
-    revalidatePath('/dashboard/bookings')
-    return { success: true }
 }

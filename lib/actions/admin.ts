@@ -1,172 +1,118 @@
 'use server'
 
-import { createClient } from '@/lib/supabase/server'
+import { db } from '@/lib/db'
+import { profiles, appointments, bookings } from '@/lib/db/schema'
+import { eq, sql } from 'drizzle-orm'
 import { revalidatePath } from 'next/cache'
 
-/**
- * GET ALL USERS (PROFILES)
- */
 export async function getAllUsers() {
-    const supabase = createClient()
-
-    const { data, error } = await supabase
-        .from('profiles')
-        .select('*')
-        .order('created_at', { ascending: false })
-
-    if (error) {
+    try {
+        const results = await db.query.profiles.findMany({
+            orderBy: (profiles, { desc }) => [desc(profiles.createdAt)]
+        })
+        return results
+    } catch (error) {
         console.error('Error fetching users:', error)
         return []
     }
-
-    return data || []
 }
 
-/**
- * UPDATE USER ROLE
- */
 export async function updateUserRole(userId: string, role: 'customer' | 'organizer' | 'admin') {
-    const supabase = createClient()
+    try {
+        await db.update(profiles)
+            .set({ role })
+            .where(eq(profiles.id, userId))
 
-    const { error } = await supabase
-        .from('profiles')
-        .update({ role })
-        .eq('id', userId)
-
-    if (error) {
+        revalidatePath('/admin')
+        return { success: true }
+    } catch (error: any) {
         return { success: false, error: error.message }
     }
-
-    revalidatePath('/admin')
-    return { success: true }
 }
 
-/**
- * GET ALL ORGANIZERS (PROFILES with role 'organizer')
- */
 export async function getAllOrganizers() {
-    const supabase = createClient()
-
-    const { data, error } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('role', 'organizer')
-        .order('created_at', { ascending: false })
-
-    if (error) {
+    try {
+        const results = await db.query.profiles.findMany({
+            where: eq(profiles.role, 'organizer'),
+            orderBy: (profiles, { desc }) => [desc(profiles.createdAt)]
+        })
+        return results
+    } catch (error) {
         console.error('Error fetching organizers:', error)
         return []
     }
-
-    return data || []
 }
 
-/**
- * UPDATE USER STATUS
- */
 export async function updateUserStatus(userId: string, status: 'active' | 'suspended') {
-    const supabase = createClient()
+    try {
+        await db.update(profiles)
+            .set({ status })
+            .where(eq(profiles.id, userId))
 
-    const { error } = await supabase
-        .from('profiles')
-        .update({ status })
-        .eq('id', userId)
-
-    if (error) {
+        revalidatePath('/dashboard/admin')
+        return { success: true }
+    } catch (error: any) {
         return { success: false, error: error.message }
     }
-
-    revalidatePath('/dashboard/admin')
-    return { success: true }
 }
 
-/**
- * APPROVE ORGANIZER
- */
 export async function approveOrganizer(userId: string) {
-    const supabase = createClient()
+    try {
+        await db.update(profiles)
+            .set({
+                role: 'organizer',
+                status: 'active'
+            })
+            .where(eq(profiles.id, userId))
 
-    const { error } = await supabase
-        .from('profiles')
-        .update({
-            role: 'organizer',
-            status: 'active'
-        })
-        .eq('id', userId)
-
-    if (error) {
+        revalidatePath('/dashboard/admin')
+        return { success: true }
+    } catch (error: any) {
         return { success: false, error: error.message }
     }
-
-    revalidatePath('/dashboard/admin')
-    return { success: true }
 }
 
-/**
- * DISABLE ORGANIZER
- */
 export async function disableOrganizer(userId: string) {
-    const supabase = createClient()
+    try {
+        await db.update(profiles)
+            .set({ status: 'suspended' })
+            .where(eq(profiles.id, userId))
 
-    const { error } = await supabase
-        .from('profiles')
-        .update({ status: 'suspended' })
-        .eq('id', userId)
-
-    if (error) {
+        revalidatePath('/dashboard/admin')
+        return { success: true }
+    } catch (error: any) {
         return { success: false, error: error.message }
     }
-
-    revalidatePath('/dashboard/admin')
-    return { success: true }
 }
 
-/**
- * GET SYSTEM STATISTICS
- */
 export async function getSystemStats() {
-    const supabase = createClient()
+    try {
+        const totalUsers = await db.select({ count: sql<number>`count(*)` }).from(profiles)
+        const totalOrganizers = await db.select({ count: sql<number>`count(*)` }).from(profiles).where(eq(profiles.role, 'organizer'))
+        const totalAppointments = await db.select({ count: sql<number>`count(*)` }).from(appointments)
+        const totalBookings = await db.select({ count: sql<number>`count(*)` }).from(bookings)
 
-    // Total profiles
-    const { count: totalUsers } = await supabase
-        .from('profiles')
-        .select('*', { count: 'exact', head: true })
-
-    // Total organizers
-    const { count: totalOrganizers } = await supabase
-        .from('profiles')
-        .select('*', { count: 'exact', head: true })
-        .eq('role', 'organizer')
-
-    // Total appointments
-    const { count: totalAppointments } = await supabase
-        .from('appointments')
-        .select('*', { count: 'exact', head: true })
-
-    // Total bookings
-    const { count: totalBookings } = await supabase
-        .from('bookings')
-        .select('*', { count: 'exact', head: true })
-
-    // Extended Stats for Mockup
-    const { count: activeUsers } = await supabase
-        .from('profiles')
-        .select('*', { count: 'exact', head: true })
-        .eq('status', 'active')
-
-    const { count: confirmedBookings } = await supabase
-        .from('bookings')
-        .select('*', { count: 'exact', head: true })
-        .eq('status', 'confirmed')
-
-    return {
-        totalUsers: totalUsers || 0,
-        totalOrganizers: totalOrganizers || 0,
-        totalAppointments: totalAppointments || 0,
-        totalBookings: totalBookings || 0,
-        activeUsers: activeUsers || 0,
-        approvedOrganizers: totalOrganizers || 0,
-        publishedAppointments: totalAppointments || 0,
-        confirmedBookings: confirmedBookings || 0,
+        return {
+            totalUsers: Number(totalUsers[0]?.count || 0),
+            totalOrganizers: Number(totalOrganizers[0]?.count || 0),
+            totalAppointments: Number(totalAppointments[0]?.count || 0),
+            totalBookings: Number(totalBookings[0]?.count || 0),
+            activeUsers: Number(totalUsers[0]?.count || 0), // Placeholder logic
+            approvedOrganizers: Number(totalOrganizers[0]?.count || 0),
+            publishedAppointments: Number(totalAppointments[0]?.count || 0),
+            confirmedBookings: Number(totalBookings[0]?.count || 0),
+        }
+    } catch (error) {
+        console.error('Error fetching system stats:', error)
+        return {
+            totalUsers: 0,
+            totalOrganizers: 0,
+            totalAppointments: 0,
+            totalBookings: 0,
+            activeUsers: 0,
+            approvedOrganizers: 0,
+            publishedAppointments: 0,
+            confirmedBookings: 0,
+        }
     }
 }

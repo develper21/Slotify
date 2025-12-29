@@ -1,5 +1,5 @@
 import { notFound, redirect } from 'next/navigation'
-import { createClient } from '@/lib/supabase/server'
+import { getSession } from '@/lib/auth'
 import { getAppointmentForEdit } from '@/lib/actions/organizer'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/Tabs'
 import { Button } from '@/components/ui/Button'
@@ -17,10 +17,9 @@ export default async function EditAppointmentPage({
 }: {
     params: { id: string }
 }) {
-    const supabase = createClient()
-    const { data: { user } } = await supabase.auth.getUser()
+    const session = await getSession()
 
-    if (!user) {
+    if (!session) {
         redirect('/login')
     }
 
@@ -30,14 +29,12 @@ export default async function EditAppointmentPage({
         notFound()
     }
 
-    // Verify ownership (profiles.id == organizer_id)
-    if (appointment.organizer_id !== user.id) {
-        redirect('/dashboard')
+    if (appointment.organizerId !== session.user.id) {
+        redirect('/dashboard/appointments')
     }
 
     return (
         <div className="space-y-8 animate-in fade-in duration-500">
-            {/* Header */}
             <div>
                 <Link
                     href="/dashboard/appointments"
@@ -51,8 +48,8 @@ export default async function EditAppointmentPage({
 
                     <div className="relative z-10">
                         <div className="flex items-center gap-3 mb-2">
-                            <Badge variant={appointment.is_active ? 'success' : 'warning'}>
-                                {appointment.is_active ? 'Active' : 'Hidden'}
+                            <Badge variant={appointment.isActive ? 'success' : 'warning'}>
+                                {appointment.isActive ? 'Active' : 'Hidden'}
                             </Badge>
                             <span className="text-xs font-bold text-neutral-500 uppercase tracking-widest">Appointment ID: {appointment.id.slice(0, 8)}</span>
                         </div>
@@ -65,7 +62,7 @@ export default async function EditAppointmentPage({
                     </div>
 
                     <div className="flex items-center gap-3 relative z-10 bg-mongodb-black/40 p-3 rounded-2xl backdrop-blur-md border border-neutral-800">
-                        <TogglePublishButton appointmentId={appointment.id} currentStatus={appointment.is_active} />
+                        <TogglePublishButton appointmentId={appointment.id} currentStatus={appointment.isActive} />
                         <div className="w-px h-8 bg-neutral-800 mx-1" />
                         <Link href={`/book/${appointment.id}`} target="_blank">
                             <Button variant="primary" className="shadow-lg shadow-mongodb-spring/10 h-11 px-6 font-bold">
@@ -77,7 +74,6 @@ export default async function EditAppointmentPage({
                 </div>
             </div>
 
-            {/* Designer Tabs */}
             <Tabs defaultValue="basic" className="space-y-8">
                 <TabsList className="bg-mongodb-black border border-neutral-800 p-1.5 rounded-xl h-auto gap-1">
                     <TabsTrigger value="basic" className="rounded-lg px-6 py-2.5 data-[state=active]:bg-mongodb-spring data-[state=active]:text-mongodb-black transition-all">

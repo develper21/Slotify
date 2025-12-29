@@ -1,5 +1,5 @@
 import { redirect } from 'next/navigation'
-import { createClient } from '@/lib/supabase/server'
+import { getSession } from '@/lib/auth'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { Badge } from '@/components/ui/Badge'
@@ -8,17 +8,13 @@ import { Plus, HelpCircle } from 'lucide-react'
 export const dynamic = 'force-dynamic'
 
 export default async function QuestionsPage() {
-    const supabase = createClient()
-
-    // Check authentication
-    const { data: { session } } = await supabase.auth.getSession()
+    const session = await getSession()
     if (!session) {
         redirect('/login')
     }
 
     return (
         <div className="space-y-8 animate-in fade-in duration-500">
-            {/* Header */}
             <div className="flex items-center justify-between">
                 <div>
                     <h1 className="text-3xl font-display font-bold text-white mb-2">
@@ -34,7 +30,6 @@ export default async function QuestionsPage() {
                 </Button>
             </div>
 
-            {/* Questions List */}
             <div className="space-y-4">
                 <Card className="hover:border-mongodb-spring/50 transition-colors bg-mongodb-slate/50 border-neutral-800">
                     <CardContent className="p-6">

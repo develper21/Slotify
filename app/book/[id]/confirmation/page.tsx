@@ -33,7 +33,6 @@ export default function ConfirmationPage({ params }: { params: { id: string } })
 
     return (
         <div className="max-w-2xl mx-auto">
-            {/* Success Animation */}
             <div className="text-center mb-12 animate-scale-in">
                 <div className="inline-flex items-center justify-center w-24 h-24 bg-mongodb-spring/10 rounded-full mb-6 relative">
                     <div className="absolute inset-0 rounded-full bg-mongodb-spring/5 animate-ping"></div>
@@ -47,7 +46,6 @@ export default function ConfirmationPage({ params }: { params: { id: string } })
                 </p>
             </div>
 
-            {/* Booking Details Card */}
             <Card className="mb-6 bg-mongodb-slate/50 border-neutral-800">
                 <CardContent className="py-8">
                     <h2 className="text-xl font-semibold text-white mb-6">
@@ -96,7 +94,6 @@ export default function ConfirmationPage({ params }: { params: { id: string } })
                         <p className="text-red-400">Could not load booking details</p>
                     )}
 
-                    {/* Confirmation Message */}
                     <div className="mt-8 p-6 bg-mongodb-spring/5 border border-mongodb-spring/10 rounded-xl relative overflow-hidden group">
                         <div className="absolute top-0 right-0 w-32 h-32 bg-mongodb-spring/5 blur-3xl -mr-16 -mt-16" />
                         <p className="text-mongodb-spring text-sm font-medium relative z-10 flex items-center gap-2">
@@ -106,7 +103,6 @@ export default function ConfirmationPage({ params }: { params: { id: string } })
                 </CardContent>
             </Card>
 
-            {/* Next Steps */}
             <Card className="mb-10 bg-mongodb-slate/50 border-neutral-800">
                 <CardContent className="py-6">
                     <h3 className="font-semibold text-white mb-4">Quick Links</h3>

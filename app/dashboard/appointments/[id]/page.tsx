@@ -26,7 +26,6 @@ export default async function AppointmentDetailPage({
 
     return (
         <div className="min-h-screen bg-neutral-50">
-            {/* Hero Image */}
             {primaryImage ? (
                 <div className="relative h-96 bg-gradient-primary">
                     <Image
@@ -57,12 +56,9 @@ export default async function AppointmentDetailPage({
                 </div>
             )}
 
-            {/* Content */}
             <div className="container mx-auto px-4 py-12">
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                    {/* Main Content */}
                     <div className="lg:col-span-2 space-y-6">
-                        {/* Description */}
                         <Card>
                             <CardHeader>
                                 <CardTitle>About This Appointment</CardTitle>
@@ -74,7 +70,6 @@ export default async function AppointmentDetailPage({
                             </CardContent>
                         </Card>
 
-                        {/* Introduction Message */}
                         {settings?.introduction_message && (
                             <Card className="bg-blue-50 border-blue-200">
                                 <CardHeader>
@@ -88,7 +83,6 @@ export default async function AppointmentDetailPage({
                             </Card>
                         )}
 
-                        {/* Image Gallery */}
                         {images.length > 1 && (
                             <Card>
                                 <CardHeader>
@@ -112,15 +106,12 @@ export default async function AppointmentDetailPage({
                         )}
                     </div>
 
-                    {/* Sidebar */}
                     <div className="space-y-6">
-                        {/* Booking Card */}
                         <Card className="sticky top-4">
                             <CardHeader>
                                 <CardTitle>Book This Appointment</CardTitle>
                             </CardHeader>
                             <CardContent className="space-y-4">
-                                {/* Details */}
                                 <div className="space-y-3">
                                     <div className="flex items-center gap-3 text-neutral-700">
                                         <Clock className="w-5 h-5 text-primary-600" />
@@ -142,7 +133,6 @@ export default async function AppointmentDetailPage({
                                     )}
                                 </div>
 
-                                {/* Features */}
                                 <div className="pt-4 border-t border-neutral-200 space-y-2">
                                     {settings?.capacity_enabled && (
                                         <Badge variant="info">Group Booking Available</Badge>
@@ -155,7 +145,6 @@ export default async function AppointmentDetailPage({
                                     )}
                                 </div>
 
-                                {/* Book Button */}
                                 <Link href={`/book/${appointment.id}/date`} className="block">
                                     <Button className="w-full" size="lg">
                                         <Calendar className="w-5 h-5 mr-2" />
@@ -163,7 +152,6 @@ export default async function AppointmentDetailPage({
                                     </Button>
                                 </Link>
 
-                                {/* Meeting Info */}
                                 {settings?.meeting_type && (
                                     <div className="pt-4 border-t border-neutral-200">
                                         <p className="text-sm font-medium text-neutral-700 mb-2">
@@ -185,7 +173,6 @@ export default async function AppointmentDetailPage({
                             </CardContent>
                         </Card>
 
-                        {/* Organizer Info */}
                         <Card>
                             <CardHeader>
                                 <CardTitle>About the Organizer</CardTitle>

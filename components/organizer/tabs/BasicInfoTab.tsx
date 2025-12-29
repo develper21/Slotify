@@ -73,8 +73,7 @@ export default function BasicInfoTab({ appointment }: { appointment: any }) {
                             <select
                                 value={formData.duration}
                                 onChange={(e) => setFormData(prev => ({ ...prev, duration: parseInt(e.target.value) }))}
-                                className="w-full px-4 py-3 rounded-xl border border-neutral-700 bg-mongodb-black text-white focus:border-mongodb-spring focus:ring-4 focus:ring-mongodb-spring/10 transition-all outline-none h-12"
-                            >
+                                className="w-full px-4 py-3 rounded-xl border border-neutral-700 bg-mongodb-black text-white focus:border-mongodb-spring focus:ring-4 focus:ring-mongodb-spring/10 transition-all outline-none h-12">
                                 <option value={15}>15 Minutes</option>
                                 <option value={30}>30 Minutes</option>
                                 <option value={45}>45 Minutes</option>
@@ -116,8 +115,7 @@ export default function BasicInfoTab({ appointment }: { appointment: any }) {
                             type="submit"
                             isLoading={isSubmitting}
                             variant="primary"
-                            className="rounded-xl px-12 h-12 shadow-lg shadow-mongodb-spring/10 font-bold"
-                        >
+                            className="rounded-xl px-12 h-12 shadow-lg shadow-mongodb-spring/10 font-bold">
                             Update Service
                         </Button>
                     </div>

@@ -1,41 +1,48 @@
 'use server'
 
-import { createClient } from '@/lib/supabase/server'
+import { db } from '@/lib/db'
+import { notifications } from '@/lib/db/schema'
+import { eq, desc } from 'drizzle-orm'
 import { revalidatePath } from 'next/cache'
 
 export async function getNotifications(userId: string) {
-    const supabase = createClient()
-    const { data, error } = await supabase
-        .from('notifications')
-        .select('*')
-        .eq('user_id', userId)
-        .order('created_at', { ascending: false })
-        .limit(20)
-
-    if (error) return []
-    return data
+    try {
+        const results = await db.query.notifications.findMany({
+            where: eq(notifications.userId, userId),
+            orderBy: [desc(notifications.createdAt)],
+            limit: 20
+        })
+        return results
+    } catch (error) {
+        console.error('Error fetching notifications:', error)
+        return []
+    }
 }
 
 export async function markAsRead(notificationId: string) {
-    const supabase = createClient()
-    const { error } = await supabase
-        .from('notifications')
-        .update({ is_read: true })
-        .eq('id', notificationId)
+    try {
+        await db.update(notifications)
+            .set({ isRead: true })
+            .where(eq(notifications.id, notificationId))
 
-    if (error) return { success: false }
-    revalidatePath('/dashboard')
-    return { success: true }
+        revalidatePath('/dashboard')
+        return { success: true }
+    } catch (error: any) {
+        console.error('Error marking notification as read:', error)
+        return { success: false }
+    }
 }
 
 export async function markAllAsRead(userId: string) {
-    const supabase = createClient()
-    const { error } = await supabase
-        .from('notifications')
-        .update({ is_read: true })
-        .eq('user_id', userId)
+    try {
+        await db.update(notifications)
+            .set({ isRead: true })
+            .where(eq(notifications.userId, userId))
 
-    if (error) return { success: false }
-    revalidatePath('/dashboard')
-    return { success: true }
+        revalidatePath('/dashboard')
+        return { success: true }
+    } catch (error: any) {
+        console.error('Error marking all notifications as read:', error)
+        return { success: false }
+    }
 }

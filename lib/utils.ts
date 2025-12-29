@@ -1,16 +1,12 @@
 import { type ClassValue, clsx } from 'clsx'
 import { twMerge } from 'tailwind-merge'
 
-/**
- * Utility function to merge Tailwind CSS classes
- */
+
 export function cn(...inputs: ClassValue[]) {
     return twMerge(clsx(inputs))
 }
 
-/**
- * Format date to readable string
- */
+
 export function formatDate(date: Date | string): string {
     const d = typeof date === 'string' ? new Date(date) : date
     return d.toLocaleDateString('en-US', {
@@ -20,9 +16,7 @@ export function formatDate(date: Date | string): string {
     })
 }
 
-/**
- * Format time to readable string
- */
+
 export function formatTime(time: string): string {
     const [hours, minutes] = time.split(':')
     const hour = parseInt(hours)
@@ -31,18 +25,14 @@ export function formatTime(time: string): string {
     return `${displayHour}:${minutes} ${ampm}`
 }
 
-/**
- * Format duration interval to readable string
- */
+
 export function formatDuration(duration: string): string {
-    // Duration comes as PostgreSQL interval like "00:30:00" or "01:00:00"
-    // Handle mock data where duration might be a number (minutes)
     if (typeof duration === 'number') {
         return `${duration}m`
     }
 
     if (!duration || typeof duration !== 'string' || !duration.includes(':')) {
-        return '30m' // Default fallback
+        return '30m'
     }
 
     const parts = duration.split(':')
@@ -58,17 +48,11 @@ export function formatDuration(duration: string): string {
     }
 }
 
-/**
- * Generate shareable appointment link
- */
 export function getAppointmentLink(appointmentId: string): string {
     const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
     return `${baseUrl}/appointments/${appointmentId}`
 }
 
-/**
- * Copy text to clipboard
- */
 export async function copyToClipboard(text: string): Promise<boolean> {
     try {
         await navigator.clipboard.writeText(text)
@@ -79,25 +63,16 @@ export async function copyToClipboard(text: string): Promise<boolean> {
     }
 }
 
-/**
- * Validate email format
- */
 export function isValidEmail(email: string): boolean {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
     return emailRegex.test(email)
 }
 
-/**
- * Validate phone format
- */
 export function isValidPhone(phone: string): boolean {
     const phoneRegex = /^[\d\s\-\+\(\)]+$/
     return phoneRegex.test(phone) && phone.replace(/\D/g, '').length >= 10
 }
 
-/**
- * Validate password against application requirements
- */
 export function getPasswordValidationError(password: string): string | null {
     if (password.length < 8) return 'Password must be at least 8 characters'
     if (!/[A-Z]/.test(password)) return 'Password must include at least one uppercase letter'
@@ -107,9 +82,6 @@ export function getPasswordValidationError(password: string): string | null {
     return null
 }
 
-/**
- * Generate time slots array
- */
 export function generateTimeSlots(
     startTime: string,
     endTime: string,
@@ -132,17 +104,11 @@ export function generateTimeSlots(
     return slots
 }
 
-/**
- * Get day of week name
- */
 export function getDayName(dayOfWeek: number): string {
     const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
     return days[dayOfWeek]
 }
 
-/**
- * Check if date is in the past
- */
 export function isPastDate(date: Date | string): boolean {
     const d = typeof date === 'string' ? new Date(date) : date
     const today = new Date()

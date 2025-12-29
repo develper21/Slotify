@@ -30,29 +30,26 @@ async function AppointmentContent({ id }: { id: string }) {
         )
     }
 
-    const organizerName = appointment.profiles?.business_name || appointment.profiles?.full_name || 'Expert Organizer'
+    const organizerName = appointment.organizer?.businessName || appointment.organizer?.fullName || 'Expert Organizer'
 
     return (
         <div className="relative min-h-screen bg-mongodb-black pb-24">
             <Navbar />
 
-            {/* Hero Background Glow */}
             <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-7xl h-[500px] bg-mongodb-spring/5 blur-[120px] rounded-full -mt-24 pointer-events-none" />
 
             <div className="container mx-auto px-4 pt-12 relative z-10">
-                {/* Breadcrumbs */}
                 <Link href="/home" className="inline-flex items-center gap-2 text-neutral-500 hover:text-white mb-8 transition-colors group">
                     <ArrowLeft className="w-4 h-4 transition-transform group-hover:-translate-x-1" />
                     Back to all appointments
                 </Link>
 
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
-                    {/* Left Column: Details */}
                     <div className="lg:col-span-2 space-y-12">
                         <div>
                             <div className="flex items-center gap-3 mb-6">
                                 <Badge variant="primary" className="px-4 py-1.5 text-xs font-bold uppercase tracking-widest">
-                                    {appointment.location_type || 'Professional'}
+                                    Professional
                                 </Badge>
                                 <div className="h-px flex-1 bg-gradient-to-r from-neutral-800 to-transparent" />
                             </div>
@@ -64,7 +61,6 @@ async function AppointmentContent({ id }: { id: string }) {
                             </p>
                         </div>
 
-                        {/* Features Grid */}
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <Card className="bg-mongodb-slate/30 border-neutral-800/50 hover:border-mongodb-spring/30 transition-colors">
                                 <CardContent className="p-6 flex items-start gap-4">
@@ -73,7 +69,7 @@ async function AppointmentContent({ id }: { id: string }) {
                                     </div>
                                     <div>
                                         <h3 className="text-white font-bold mb-1">Duration</h3>
-                                        <p className="text-neutral-400">{formatDuration(appointment.duration)}</p>
+                                        <p className="text-neutral-400">{formatDuration(appointment.duration?.toString() || '60')}</p>
                                     </div>
                                 </CardContent>
                             </Card>
@@ -85,13 +81,12 @@ async function AppointmentContent({ id }: { id: string }) {
                                     </div>
                                     <div>
                                         <h3 className="text-white font-bold mb-1">Location</h3>
-                                        <p className="text-neutral-400">{appointment.location_details || 'Online Session'}</p>
+                                        <p className="text-neutral-400">{appointment.locationDetails || 'Online Session'}</p>
                                     </div>
                                 </CardContent>
                             </Card>
                         </div>
 
-                        {/* Organizer Section */}
                         <div className="pt-12 border-t border-neutral-800">
                             <div className="flex items-center gap-6 mb-8">
                                 <div className="w-20 h-20 rounded-2xl bg-gradient-mongodb p-1">
@@ -105,12 +100,11 @@ async function AppointmentContent({ id }: { id: string }) {
                                 </div>
                             </div>
                             <p className="text-lg text-neutral-400 leading-relaxed">
-                                {appointment.profiles?.business_description || 'A recognized leader in the field, dedicated to providing high-impact professional services and exceptional client experiences.'}
+                                {appointment.organizer?.businessDescription || 'A recognized leader in the field, dedicated to providing high-impact professional services and exceptional client experiences.'}
                             </p>
                         </div>
                     </div>
 
-                    {/* Right Column: Sticky Booking Card */}
                     <div className="lg:col-span-1">
                         <Card className="sticky top-24 border-mongodb-spring/20 bg-mongodb-slate/50 backdrop-blur-xl shadow-[0_20px_50px_rgba(0,0,0,0.5)] overflow-hidden">
                             <div className="h-1.5 w-full bg-gradient-mongodb" />
@@ -129,11 +123,11 @@ async function AppointmentContent({ id }: { id: string }) {
                                     </div>
                                 </div>
 
-                                {appointment.price > 0 && (
+                                {appointment.price && Number(appointment.price) > 0 && (
                                     <div className="p-4 rounded-xl bg-white/5 border border-white/10">
                                         <p className="text-neutral-500 text-sm font-medium mb-1">Professional Fee</p>
                                         <p className="text-4xl font-bold text-white">
-                                            ${appointment.price}<span className="text-lg text-neutral-500">/{appointment.currency || 'USD'}</span>
+                                            ${appointment.price}<span className="text-lg text-neutral-500">/USD</span>
                                         </p>
                                     </div>
                                 )}

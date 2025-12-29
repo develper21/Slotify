@@ -24,34 +24,26 @@ export default function DatePickerPage({ params }: DatePickerPageProps) {
     const year = currentDate.getFullYear()
     const month = currentDate.getMonth()
 
-    // Get first day of month and number of days
     const firstDayOfMonth = new Date(year, month, 1).getDay()
     const daysInMonth = new Date(year, month + 1, 0).getDate()
     const daysInPrevMonth = new Date(year, month, 0).getDate()
 
-    // Generate calendar days
     const calendarDays: (Date | null)[] = []
 
-    // Previous month days
     for (let i = firstDayOfMonth - 1; i >= 0; i--) {
         calendarDays.push(new Date(year, month - 1, daysInPrevMonth - i))
     }
 
-    // Current month days
     for (let i = 1; i <= daysInMonth; i++) {
         calendarDays.push(new Date(year, month, i))
     }
 
-    // Next month days to fill the grid
     const remainingDays = 42 - calendarDays.length
     for (let i = 1; i <= remainingDays; i++) {
         calendarDays.push(new Date(year, month + 1, i))
     }
 
-    // TODO: Fetch available dates from server
     useEffect(() => {
-        // Placeholder: In real implementation, fetch from getAvailableSlots
-        // For now, mark all future dates as available
         const dates: string[] = []
         for (let i = 0; i < daysInMonth; i++) {
             const date = new Date(year, month, i + 1)
@@ -98,7 +90,6 @@ export default function DatePickerPage({ params }: DatePickerPageProps) {
 
     return (
         <div className="max-w-2xl mx-auto">
-            {/* Header */}
             <div className="mb-12 text-center">
                 <h1 className="text-5xl font-display font-bold text-white mb-4 tracking-tight">
                     Pick a <span className="gradient-text">Date</span>
@@ -106,29 +97,21 @@ export default function DatePickerPage({ params }: DatePickerPageProps) {
                 <p className="text-xl text-neutral-400">Choose a day that works best for you</p>
             </div>
 
-            {/* Calendar Card */}
             <Card className="bg-mongodb-slate/50 border-neutral-800">
                 <CardHeader>
                     <div className="flex items-center justify-between">
-                        <button
-                            onClick={handlePrevMonth}
-                            className="p-2 hover:bg-neutral-800 rounded-lg transition-colors text-white"
-                        >
+                        <button onClick={handlePrevMonth} className="p-2 hover:bg-neutral-800 rounded-lg transition-colors text-white">
                             <ChevronLeft className="w-5 h-5" />
                         </button>
                         <CardTitle className="text-xl text-white">
                             {MONTHS[month]} {year}
                         </CardTitle>
-                        <button
-                            onClick={handleNextMonth}
-                            className="p-2 hover:bg-neutral-800 rounded-lg transition-colors text-white"
-                        >
+                        <button onClick={handleNextMonth} className="p-2 hover:bg-neutral-800 rounded-lg transition-colors text-white">
                             <ChevronRight className="w-5 h-5" />
                         </button>
                     </div>
                 </CardHeader>
                 <CardContent>
-                    {/* Day Headers */}
                     <div className="grid grid-cols-7 gap-2 mb-2">
                         {DAYS.map((day) => (
                             <div key={day} className="text-center text-sm font-medium text-neutral-400 py-2">
@@ -137,7 +120,6 @@ export default function DatePickerPage({ params }: DatePickerPageProps) {
                         ))}
                     </div>
 
-                    {/* Calendar Grid */}
                     <div className="grid grid-cols-7 gap-2">
                         {calendarDays.map((date, index) => {
                             if (!date) return <div key={index} />
@@ -159,15 +141,13 @@ export default function DatePickerPage({ params }: DatePickerPageProps) {
                                         !isSelectedDate && isAvailable && !isPast && isCurrent && 'hover:bg-neutral-800 hover:scale-105',
                                         (!isAvailable || isPast) && isCurrent && 'opacity-30 cursor-not-allowed',
                                         !isCurrent && 'cursor-not-allowed opacity-20'
-                                    )}
-                                >
+                                    )}>
                                     {date.getDate()}
                                 </button>
                             )
                         })}
                     </div>
 
-                    {/* Legend */}
                     <div className="mt-6 pt-6 border-t border-neutral-800 flex items-center justify-center gap-6 text-sm">
                         <div className="flex items-center gap-2">
                             <div className="w-4 h-4 rounded bg-mongodb-spring" />
@@ -185,7 +165,6 @@ export default function DatePickerPage({ params }: DatePickerPageProps) {
                 </CardContent>
             </Card>
 
-            {/* Selected Date Display */}
             {selectedDate && (
                 <Card className="mt-6 bg-mongodb-spring/10 border-mongodb-spring/20">
                     <CardContent className="py-4">

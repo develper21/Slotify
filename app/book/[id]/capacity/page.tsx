@@ -1,5 +1,8 @@
 import { redirect } from 'next/navigation'
-import { createClient } from '@/lib/supabase/server'
+import { getSession } from '@/lib/auth'
+import { db } from '@/lib/db'
+import { appointments } from '@/lib/db/schema'
+import { eq } from 'drizzle-orm'
 import { Card, CardContent } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { Users } from 'lucide-react'
@@ -13,45 +16,25 @@ export default async function CapacitySelectionPage({
     params: { id: string }
     searchParams: { resource?: string; date?: string; slot?: string }
 }) {
-    const supabase = createClient()
-
-    // Check authentication
-    const { data: { session } } = await supabase.auth.getSession()
+    const session = await getSession()
     if (!session) {
         redirect('/login')
     }
 
-    // Get appointment details
-    const { data: appointment }: { data: any } = await supabase
-        .from('appointments')
-        .select(`
-            *,
-            appointment_settings (*)
-        `)
-        .eq('id', params.id)
-        .single()
+    const appointment = await db.query.appointments.findFirst({
+        where: eq(appointments.id, params.id)
+    })
 
     if (!appointment) {
         redirect('/')
     }
 
-    // Get selected slot to check available capacity
-    const { data: slot }: { data: { available_capacity?: number } | null } = searchParams.slot
-        ? await supabase
-            .from('time_slots')
-            .select('*')
-            .eq('id', searchParams.slot)
-            .single()
-        : { data: null }
-
-    const settings: any = appointment?.appointment_settings?.[0]
-    const maxCapacity = slot?.available_capacity || settings?.max_capacity || 10
-    const minCapacity = settings?.min_capacity || 1
+    const maxCapacity = appointment.maxCapacity || 1
+    const minCapacity = 1
 
     return (
         <div className="min-h-screen bg-mongodb-black py-12">
             <div className="container mx-auto px-4 max-w-2xl">
-                {/* Header */}
                 <div className="mb-8">
                     <h1 className="text-3xl font-display font-bold text-white mb-2">
                         Select Capacity
@@ -61,7 +44,6 @@ export default async function CapacitySelectionPage({
                     </p>
                 </div>
 
-                {/* Progress Steps */}
                 <div className="mb-8 flex items-center gap-4">
                     <div className="flex items-center gap-2">
                         <div className="w-8 h-8 rounded-full bg-green-500 text-white flex items-center justify-center text-sm font-semibold">
@@ -92,7 +74,6 @@ export default async function CapacitySelectionPage({
                     </div>
                 </div>
 
-                {/* Capacity Selection Card */}
                 <Card className="mb-6 bg-mongodb-slate/50 border-neutral-800">
                     <CardContent className="p-8">
                         <div className="flex flex-col items-center gap-6">
@@ -109,7 +90,6 @@ export default async function CapacitySelectionPage({
                                 </p>
                             </div>
 
-                            {/* Capacity Selector */}
                             <CapacitySelector
                                 appointmentId={params.id}
                                 minCapacity={minCapacity}
@@ -122,7 +102,6 @@ export default async function CapacitySelectionPage({
                     </CardContent>
                 </Card>
 
-                {/* Back Button */}
                 <Link href={`/book/${params.id}/time?${new URLSearchParams(searchParams as any).toString()}`}>
                     <Button variant="ghost" className="w-full text-neutral-400 hover:text-white">
                         ← Back to Time Selection

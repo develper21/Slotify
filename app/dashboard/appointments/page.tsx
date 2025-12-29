@@ -1,5 +1,5 @@
 import { redirect } from 'next/navigation'
-import { createClient } from '@/lib/supabase/server'
+import { getSession } from '@/lib/auth'
 import { getOrganizerAppointments } from '@/lib/actions/organizer'
 import { Card, CardContent } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
@@ -14,20 +14,16 @@ export default async function AppointmentsPage({
 }: {
     searchParams: { search?: string }
 }) {
-    const supabase = createClient()
-
-    // 1. Check authentication and get user
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) {
+    const session = await getSession()
+    if (!session) {
         redirect('/login')
     }
 
-    // 2. Fetch appointments (using user.id as organizerId since profiles.id == auth.users.id)
+    const { user } = session
     const appointments = await getOrganizerAppointments(user.id, searchParams.search)
 
     return (
         <div className="space-y-8 animate-in fade-in duration-500">
-            {/* Header Content */}
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
                     <h1 className="text-4xl font-display font-bold text-white tracking-tight">
@@ -45,7 +41,6 @@ export default async function AppointmentsPage({
                 </Link>
             </div>
 
-            {/* Filter Row */}
             <div className="flex flex-col sm:flex-row gap-4">
                 <form className="relative flex-1 group">
                     <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-neutral-500 group-focus-within:text-mongodb-spring transition-colors" />
@@ -59,7 +54,6 @@ export default async function AppointmentsPage({
                 </form>
             </div>
 
-            {/* Content Area */}
             {appointments.length === 0 ? (
                 <Card className="bg-mongodb-slate/50 border-neutral-800 border-dashed">
                     <CardContent className="py-24 text-center">
@@ -85,8 +79,7 @@ export default async function AppointmentsPage({
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     {appointments.map((appointment: any) => (
                         <Card key={appointment.id} className="group hover:border-mongodb-spring/30 transition-all duration-300 bg-mongodb-slate/40 border-neutral-800 overflow-hidden relative">
-                            {/* Status Indicator Bar */}
-                            <div className={`absolute top-0 left-0 w-full h-1 ${appointment.is_active ? 'bg-mongodb-spring' : 'bg-yellow-500/50'}`} />
+                            <div className={`absolute top-0 left-0 w-full h-1 ${appointment.isActive ? 'bg-mongodb-spring' : 'bg-yellow-500/50'}`} />
 
                             <CardContent className="p-6">
                                 <div className="flex items-start justify-between mb-4">
@@ -96,19 +89,18 @@ export default async function AppointmentsPage({
                                         </h3>
                                         <div className="flex items-center gap-2">
                                             <Badge
-                                                variant={appointment.is_active ? 'success' : 'warning'}
-                                                className="rounded-md"
-                                            >
-                                                {appointment.is_active ? 'Active' : 'Hidden'}
+                                                variant={appointment.isActive ? 'success' : 'warning' as any}
+                                                className="rounded-md">
+                                                {appointment.isActive ? 'Active' : 'Hidden'}
                                             </Badge>
                                             <span className="text-xs font-bold text-neutral-500 bg-neutral-800/50 px-2 py-0.5 rounded uppercase tracking-wider">
-                                                {appointment.price > 0 ? `$${appointment.price}` : 'Free'}
+                                                {Number(appointment.price) > 0 ? `$${appointment.price}` : 'Free'}
                                             </span>
                                         </div>
                                     </div>
                                     <TogglePublishButton
                                         appointmentId={appointment.id}
-                                        currentStatus={appointment.is_active}
+                                        currentStatus={appointment.isActive}
                                     />
                                 </div>
 
@@ -123,7 +115,7 @@ export default async function AppointmentsPage({
                                     </div>
                                     <div className="flex items-center gap-2 text-xs font-medium text-neutral-500 bg-mongodb-black/50 p-2 rounded-lg border border-neutral-700/30">
                                         <MapPin className="w-3.5 h-3.5 text-mongodb-spring" />
-                                        <span className="truncate">{appointment.location_details || 'Online'}</span>
+                                        <span className="truncate">{appointment.locationDetails || 'Online'}</span>
                                     </div>
                                 </div>
 

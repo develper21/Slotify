@@ -1,11 +1,15 @@
 import { redirect } from 'next/navigation'
-import { createClient } from '@/lib/supabase/server'
+import { getSession } from '@/lib/auth'
 import { getOrganizerId, getOrganizerAppointments } from '@/lib/actions/organizer'
 import { getOrganizerBookings, getCustomerBookings } from '@/lib/actions/bookings'
 import { Card, CardContent } from '@/components/ui/Card'
 import { Calendar, Clock } from 'lucide-react'
+import Link from 'next/link'
 import { BookingFilters, ExportButton } from '@/components/bookings/BookingActions'
 import { BookingsList } from '@/components/dashboard/BookingsList'
+import { db } from '@/lib/db'
+import { profiles } from '@/lib/db/schema'
+import { eq } from 'drizzle-orm'
 
 export const dynamic = 'force-dynamic'
 
@@ -14,20 +18,16 @@ export default async function BookingsPage({
 }: {
     searchParams: { status?: string; appointment?: string }
 }) {
-    const supabase = createClient()
-
-    // Check authentication
-    const { data: { session } } = await supabase.auth.getSession()
+    const session = await getSession()
     if (!session) {
         redirect('/login')
     }
 
-    // Check User Role
-    const { data: profile } = await supabase
-        .from('profiles')
-        .select('role')
-        .eq('id', session.user.id)
-        .single()
+    const { user } = session
+
+    const profile = await db.query.profiles.findFirst({
+        where: eq(profiles.id, user.id)
+    })
 
     const userRole = profile?.role || 'customer'
 
@@ -36,34 +36,19 @@ export default async function BookingsPage({
     let organizerId = null
 
     if (userRole === 'organizer') {
-        // Get organizer ID
-        organizerId = await getOrganizerId(session.user.id)
-        if (!organizerId) {
-            // If organizer user but no organizer record, maybe redirect to profile setup?
-            // For now, redirect dashboard
-            redirect('/dashboard')
-        }
-
-        // Get appointments for filter
+        organizerId = user.id
         appointments = await getOrganizerAppointments(organizerId)
-
-        // Get bookings with filters
         bookings = await getOrganizerBookings(organizerId, {
             status: searchParams.status,
             appointmentId: searchParams.appointment,
         })
     } else if (userRole === 'customer') {
-        bookings = await getCustomerBookings(session.user.id)
-        // Check for client-side filtering if needed, or implement filter support in getCustomerBookings
+        bookings = await getCustomerBookings(user.id)
         if (searchParams.status) {
             bookings = bookings.filter((b: any) => b.status === searchParams.status)
         }
-    } else {
-        // generic fallback or redirect
-        redirect('/dashboard')
     }
 
-    // Calculate stats
     const stats = {
         total: bookings.length,
         confirmed: bookings.filter((b: any) => b.status === 'confirmed').length,
@@ -73,7 +58,6 @@ export default async function BookingsPage({
 
     return (
         <div className="space-y-8 animate-in fade-in duration-500">
-            {/* Header */}
             <div>
                 <h1 className="text-3xl font-display font-bold text-white mb-2">
                     {userRole === 'organizer' ? 'Bookings Management' : 'My Bookings'}
@@ -86,7 +70,6 @@ export default async function BookingsPage({
                 </p>
             </div>
 
-            {/* Stats Cards */}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
                 <Card className="bg-mongodb-slate/50 border-neutral-800">
                     <CardContent className="p-6">
@@ -137,7 +120,6 @@ export default async function BookingsPage({
                 </Card>
             </div>
 
-            {/* Filters & List */}
             <Card className="mb-6 bg-mongodb-slate/50 border-neutral-800">
                 <CardContent className="p-6">
                     {userRole === 'organizer' ? (
@@ -152,20 +134,18 @@ export default async function BookingsPage({
                             <ExportButton organizerId={organizerId!} />
                         </div>
                     ) : (
-                        // Customer specific filters? Just status for now
                         <div className="flex items-center gap-4">
                             <div className="flex bg-mongodb-black p-1 rounded-lg border border-neutral-800">
                                 {['all', 'confirmed', 'pending', 'cancelled'].map((status) => (
-                                    <a
+                                    <Link
                                         key={status}
                                         href={status === 'all' ? '/dashboard/bookings' : `/dashboard/bookings?status=${status}`}
                                         className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${(status === 'all' && !searchParams.status) || searchParams.status === status
                                             ? 'bg-neutral-800 text-white'
                                             : 'text-neutral-400 hover:text-white'
-                                            }`}
-                                    >
+                                            }`}>
                                         {status.charAt(0).toUpperCase() + status.slice(1)}
-                                    </a>
+                                    </Link>
                                 ))}
                             </div>
                         </div>

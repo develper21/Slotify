@@ -1,6 +1,0 @@
-{
-  "imports": {
-    "std/": "https://deno.land/std@0.190.0/",
-    "resend": "npm:resend@0.16.0"
-  }
-}

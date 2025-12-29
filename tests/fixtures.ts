@@ -1,19 +1,13 @@
 import { test as base, expect } from '@playwright/test'
 
-// Extend base test with custom fixtures
-export const test = base.extend({
-    // Add custom fixtures here if needed
-})
-
+export const test = base.extend({})
 export { expect }
 
-// Custom test helpers
 export const testConfig = {
     baseURL: process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000',
     timeout: 30000,
 }
 
-// Helper functions for authentication
 export async function loginAsCustomer(page: any) {
     await page.goto('/login')
     await page.fill('input[name="email"]', 'customer@test.com')

@@ -1,13 +1,13 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { ChevronLeft, Info } from 'lucide-react'
 import { createAppointment } from '@/lib/actions/organizer'
-import { createClient } from '@/lib/supabase/client'
+import { getCurrentUser } from '@/lib/actions/auth'
 import { toast } from 'sonner'
 
 export default function NewAppointmentPage() {
@@ -16,8 +16,8 @@ export default function NewAppointmentPage() {
     const [formData, setFormData] = useState({
         title: '',
         description: '',
-        duration: 60, // Minutes
-        location_details: 'Online',
+        duration: 60,
+        locationDetails: 'Online',
         price: 0
     })
     const [errors, setErrors] = useState<Record<string, string>>({})
@@ -58,16 +58,21 @@ export default function NewAppointmentPage() {
         setIsSubmitting(true)
 
         try {
-            const supabase = createClient()
-            const { data: { user } } = await supabase.auth.getUser()
+            const user = await getCurrentUser()
 
             if (!user) {
                 toast.error('Session expired. Please login again.')
+                router.push('/login')
                 return
             }
 
-            // Using user.id directly as profiles.id matches auth.users.id
-            const result = await createAppointment(user.id, formData)
+            const result = await createAppointment(user.id, {
+                title: formData.title,
+                description: formData.description,
+                duration: formData.duration,
+                locationDetails: formData.locationDetails,
+                price: formData.price
+            })
 
             if (!result.success) {
                 toast.error(result.message || 'Error occurred')
@@ -85,12 +90,10 @@ export default function NewAppointmentPage() {
 
     return (
         <div className="space-y-8 animate-in fade-in duration-500 max-w-2xl py-8">
-            {/* Header */}
             <div>
                 <button
                     onClick={() => router.back()}
-                    className="flex items-center gap-2 text-neutral-500 hover:text-mongodb-spring mb-6 transition-colors group px-2 py-1 -ml-2 rounded-lg hover:bg-neutral-800"
-                >
+                    className="flex items-center gap-2 text-neutral-500 hover:text-mongodb-spring mb-6 transition-colors group px-2 py-1 -ml-2 rounded-lg hover:bg-neutral-800">
                     <ChevronLeft className="w-5 h-5 transition-transform group-hover:-translate-x-1" />
                     Back
                 </button>
@@ -102,7 +105,6 @@ export default function NewAppointmentPage() {
                 </p>
             </div>
 
-            {/* Hint Box */}
             <div className="bg-mongodb-slate/20 border border-neutral-800 p-4 rounded-xl flex items-start gap-4">
                 <div className="p-2 bg-mongodb-spring/10 rounded-lg">
                     <Info className="w-5 h-5 text-mongodb-spring" />
@@ -112,14 +114,12 @@ export default function NewAppointmentPage() {
                 </p>
             </div>
 
-            {/* Form */}
             <form onSubmit={handleSubmit} className="space-y-6">
                 <Card className="bg-mongodb-slate/30 border-neutral-800 backdrop-blur-sm shadow-2xl">
                     <CardHeader>
                         <CardTitle className="text-white text-xl">Service Particulars</CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-8">
-                        {/* Title */}
                         <Input
                             label="Plan Title"
                             value={formData.title}
@@ -131,7 +131,6 @@ export default function NewAppointmentPage() {
                             labelClassName="text-neutral-400 font-bold uppercase text-[10px] tracking-widest px-1 mb-2"
                         />
 
-                        {/* Description */}
                         <div>
                             <label className="block text-[10px] font-bold text-neutral-400 uppercase tracking-widest px-1 mb-2">
                                 Brief Description
@@ -146,7 +145,6 @@ export default function NewAppointmentPage() {
                         </div>
 
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                            {/* Duration */}
                             <div>
                                 <label className="block text-[10px] font-bold text-neutral-400 uppercase tracking-widest px-1 mb-2">
                                     Duration <span className="text-mongodb-spring">*</span>
@@ -154,8 +152,7 @@ export default function NewAppointmentPage() {
                                 <select
                                     value={formData.duration}
                                     onChange={(e) => handleChange('duration', parseInt(e.target.value))}
-                                    className="w-full px-4 py-3 rounded-xl border border-neutral-700 bg-mongodb-black text-white focus:border-mongodb-spring focus:ring-4 focus:ring-mongodb-spring/10 transition-all outline-none h-12"
-                                >
+                                    className="w-full px-4 py-3 rounded-xl border border-neutral-700 bg-mongodb-black text-white focus:border-mongodb-spring focus:ring-4 focus:ring-mongodb-spring/10 transition-all outline-none h-12">
                                     <option value={15}>15 Minutes</option>
                                     <option value={30}>30 Minutes</option>
                                     <option value={45}>45 Minutes</option>
@@ -165,7 +162,6 @@ export default function NewAppointmentPage() {
                                 </select>
                             </div>
 
-                            {/* Price */}
                             <Input
                                 label="Pricing ($)"
                                 type="number"
@@ -177,11 +173,10 @@ export default function NewAppointmentPage() {
                             />
                         </div>
 
-                        {/* Location */}
                         <Input
                             label="Meeting Location"
-                            value={formData.location_details}
-                            onChange={(e) => handleChange('location_details', e.target.value)}
+                            value={formData.locationDetails}
+                            onChange={(e) => handleChange('locationDetails', e.target.value)}
                             placeholder="Online Meet, Google Zoom, Office Address..."
                             className="bg-mongodb-black border-neutral-700 text-white placeholder:text-neutral-600 focus:border-mongodb-spring h-12"
                             labelClassName="text-neutral-400 font-bold uppercase text-[10px] tracking-widest px-1 mb-2"
@@ -189,14 +184,12 @@ export default function NewAppointmentPage() {
                     </CardContent>
                 </Card>
 
-                {/* Submit Action */}
                 <div className="flex items-center justify-end gap-4 pt-4">
                     <Button
                         type="button"
                         variant="ghost"
                         onClick={() => router.back()}
-                        className="text-neutral-500 hover:text-white"
-                    >
+                        className="text-neutral-500 hover:text-white">
                         Discard
                     </Button>
                     <Button
@@ -204,8 +197,7 @@ export default function NewAppointmentPage() {
                         size="xl"
                         isLoading={isSubmitting}
                         variant="primary"
-                        className="rounded-xl px-12"
-                    >
+                        className="rounded-xl px-12">
                         Create Plan
                     </Button>
                 </div>

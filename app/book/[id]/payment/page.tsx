@@ -27,8 +27,6 @@ export default function PaymentPage({ params }: { params: { id: string } }) {
         setLoading(true)
 
         try {
-            // TODO: Integrate with payment gateway (Stripe/Razorpay)
-            // Simulating payment processing
             await new Promise(resolve => setTimeout(resolve, 2000))
 
             toast.success('Payment successful!')
@@ -42,7 +40,6 @@ export default function PaymentPage({ params }: { params: { id: string } }) {
 
     return (
         <div className="max-w-4xl mx-auto">
-            {/* Header */}
             <div className="mb-12 text-center">
                 <h1 className="text-5xl font-display font-bold text-white mb-4 tracking-tight">
                     Secure <span className="gradient-text">Payment</span>
@@ -51,14 +48,12 @@ export default function PaymentPage({ params }: { params: { id: string } }) {
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                {/* Payment Form */}
                 <div className="lg:col-span-2">
                     <Card className="bg-mongodb-slate/50 border-neutral-800">
                         <CardHeader>
                             <CardTitle className="text-white">Payment Method</CardTitle>
                         </CardHeader>
                         <CardContent className="space-y-6">
-                            {/* Payment Method Selection */}
                             <div className="grid grid-cols-3 gap-4">
                                 <button
                                     type="button"
@@ -66,8 +61,7 @@ export default function PaymentPage({ params }: { params: { id: string } }) {
                                     className={`p-4 rounded-lg border-2 transition-all ${paymentMethod === 'card'
                                         ? 'border-mongodb-spring bg-mongodb-spring/10'
                                         : 'border-neutral-700 hover:border-neutral-500 bg-mongodb-black'
-                                        }`}
-                                >
+                                        }`}>
                                     <CreditCard className={`w-6 h-6 mx-auto mb-2 ${paymentMethod === 'card' ? 'text-mongodb-spring' : 'text-neutral-400'}`} />
                                     <p className={`text-sm font-medium ${paymentMethod === 'card' ? 'text-white' : 'text-neutral-400'}`}>Card</p>
                                 </button>
@@ -77,8 +71,7 @@ export default function PaymentPage({ params }: { params: { id: string } }) {
                                     className={`p-4 rounded-lg border-2 transition-all ${paymentMethod === 'upi'
                                         ? 'border-mongodb-spring bg-mongodb-spring/10'
                                         : 'border-neutral-700 hover:border-neutral-500 bg-mongodb-black'
-                                        }`}
-                                >
+                                        }`}>
                                     <div className={`w-6 h-6 mx-auto mb-2 font-bold ${paymentMethod === 'upi' ? 'text-mongodb-spring' : 'text-neutral-400'}`}>₹</div>
                                     <p className={`text-sm font-medium ${paymentMethod === 'upi' ? 'text-white' : 'text-neutral-400'}`}>UPI</p>
                                 </button>
@@ -88,14 +81,12 @@ export default function PaymentPage({ params }: { params: { id: string } }) {
                                     className={`p-4 rounded-lg border-2 transition-all ${paymentMethod === 'netbanking'
                                         ? 'border-mongodb-spring bg-mongodb-spring/10'
                                         : 'border-neutral-700 hover:border-neutral-500 bg-mongodb-black'
-                                        }`}
-                                >
+                                        }`}>
                                     <div className="w-6 h-6 mx-auto mb-2 text-neutral-400 font-bold">🏦</div>
                                     <p className={`text-sm font-medium ${paymentMethod === 'netbanking' ? 'text-white' : 'text-neutral-400'}`}>Net Banking</p>
                                 </button>
                             </div>
 
-                            {/* Card Payment Form */}
                             {paymentMethod === 'card' && (
                                 <form onSubmit={handlePayment} className="space-y-4">
                                     <div>
@@ -165,7 +156,6 @@ export default function PaymentPage({ params }: { params: { id: string } }) {
                                 </form>
                             )}
 
-                            {/* UPI Payment */}
                             {paymentMethod === 'upi' && (
                                 <div className="space-y-4">
                                     <div>
@@ -184,7 +174,6 @@ export default function PaymentPage({ params }: { params: { id: string } }) {
                                 </div>
                             )}
 
-                            {/* Net Banking */}
                             {paymentMethod === 'netbanking' && (
                                 <div className="space-y-4">
                                     <div>
@@ -205,7 +194,6 @@ export default function PaymentPage({ params }: { params: { id: string } }) {
                                 </div>
                             )}
 
-                            {/* Security Notice */}
                             <div className="flex items-start gap-3 p-4 bg-green-900/10 border border-green-900/30 rounded-lg">
                                 <Lock className="w-5 h-5 text-green-500 mt-0.5" />
                                 <div>
@@ -219,7 +207,6 @@ export default function PaymentPage({ params }: { params: { id: string } }) {
                     </Card>
                 </div>
 
-                {/* Order Summary */}
                 <div className="lg:col-span-1">
                     <Card className="bg-mongodb-slate/50 border-neutral-800">
                         <CardHeader>
