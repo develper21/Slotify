@@ -23,11 +23,11 @@ module.exports = {
                     200: '#BBF7D0',
                     300: '#86EFAC',
                     400: '#4ADE80',
-                    500: '#00ED64', // MongoDB Spring Green
-                    600: '#00684A', // MongoDB Forest Green
+                    500: '#00ED64',
+                    600: '#00684A',
                     700: '#004D39',
                     800: '#003E2F',
-                    900: '#001E2B', // MongoDB Black
+                    900: '#001E2B',
                 },
                 accent: {
                     500: '#00ED64',
