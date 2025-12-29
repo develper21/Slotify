@@ -1,5 +1,4 @@
 'use client'
-
 import { useEffect, useMemo, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { Button } from '@/components/ui/Button'
@@ -80,11 +79,11 @@ function VerifyRecoveryContent() {
 
                 <div className="space-y-4">
                     <label className="text-sm font-bold text-neutral-400 ml-1 uppercase tracking-widest block text-center">
-                        6-Digit OTP Code
+                        8-Digit OTP Code
                     </label>
                     <div className="flex justify-center">
                         <OTPInput
-                            length={6}
+                            length={8}
                             onComplete={handleVerifyOTP}
                             disabled={isLoading}
                             error={hasError}
@@ -100,8 +99,7 @@ function VerifyRecoveryContent() {
                         onClick={() => { }}
                         size="xl"
                         className="w-full group shadow-[0_10px_30px_rgba(0,237,100,0.15)] rounded-2xl h-16 opacity-50 cursor-not-allowed"
-                        disabled
-                    >
+                        disabled>
                         Auto-verifying Code...
                         <ArrowRight className="w-5 h-5 ml-2 animate-pulse" />
                     </Button>
