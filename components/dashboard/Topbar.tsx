@@ -8,7 +8,6 @@ import { NotificationBell } from './NotificationBell'
 export function Topbar({ className, user }: { className?: string; user?: any }) {
     return (
         <header className={cn("h-16 bg-mongodb-black/95 border-b border-neutral-800 flex items-center justify-between px-6 sticky top-0 z-40 backdrop-blur-sm", className)}>
-            {/* Left: Search */}
             <div className="flex-1 max-w-xl">
                 <div className="relative group">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-500 group-focus-within:text-mongodb-spring transition-colors" />
@@ -20,7 +19,6 @@ export function Topbar({ className, user }: { className?: string; user?: any }) 
                 </div>
             </div>
 
-            {/* Right: Actions */}
             <div className="flex items-center gap-4 ml-4">
                 {user && <NotificationBell userId={user.id} />}
 
@@ -29,7 +27,7 @@ export function Topbar({ className, user }: { className?: string; user?: any }) 
                 <div className="flex items-center gap-3 pl-2">
                     <div className="text-right hidden sm:block">
                         <p className="text-sm font-medium text-white">
-                            {user?.user_metadata?.full_name || 'Account'}
+                            {user?.full_name || 'Account'}
                         </p>
                         <p className="text-[10px] text-neutral-500 font-bold uppercase tracking-widest leading-none mt-1">
                             {user?.email}
