@@ -22,7 +22,6 @@ export function Navbar() {
         <nav className="sticky top-0 z-50 bg-mongodb-black/80 backdrop-blur-md border-b border-neutral-700/50">
             <div className="container mx-auto px-4">
                 <div className="flex items-center justify-between h-16">
-                    {/* Logo */}
                     <Link href="/" className="flex items-center gap-2">
                         <div className="w-8 h-8 bg-mongodb-spring rounded-mongodb flex items-center justify-center">
                             <Calendar className="w-5 h-5 text-mongodb-black" />
@@ -32,7 +31,6 @@ export function Navbar() {
                         </span>
                     </Link>
 
-                    {/* Desktop Navigation */}
                     <div className="hidden md:flex items-center gap-1">
                         {navItems.map((item) => {
                             const Icon = item.icon
@@ -46,8 +44,7 @@ export function Navbar() {
                                         isActive
                                             ? 'bg-mongodb-spring/10 text-mongodb-spring'
                                             : 'text-neutral-400 hover:text-white hover:bg-white/5'
-                                    )}
-                                >
+                                    )}>
                                     <Icon className="w-4 h-4" />
                                     {item.name}
                                 </Link>
@@ -55,7 +52,6 @@ export function Navbar() {
                         })}
                     </div>
 
-                    {/* Actions */}
                     <div className="hidden md:flex items-center gap-3">
                         <Button variant="ghost" size="sm" className="text-neutral-400 hover:text-red-400">
                             <LogOut className="w-4 h-4 mr-2" />
@@ -66,19 +62,16 @@ export function Navbar() {
                         </Button>
                     </div>
 
-                    {/* Mobile Menu Button */}
                     <div className="md:hidden">
                         <button
                             onClick={() => setIsOpen(!isOpen)}
-                            className="p-2 text-neutral-400 hover:text-white"
-                        >
+                            className="p-2 text-neutral-400 hover:text-white">
                             {isOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
                         </button>
                     </div>
                 </div>
             </div>
 
-            {/* Mobile Navigation */}
             {isOpen && (
                 <div className="md:hidden bg-mongodb-slate border-b border-neutral-700/50 animate-in">
                     <div className="px-2 pt-2 pb-3 space-y-1">
@@ -95,8 +88,7 @@ export function Navbar() {
                                         isActive
                                             ? 'bg-mongodb-spring/10 text-mongodb-spring'
                                             : 'text-neutral-400 hover:text-white hover:bg-white/5'
-                                    )}
-                                >
+                                    )}>
                                     <Icon className="w-5 h-5" />
                                     {item.name}
                                 </Link>
