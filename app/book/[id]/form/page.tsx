@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/Button'
 import { ChevronLeft } from 'lucide-react'
 import { getBookingQuestions, createBooking } from '@/lib/actions/appointments'
 import { createCheckoutSession } from '@/lib/actions/payments'
-import { createClient } from '@/lib/supabase/client'
+import { getCurrentUser } from '@/lib/actions/auth'
 import { toast } from 'sonner'
 
 interface BookingFormPageProps {
@@ -16,10 +16,10 @@ interface BookingFormPageProps {
 
 interface Question {
     id: string
-    question_text: string
-    question_type: 'single_line' | 'multi_line' | 'phone' | 'radio' | 'checkbox'
+    questionText: string
+    questionType: 'single_line' | 'multi_line' | 'phone' | 'radio' | 'checkbox'
     options: string[] | null
-    is_mandatory: boolean
+    isMandatory: boolean
 }
 
 export default function BookingFormPage({ params }: BookingFormPageProps) {
@@ -41,16 +41,19 @@ export default function BookingFormPage({ params }: BookingFormPageProps) {
     }, [])
 
     const loadUser = async () => {
-        const supabase = createClient()
-        const { data: { user } } = await supabase.auth.getUser()
-        if (user) {
-            setUserId(user.id)
-            // Pre-fill user data
-            setAnswers(prev => ({
-                ...prev,
-                name: user.user_metadata?.full_name || '',
-                email: user.email || '',
-            }))
+        try {
+            const user = await getCurrentUser()
+            if (user) {
+                setUserId(user.id)
+                // Pre-fill user data
+                setAnswers(prev => ({
+                    ...prev,
+                    name: user.fullName || '',
+                    email: user.email || '',
+                }))
+            }
+        } catch (error) {
+            console.error('Error loading user:', error)
         }
     }
 
@@ -58,7 +61,7 @@ export default function BookingFormPage({ params }: BookingFormPageProps) {
         setIsLoading(true)
         try {
             const data = await getBookingQuestions(params.id)
-            setQuestions(data as Question[])
+            setQuestions(data as any[])
         } catch (error) {
             console.error('Error loading questions:', error)
             toast.error('Failed to load booking form')
@@ -69,7 +72,6 @@ export default function BookingFormPage({ params }: BookingFormPageProps) {
 
     const handleInputChange = (questionId: string, value: string) => {
         setAnswers(prev => ({ ...prev, [questionId]: value }))
-        // Clear error for this field
         if (errors[questionId]) {
             setErrors(prev => {
                 const newErrors = { ...prev }
@@ -82,7 +84,6 @@ export default function BookingFormPage({ params }: BookingFormPageProps) {
     const validateForm = () => {
         const newErrors: Record<string, string> = {}
 
-        // Validate required fields
         if (!answers.name?.trim()) {
             newErrors.name = 'Name is required'
         }
@@ -93,9 +94,8 @@ export default function BookingFormPage({ params }: BookingFormPageProps) {
             newErrors.phone = 'Phone is required'
         }
 
-        // Validate custom questions
         questions.forEach(question => {
-            if (question.is_mandatory && !answers[question.id]?.trim()) {
+            if (question.isMandatory && !answers[question.id]?.trim()) {
                 newErrors[question.id] = 'This field is required'
             }
         })
@@ -135,12 +135,11 @@ export default function BookingFormPage({ params }: BookingFormPageProps) {
             if (!result.success) {
                 toast.error(result.message || 'Failed to create booking')
             } else if (result.requiresPayment && result.price) {
-                // REDIRECT TO STRIPE
                 toast.info('Redirecting to secure payment...')
                 const checkout = await createCheckoutSession({
                     appointmentId: params.id,
-                    bookingId: result.bookingId,
-                    price: result.price,
+                    bookingId: result.bookingId!,
+                    price: Number(result.price),
                     title: result.title || 'Professional Appointment'
                 })
 
@@ -165,13 +164,13 @@ export default function BookingFormPage({ params }: BookingFormPageProps) {
         const value = answers[question.id] || ''
         const error = errors[question.id]
 
-        switch (question.question_type) {
+        switch (question.questionType) {
             case 'single_line':
                 return (
                     <div key={question.id}>
                         <label className="block text-sm font-medium text-neutral-300 mb-2">
-                            {question.question_text}
-                            {question.is_mandatory && <span className="text-red-500 ml-1">*</span>}
+                            {question.questionText}
+                            {question.isMandatory && <span className="text-red-500 ml-1">*</span>}
                         </label>
                         <input
                             type="text"
@@ -187,8 +186,8 @@ export default function BookingFormPage({ params }: BookingFormPageProps) {
                 return (
                     <div key={question.id}>
                         <label className="block text-sm font-medium text-neutral-300 mb-2">
-                            {question.question_text}
-                            {question.is_mandatory && <span className="text-red-500 ml-1">*</span>}
+                            {question.questionText}
+                            {question.isMandatory && <span className="text-red-500 ml-1">*</span>}
                         </label>
                         <textarea
                             value={value}
@@ -204,8 +203,8 @@ export default function BookingFormPage({ params }: BookingFormPageProps) {
                 return (
                     <div key={question.id}>
                         <label className="block text-sm font-medium text-neutral-300 mb-2">
-                            {question.question_text}
-                            {question.is_mandatory && <span className="text-red-500 ml-1">*</span>}
+                            {question.questionText}
+                            {question.isMandatory && <span className="text-red-500 ml-1">*</span>}
                         </label>
                         <input
                             type="tel"
@@ -221,8 +220,8 @@ export default function BookingFormPage({ params }: BookingFormPageProps) {
                 return (
                     <div key={question.id}>
                         <label className="block text-sm font-medium text-neutral-300 mb-2">
-                            {question.question_text}
-                            {question.is_mandatory && <span className="text-red-500 ml-1">*</span>}
+                            {question.questionText}
+                            {question.isMandatory && <span className="text-red-500 ml-1">*</span>}
                         </label>
                         <div className="space-y-2">
                             {question.options?.map((option, index) => (
@@ -247,8 +246,8 @@ export default function BookingFormPage({ params }: BookingFormPageProps) {
                 return (
                     <div key={question.id}>
                         <label className="block text-sm font-medium text-neutral-300 mb-2">
-                            {question.question_text}
-                            {question.is_mandatory && <span className="text-red-500 ml-1">*</span>}
+                            {question.questionText}
+                            {question.isMandatory && <span className="text-red-500 ml-1">*</span>}
                         </label>
                         <div className="space-y-2">
                             {question.options?.map((option, index) => (
@@ -281,7 +280,6 @@ export default function BookingFormPage({ params }: BookingFormPageProps) {
 
     return (
         <div className="max-w-2xl mx-auto">
-            {/* Header */}
             <div className="mb-12 text-center">
                 <h1 className="text-5xl font-display font-bold text-white mb-4 tracking-tight">
                     Almost <span className="gradient-text">There</span>
@@ -289,14 +287,12 @@ export default function BookingFormPage({ params }: BookingFormPageProps) {
                 <p className="text-xl text-neutral-400">Please provide a few more details to confirm</p>
             </div>
 
-            {/* Form */}
             <form onSubmit={handleSubmit}>
                 <Card className="bg-mongodb-slate/50 border-neutral-800">
                     <CardHeader>
                         <CardTitle className="text-white">Your Information</CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-6">
-                        {/* Name */}
                         <div>
                             <label className="block text-sm font-medium text-neutral-300 mb-2">
                                 Full Name <span className="text-red-500">*</span>
@@ -310,7 +306,6 @@ export default function BookingFormPage({ params }: BookingFormPageProps) {
                             {errors.name && <p className="mt-1 text-sm text-red-500">{errors.name}</p>}
                         </div>
 
-                        {/* Email */}
                         <div>
                             <label className="block text-sm font-medium text-neutral-300 mb-2">
                                 Email <span className="text-red-500">*</span>
@@ -324,7 +319,6 @@ export default function BookingFormPage({ params }: BookingFormPageProps) {
                             {errors.email && <p className="mt-1 text-sm text-red-500">{errors.email}</p>}
                         </div>
 
-                        {/* Phone */}
                         <div>
                             <label className="block text-sm font-medium text-neutral-300 mb-2">
                                 Phone Number <span className="text-red-500">*</span>
@@ -338,7 +332,6 @@ export default function BookingFormPage({ params }: BookingFormPageProps) {
                             {errors.phone && <p className="mt-1 text-sm text-red-500">{errors.phone}</p>}
                         </div>
 
-                        {/* Dynamic Questions */}
                         {questions.length > 0 && (
                             <>
                                 <div className="pt-6 border-t border-neutral-800">
@@ -352,7 +345,6 @@ export default function BookingFormPage({ params }: BookingFormPageProps) {
                     </CardContent>
                 </Card>
 
-                {/* Submit Button */}
                 <div className="mt-6 flex justify-end gap-4">
                     <Button type="button" variant="ghost" onClick={() => router.back()} className="text-neutral-400 hover:text-white">
                         Cancel
