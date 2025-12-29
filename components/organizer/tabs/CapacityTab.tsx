@@ -70,8 +70,7 @@ export default function CapacityTab({ appointment }: { appointment: any }) {
                                         key={val}
                                         type="button"
                                         onClick={() => setMaxCapacity(val)}
-                                        className={`text-[10px] font-bold px-3 py-1 rounded-md border transition-all ${maxCapacity === val ? 'bg-mongodb-spring border-mongodb-spring text-mongodb-black' : 'bg-neutral-800 border-neutral-700 text-neutral-400 hover:border-neutral-500'}`}
-                                    >
+                                        className={`text-[10px] font-bold px-3 py-1 rounded-md border transition-all ${maxCapacity === val ? 'bg-mongodb-spring border-mongodb-spring text-mongodb-black' : 'bg-neutral-800 border-neutral-700 text-neutral-400 hover:border-neutral-500'}`}>
                                         {val}
                                     </button>
                                 ))}
@@ -84,8 +83,7 @@ export default function CapacityTab({ appointment }: { appointment: any }) {
                             type="submit"
                             isLoading={isSubmitting}
                             variant="primary"
-                            className="rounded-xl px-12 h-14 font-black shadow-lg shadow-mongodb-spring/10"
-                        >
+                            className="rounded-xl px-12 h-14 font-black shadow-lg shadow-mongodb-spring/10">
                             Update Capacity
                         </Button>
                     </div>
