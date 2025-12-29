@@ -3,34 +3,32 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/Button'
 import { toast } from 'sonner'
 import { ArrowLeft, ArrowRight, Lock, Mail } from 'lucide-react'
 
+import { signIn } from '@/lib/actions/auth'
+
 export default function LoginPage() {
     const router = useRouter()
-    const [email, setEmail] = useState('')
-    const [password, setPassword] = useState('')
     const [isLoading, setIsLoading] = useState(false)
 
-    const handleLogin = async (e: React.FormEvent) => {
+    const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault()
         setIsLoading(true)
 
         try {
-            const supabase = createClient()
-            const { error } = await supabase.auth.signInWithPassword({
-                email,
-                password,
-            })
+            const formData = new FormData(e.currentTarget)
+            const result = await signIn(formData)
 
-            if (error) {
-                toast.error(error.message)
-            } else {
+            if (result.success) {
                 toast.success('Logged in successfully')
-                router.push('/dashboard')
+                if (result.role === 'admin') router.push('/dashboard/admin')
+                else if (result.role === 'organizer') router.push('/dashboard')
+                else router.push('/dashboard')
                 router.refresh()
+            } else {
+                toast.error(result.message || 'Login failed')
             }
         } catch (error) {
             toast.error('An unexpected error occurred')
@@ -54,9 +52,8 @@ export default function LoginPage() {
                     </label>
                     <input
                         type="email"
+                        name="email"
                         placeholder="john@example.com"
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
                         required
                         className="w-full px-6 py-4 rounded-2xl bg-mongodb-black border border-neutral-800 text-white placeholder:text-neutral-600 focus:outline-none focus:border-mongodb-spring focus:ring-4 focus:ring-mongodb-spring/10 transition-all font-medium"
                     />
@@ -74,9 +71,8 @@ export default function LoginPage() {
                     </div>
                     <input
                         type="password"
+                        name="password"
                         placeholder="••••••••"
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
                         required
                         className="w-full px-6 py-4 rounded-2xl bg-mongodb-black border border-neutral-800 text-white placeholder:text-neutral-600 focus:outline-none focus:border-mongodb-spring focus:ring-4 focus:ring-mongodb-spring/10 transition-all font-medium"
                     />
@@ -87,8 +83,7 @@ export default function LoginPage() {
                         type="submit"
                         size="xl"
                         className="w-full group shadow-[0_10px_30px_rgba(0,237,100,0.15)] rounded-2xl h-16"
-                        isLoading={isLoading}
-                    >
+                        isLoading={isLoading}>
                         Sign In to Portal
                         <ArrowRight className="w-5 h-5 ml-2 transition-transform group-hover:translate-x-1" />
                     </Button>
