@@ -50,8 +50,7 @@ export function TabsList({ children, className }: TabsListProps) {
             className={cn(
                 'inline-flex items-center gap-1 p-1 bg-mongodb-black/50 border border-neutral-700/50 rounded-mongodb',
                 className
-            )}
-        >
+            )}>
             {children}
         </div>
     )
@@ -70,8 +69,7 @@ export function TabsTrigger({ value, children, className }: TabsTriggerProps) {
                     ? 'bg-mongodb-forest text-white shadow-mongodb'
                     : 'text-neutral-400 hover:text-white hover:bg-white/5',
                 className
-            )}
-        >
+            )}>
             {children}
         </button>
     )
