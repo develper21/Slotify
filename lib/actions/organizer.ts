@@ -1,317 +1,314 @@
 'use server'
 
-import { createClient } from '@/lib/supabase/server'
+import { db } from '@/lib/db'
+import { appointments, bookings, profiles, bookingQuestions, schedules } from '@/lib/db/schema'
+import { eq, and, or, ilike, gte, ne, sql } from 'drizzle-orm'
 import { revalidatePath } from 'next/cache'
 
-/**
- * GET ORGANIZER DETAILS
- * Profiles table contains both User and Organizer data.
- */
 export async function getOrganizerId(userId: string) {
-    const supabase = createClient()
-
-    const { data, error } = await supabase
-        .from('profiles')
-        .select('id')
-        .eq('id', userId)
-        .eq('role', 'organizer')
-        .single()
-
-    if (error) return null
-    return data?.id
+    return userId
 }
 
-/**
- * GET ALL APPOINTMENTS FOR AN ORGANIZER
- * Simplified query with no joins to extra settings/images tables.
- */
 export async function getOrganizerAppointments(organizerId: string, searchQuery?: string) {
-    const supabase = createClient()
-
-    let query = supabase
-        .from('appointments')
-        .select(`
-            *,
-            bookings_count:bookings(count)
-        `)
-        .eq('organizer_id', organizerId)
-
-    if (searchQuery) {
-        query = query.or(`title.ilike.%${searchQuery}%,description.ilike.%${searchQuery}%`)
-    }
-
-    const { data, error } = await query.order('created_at', { ascending: false })
-
-    if (error) {
-        console.error('Error fetching appointments:', error)
+    try {
+        const results = await db.query.appointments.findMany({
+            where: and(
+                eq(appointments.organizerId, organizerId),
+                searchQuery
+                    ? or(
+                        ilike(appointments.title, `%${searchQuery}%`),
+                        ilike(appointments.description, `%${searchQuery}%`)
+                    )
+                    : undefined
+            ),
+            orderBy: (appointments, { desc }) => [desc(appointments.createdAt)]
+        })
+        return results
+    } catch (error) {
+        console.error('Error fetching organizer appointments:', error)
         return []
     }
-
-    return data || []
 }
 
-/**
- * CREATE NEW APPOINTMENT
- * Consolidates settings into the main appointments table.
- */
 export async function createAppointment(organizerId: string, data: {
     title: string
     description?: string
     duration: number
-    location_details?: string
-    image_url?: string
+    locationDetails?: string
+    imageUrl?: string
     price?: number
 }) {
-    const supabase = createClient()
-
-    const { data: appointment, error } = await supabase
-        .from('appointments')
-        .insert({
-            organizer_id: organizerId,
+    try {
+        const [appointment] = await db.insert(appointments).values({
+            organizerId: organizerId,
             title: data.title,
             description: data.description,
             duration: data.duration || 60,
-            location_details: data.location_details || 'Online',
-            image_url: data.image_url,
-            price: data.price || 0,
-            is_active: true
-        })
-        .select()
-        .single()
+            locationDetails: data.locationDetails || 'Online',
+            imageUrl: data.imageUrl,
+            price: (data.price || 0).toString(),
+            isActive: true
+        }).returning()
 
-    if (error) {
+        revalidatePath('/dashboard')
+        return { success: true, appointmentId: appointment.id }
+    } catch (error: any) {
         return { success: false, message: error.message }
     }
-
-    revalidatePath('/dashboard')
-    return { success: true, appointmentId: appointment.id }
 }
 
-/**
- * UPDATE APPOINTMENT
- */
 export async function updateAppointment(appointmentId: string, data: any) {
-    const supabase = createClient()
+    try {
+        await db.update(appointments)
+            .set(data)
+            .where(eq(appointments.id, appointmentId))
 
-    const { error } = await supabase
-        .from('appointments')
-        .update(data)
-        .eq('id', appointmentId)
-
-    if (error) {
+        revalidatePath('/dashboard')
+        revalidatePath(`/appointments/${appointmentId}/edit`)
+        return { success: true }
+    } catch (error: any) {
         return { success: false, message: error.message }
     }
-
-    revalidatePath('/dashboard')
-    revalidatePath(`/appointments/${appointmentId}/edit`)
-    return { success: true }
 }
 
-/**
- * TOGGLE ACTIVE STATUS
- */
 export async function toggleActiveStatus(appointmentId: string, currentStatus: boolean) {
-    const supabase = createClient()
+    try {
+        await db.update(appointments)
+            .set({ isActive: !currentStatus })
+            .where(eq(appointments.id, appointmentId))
 
-    const { error } = await supabase
-        .from('appointments')
-        .update({ is_active: !currentStatus })
-        .eq('id', appointmentId)
-
-    if (error) {
+        revalidatePath('/dashboard')
+        return { success: true }
+    } catch (error: any) {
         return { success: false, message: error.message }
     }
-
-    revalidatePath('/dashboard')
-    return { success: true }
 }
 
-/**
- * DELETE APPOINTMENT
- */
 export async function deleteAppointment(appointmentId: string) {
-    const supabase = createClient()
+    try {
+        await db.delete(appointments)
+            .where(eq(appointments.id, appointmentId))
 
-    const { error } = await supabase
-        .from('appointments')
-        .delete()
-        .eq('id', appointmentId)
-
-    if (error) {
+        revalidatePath('/dashboard')
+        return { success: true }
+    } catch (error: any) {
         return { success: false, message: error.message }
     }
-
-    revalidatePath('/dashboard')
-    return { success: true }
 }
 
-/**
- * GET APPOINTMENT FOR EDITING
- */
 export async function getAppointmentForEdit(appointmentId: string) {
-    const supabase = createClient()
-
-    const { data, error } = await supabase
-        .from('appointments')
-        .select('*')
-        .eq('id', appointmentId)
-        .single()
-
-    if (error) {
+    try {
+        const result = await db.query.appointments.findFirst({
+            where: eq(appointments.id, appointmentId),
+            with: {
+                schedules: true,
+                questions: true
+            }
+        })
+        return result
+    } catch (error) {
         console.error('Error fetching appointment:', error)
         return null
     }
-
-    return data
 }
 
-/**
- * UPSERT BOOKING QUESTIONS (Stored as JSONB in the appointment)
- */
 export async function upsertBookingQuestions(appointmentId: string, questions: any[]) {
-    const supabase = createClient()
+    try {
+        await db.update(appointments)
+            .set({ questions })
+            .where(eq(appointments.id, appointmentId))
 
-    const { error } = await supabase
-        .from('appointments')
-        .update({ questions })
-        .eq('id', appointmentId)
-
-    if (error) {
+        revalidatePath(`/appointments/${appointmentId}/edit`)
+        return { success: true }
+    } catch (error: any) {
         return { success: false, message: error.message }
     }
-
-    revalidatePath(`/appointments/${appointmentId}/edit`)
-    return { success: true }
 }
 
-/**
- * CREATE BOOKING QUESTION
- */
 export async function createBookingQuestion(appointmentId: string, data: any) {
-    const supabase = createClient()
-
-    const { error } = await supabase
-        .from('booking_questions')
-        .insert({
-            appointment_id: appointmentId,
+    try {
+        await db.insert(bookingQuestions).values({
+            appointmentId: appointmentId,
             ...data
         })
 
-    if (error) return { error: error.message }
-
-    revalidatePath(`/dashboard/appointments/${appointmentId}/questions`)
-    return { success: true }
+        revalidatePath(`/dashboard/appointments/${appointmentId}/questions`)
+        return { success: true }
+    } catch (error: any) {
+        return { error: error.message }
+    }
 }
 
-/**
- * UPDATE BOOKING QUESTION
- */
 export async function updateBookingQuestion(questionId: string, data: any) {
-    const supabase = createClient()
+    try {
+        await db.update(bookingQuestions)
+            .set(data)
+            .where(eq(bookingQuestions.id, questionId))
 
-    const { error } = await supabase
-        .from('booking_questions')
-        .update(data)
-        .eq('id', questionId)
-
-    if (error) return { error: error.message }
-
-    revalidatePath('/dashboard/appointments')
-    return { success: true }
+        revalidatePath('/dashboard/appointments')
+        return { success: true }
+    } catch (error: any) {
+        return { error: error.message }
+    }
 }
 
-/**
- * DELETE BOOKING QUESTION
- */
 export async function deleteBookingQuestion(questionId: string) {
-    const supabase = createClient()
+    try {
+        await db.delete(bookingQuestions)
+            .where(eq(bookingQuestions.id, questionId))
 
-    const { error } = await supabase
-        .from('booking_questions')
-        .delete()
-        .eq('id', questionId)
-
-    if (error) return { error: error.message }
-
-    revalidatePath('/dashboard/appointments')
-    return { success: true }
+        revalidatePath('/dashboard/appointments')
+        return { success: true }
+    } catch (error: any) {
+        return { error: error.message }
+    }
 }
 
-/**
- * UPDATE APPOINTMENT SETTINGS (Alias for updateAppointment)
- */
 export async function updateAppointmentSettings(appointmentId: string, data: any) {
     return updateAppointment(appointmentId, data)
 }
 
-/**
- * GET ORGANIZER STATISTICS
- */
-/**
- * UPSERT SCHEDULE 
- * Updates the availability configuration for an appointment.
- */
-export async function upsertSchedule(appointmentId: string, schedules: any[]) {
-    const supabase = createClient()
+export async function upsertSchedule(appointmentId: string, schedulesData: any[]) {
+    try {
+        await db.delete(schedules)
+            .where(eq(schedules.appointmentId, appointmentId))
 
-    // First, delete existing schedules for this appointment
-    const { error: deleteError } = await supabase
-        .from('schedules')
-        .delete()
-        .eq('appointment_id', appointmentId)
+        if (schedulesData.length > 0) {
+            await db.insert(schedules).values(
+                schedulesData.map(s => ({
+                    appointmentId: appointmentId,
+                    dayOfWeek: s.day_of_week,
+                    isWorkingDay: s.is_working_day,
+                    startTime: s.start_time,
+                    endTime: s.end_time
+                }))
+            )
+        }
 
-    if (deleteError) return { success: false, error: deleteError.message }
-
-    // Then insert the new ones
-    const { error: insertError } = await supabase
-        .from('schedules')
-        .insert(schedules.map(s => ({
-            appointment_id: appointmentId,
-            day_of_week: s.day_of_week,
-            is_working_day: s.is_working_day,
-            start_time: s.start_time,
-            end_time: s.end_time
-        })))
-
-    if (insertError) return { success: false, error: insertError.message }
-
-    revalidatePath(`/dashboard/appointments/${appointmentId}/schedule`)
-    return { success: true }
+        revalidatePath(`/dashboard/appointments/${appointmentId}/schedule`)
+        return { success: true }
+    } catch (error: any) {
+        return { success: false, error: error.message }
+    }
 }
 
 export async function getOrganizerStats(organizerId: string) {
-    const supabase = createClient()
+    try {
+        const totalAppointments = await db.select({ count: sql<number>`count(*)` })
+            .from(appointments)
+            .where(eq(appointments.organizerId, organizerId))
 
-    // Total appointments
-    const { count: totalAppointments } = await supabase
-        .from('appointments')
-        .select('*', { count: 'exact', head: true })
-        .eq('organizer_id', organizerId)
+        const publishedAppointments = await db.select({ count: sql<number>`count(*)` })
+            .from(appointments)
+            .where(and(eq(appointments.organizerId, organizerId), eq(appointments.isActive, true)))
 
-    // Active appointments
-    const { count: activeAppointments } = await supabase
-        .from('appointments')
-        .select('*', { count: 'exact', head: true })
-        .eq('organizer_id', organizerId)
-        .eq('is_active', true)
+        const totalBookings = await db.select({ count: sql<number>`count(*)` })
+            .from(bookings)
+            .innerJoin(appointments, eq(bookings.appointmentId, appointments.id))
+            .where(eq(appointments.organizerId, organizerId))
 
-    // Total bookings 
-    const { data: bookingsData } = await supabase
-        .from('bookings')
-        .select(`
-            id, 
-            start_time,
-            appointment:appointments!inner(organizer_id)
-        `)
-        .eq('appointments.organizer_id', organizerId)
+        const upcomingBookings = await db.select({ count: sql<number>`count(*)` })
+            .from(bookings)
+            .innerJoin(appointments, eq(bookings.appointmentId, appointments.id))
+            .where(and(
+                eq(appointments.organizerId, organizerId),
+                gte(bookings.startTime, new Date()),
+                ne(bookings.status, 'cancelled')
+            ))
 
-    const now = new Date().toISOString()
-    const upcomingCount = bookingsData?.filter((b: any) => b.start_time >= now).length || 0
+        return {
+            totalAppointments: Number(totalAppointments[0]?.count || 0),
+            publishedAppointments: Number(publishedAppointments[0]?.count || 0),
+            totalBookings: Number(totalBookings[0]?.count || 0),
+            upcomingBookings: Number(upcomingBookings[0]?.count || 0),
+        }
+    } catch (error) {
+        console.error('Error fetching organizer stats:', error)
+        return {
+            totalAppointments: 0,
+            publishedAppointments: 0,
+            totalBookings: 0,
+            upcomingBookings: 0,
+        }
+    }
+}
 
-    return {
-        totalAppointments: totalAppointments || 0,
-        publishedAppointments: activeAppointments || 0,
-        totalBookings: bookingsData?.length || 0,
-        upcomingBookings: upcomingCount,
+export async function updateAppointmentAvailability(appointmentId: string, schedulesData: any[]) {
+    try {
+        const availability: any = {}
+        const days = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday']
+
+        schedulesData.forEach(s => {
+            const dayName = days[s.dayOfWeek]
+            availability[dayName] = {
+                active: !!s.isWorkingDay,
+                slots: !!s.isWorkingDay ? [{ start: s.startTime, end: s.endTime }] : []
+            }
+        })
+
+        await db.update(appointments)
+            .set({ availability })
+            .where(eq(appointments.id, appointmentId))
+
+        revalidatePath(`/dashboard/appointments/${appointmentId}/schedule`)
+        return { success: true }
+    } catch (error: any) {
+        return { success: false, message: error.message }
+    }
+}
+
+export async function getOrganizerRecentBookings(organizerId: string, limit: number = 10) {
+    try {
+        const results = await db.query.bookings.findMany({
+            with: {
+                appointment: true,
+                customer: {
+                    columns: {
+                        fullName: true,
+                        email: true
+                    }
+                }
+            },
+            orderBy: (bookings, { desc }) => [desc(bookings.createdAt)],
+            limit: limit
+        })
+
+        // Filter by organizerId through appointment relation
+        return results.filter(b => b.appointment.organizerId === organizerId)
+    } catch (error) {
+        console.error('Error fetching recent bookings:', error)
+        return []
+    }
+}
+
+export async function getOrganizerBookingsChartData(organizerId: string) {
+    try {
+        const thirtyDaysAgo = new Date()
+        thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30)
+
+        const results = await db.query.bookings.findMany({
+            where: (bookings, { gte }) => gte(bookings.createdAt, thirtyDaysAgo),
+            with: {
+                appointment: true
+            }
+        })
+
+        const filtered = results.filter(b => b.appointment.organizerId === organizerId)
+
+        const grouped: { [key: string]: number } = {}
+        filtered.forEach((booking: any) => {
+            const date = new Date(booking.createdAt).toISOString().split('T')[0]
+            grouped[date] = (grouped[date] || 0) + 1
+        })
+
+        const chartData = Object.entries(grouped).map(([date, count]) => ({
+            date,
+            bookings: count,
+        })).sort((a, b) => a.date.localeCompare(b.date))
+
+        return chartData
+    } catch (error) {
+        console.error('Error fetching chart data:', error)
+        return []
     }
 }
