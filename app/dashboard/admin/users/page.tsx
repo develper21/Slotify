@@ -1,5 +1,5 @@
 import { redirect } from 'next/navigation'
-import { createClient } from '@/lib/supabase/server'
+import { getSession } from '@/lib/auth'
 import { getAllUsers } from '@/lib/actions/admin'
 import { DataTable } from '@/components/ui/DataTable'
 import { Card, CardContent } from '@/components/ui/Card'
@@ -9,28 +9,14 @@ import { format } from 'date-fns'
 import { UserActions } from '@/components/admin/UserActions'
 
 export default async function AdminUsersPage() {
-    const supabase = createClient()
+    const session = await getSession()
 
-    // Check authentication and admin role
-    const { data: { session } } = await supabase.auth.getSession()
-    if (!session) {
-        redirect('/login')
-    }
-
-    const { data: userData }: { data: { role?: string } | null } = await supabase
-        .from('users')
-        .select('role')
-        .eq('id', session.user.id)
-        .single()
-
-    if (userData?.role !== 'admin') {
+    if (!session || session.user.role !== 'admin') {
         redirect('/dashboard')
     }
 
-    // Get all users
     const users = await getAllUsers()
 
-    // Calculate stats
     const stats = {
         total: users.length,
         active: users.filter((u: any) => u.status === 'active').length,
@@ -40,9 +26,7 @@ export default async function AdminUsersPage() {
     }
 
     return (
-
         <div className="space-y-8">
-            {/* Header */}
             <div>
                 <h1 className="text-3xl font-display font-bold text-white mb-2">
                     User Management
@@ -52,7 +36,6 @@ export default async function AdminUsersPage() {
                 </p>
             </div>
 
-            {/* Stats Cards */}
             <div className="grid grid-cols-1 md:grid-cols-5 gap-6 mb-8">
                 <Card className="bg-mongodb-slate/50 border-neutral-800">
                     <CardContent className="p-6">
@@ -115,16 +98,15 @@ export default async function AdminUsersPage() {
                 </Card>
             </div>
 
-            {/* Users Table */}
             <DataTable
                 data={users}
                 columns={[
                     {
-                        key: 'full_name',
+                        key: 'fullName',
                         header: 'Name',
                         render: (user: any) => (
                             <div>
-                                <p className="font-medium text-white">{user.full_name}</p>
+                                <p className="font-medium text-white">{user.fullName}</p>
                                 <p className="text-xs text-neutral-400">{user.email}</p>
                             </div>
                         ),
@@ -139,8 +121,7 @@ export default async function AdminUsersPage() {
                                     user.role === 'admin' ? 'danger' :
                                         user.role === 'organizer' ? 'warning' :
                                             'primary'
-                                }
-                            >
+                                }>
                                 {user.role}
                             </Badge>
                         ),
@@ -157,14 +138,9 @@ export default async function AdminUsersPage() {
                         sortable: true
                     },
                     {
-                        key: 'phone',
-                        header: 'Phone',
-                        render: (user: any) => <span className="text-neutral-300">{user.phone || 'N/A'}</span>
-                    },
-                    {
-                        key: 'created_at',
+                        key: 'createdAt',
                         header: 'Joined',
-                        render: (user: any) => <span className="text-neutral-300">{format(new Date(user.created_at), 'MMM d, yyyy')}</span>,
+                        render: (user: any) => <span className="text-neutral-300">{user.createdAt ? format(new Date(user.createdAt), 'MMM d, yyyy') : 'N/A'}</span>,
                         sortable: true
                     }
                 ]}
