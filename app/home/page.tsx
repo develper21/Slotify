@@ -126,9 +126,7 @@ export default async function HomePage({
         <div className="min-h-screen bg-mongodb-black">
             <Navbar />
 
-            {/* Hero Section */}
             <section className="relative overflow-hidden pt-32 pb-24 lg:pt-48 lg:pb-32 bg-grid-pattern">
-                {/* Background Glows */}
                 <div className="absolute inset-0 z-0">
                     <div className="absolute top-0 right-1/4 w-[600px] h-[600px] bg-mongodb-spring/10 animate-pulse-glow rounded-full mix-blend-screen" />
                     <div className="absolute -bottom-48 -left-48 w-[800px] h-[800px] bg-mongodb-forest/20 animate-pulse-glow rounded-full mix-blend-screen" style={{ animationDelay: '1.5s' }} />
@@ -149,7 +147,6 @@ export default async function HomePage({
                             Experience the world's most advanced booking engine. Built for professionals who value speed, beauty, and precision.
                         </p>
 
-                        {/* Search Bar with Glow */}
                         <div className="relative max-w-3xl mx-auto animate-slide-up" style={{ animationDelay: '0.2s' }}>
                             <div className="absolute -inset-4 bg-mongodb-spring/5 blur-2xl rounded-full opacity-50 group-hover:opacity-100 transition-opacity" />
                             <form className="relative group flex items-center p-2 rounded-2xl bg-mongodb-slate/80 border border-neutral-700/50 backdrop-blur-xl shadow-2xl focus-within:border-mongodb-spring/50 transition-all">
@@ -170,7 +167,6 @@ export default async function HomePage({
                 </div>
             </section>
 
-            {/* Main Content */}
             <main className="container mx-auto px-4 pb-24 relative z-10">
                 <div className="flex items-center justify-between mb-12">
                     <div>
@@ -187,7 +183,6 @@ export default async function HomePage({
                     <AppointmentsList searchQuery={searchParams.search} />
                 </Suspense>
 
-                {/* Bottom CTA */}
                 <section className="mt-32 p-12 rounded-mongodb bg-gradient-dark border border-neutral-700/50 text-center relative overflow-hidden">
                     <div className="absolute top-0 left-0 w-full h-1 bg-gradient-mongodb" />
                     <div className="relative z-10 max-w-2xl mx-auto">
@@ -207,7 +202,6 @@ export default async function HomePage({
                 </section>
             </main>
 
-            {/* Footer */}
             <footer className="border-t border-neutral-700/50 py-12 bg-mongodb-black/50">
                 <div className="container mx-auto px-4 text-center">
                     <div className="flex items-center justify-center gap-2 mb-6">
