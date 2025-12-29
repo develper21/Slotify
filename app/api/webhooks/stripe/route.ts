@@ -1,7 +1,9 @@
 import { headers } from 'next/headers'
 import { NextResponse } from 'next/server'
 import { stripe } from '@/lib/stripe'
-import { createClient } from '@/lib/supabase/server'
+import { db } from '@/lib/db'
+import { bookings } from '@/lib/db/schema'
+import { eq } from 'drizzle-orm'
 
 const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET
 
@@ -17,24 +19,19 @@ export async function POST(req: Request) {
         return NextResponse.json({ error: `Webhook Error: ${err.message}` }, { status: 400 })
     }
 
-    const supabase = createClient()
-
-    // Handle the event
     if (event.type === 'checkout.session.completed') {
-        const session = event.data.object
+        const session = event.data.object as any
         const bookingId = session.metadata?.booking_id
 
         if (bookingId) {
-            // Update booking status to confirmed
-            const { error } = await supabase
-                .from('bookings')
-                .update({
-                    status: 'confirmed',
-                    payment_id: session.payment_intent as string // Optional: store payment intent
-                })
-                .eq('id', bookingId)
-
-            if (error) {
+            try {
+                await db.update(bookings)
+                    .set({
+                        status: 'confirmed',
+                        paymentId: session.payment_intent as string
+                    })
+                    .where(eq(bookings.id, bookingId))
+            } catch (error) {
                 console.error('Webhook DB Error:', error)
                 return NextResponse.json({ error: 'DB update failed' }, { status: 500 })
             }
