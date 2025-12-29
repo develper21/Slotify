@@ -12,7 +12,7 @@ interface OTPInputProps {
 }
 
 export function OTPInput({
-    length = 6,
+    length = 8,
     onComplete,
     disabled = false,
     error = false,
@@ -22,25 +22,20 @@ export function OTPInput({
     const inputRefs = useRef<(HTMLInputElement | null)[]>([])
 
     useEffect(() => {
-        // Focus first input on mount
         inputRefs.current[0]?.focus()
     }, [])
 
     const handleChange = (index: number, value: string) => {
-        // Only allow numbers
         if (value && isNaN(Number(value))) return
 
         const newOtp = [...otp]
-        // Take only the last character if multiple are pasted
         newOtp[index] = value.substring(value.length - 1)
         setOtp(newOtp)
 
-        // Move to next input if value entered
         if (value && index < length - 1) {
             inputRefs.current[index + 1]?.focus()
         }
 
-        // Check if OTP is complete
         const otpString = newOtp.join('')
         if (otpString.length === length && !newOtp.includes('')) {
             onComplete(otpString)
@@ -48,19 +43,16 @@ export function OTPInput({
     }
 
     const handleKeyDown = (index: number, e: React.KeyboardEvent<HTMLInputElement>) => {
-        // Move to previous input on backspace if current is empty
         if (e.key === 'Backspace') {
             if (!otp[index] && index > 0) {
                 inputRefs.current[index - 1]?.focus()
             }
         }
 
-        // Move to next input on arrow right
         if (e.key === 'ArrowRight' && index < length - 1) {
             inputRefs.current[index + 1]?.focus()
         }
 
-        // Move to previous input on arrow left
         if (e.key === 'ArrowLeft' && index > 0) {
             inputRefs.current[index - 1]?.focus()
         }
@@ -70,7 +62,6 @@ export function OTPInput({
         e.preventDefault()
         const pastedData = e.clipboardData.getData('text/plain').trim()
 
-        // Only process if pasted data is all numbers
         if (!/^\d+$/.test(pastedData)) return
 
         const pastedArray = pastedData.slice(0, length).split('')
@@ -84,11 +75,9 @@ export function OTPInput({
 
         setOtp(newOtp)
 
-        // Focus last filled input or first empty
         const lastFilledIndex = Math.min(pastedArray.length - 1, length - 1)
         inputRefs.current[lastFilledIndex]?.focus()
 
-        // Check if complete
         const otpString = newOtp.join('')
         if (otpString.length === length) {
             onComplete(otpString)
@@ -135,8 +124,7 @@ export function OTPInput({
                 <button
                     type="button"
                     onClick={clearOTP}
-                    className="text-sm text-red-600 hover:text-red-700 underline"
-                >
+                    className="text-sm text-red-600 hover:text-red-700 underline">
                     Clear and try again
                 </button>
             )}
