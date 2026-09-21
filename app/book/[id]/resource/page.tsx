@@ -6,18 +6,17 @@ import { eq } from 'drizzle-orm'
 import { Button } from '@/components/ui/Button'
 import Link from 'next/link'
 
-export default async function ResourceSelectionPage({
-    params,
-}: {
-    params: { id: string }
+export default async function ResourceSelectionPage(props: {
+    params: Promise<{ id: string }>
 }) {
+    const { id } = await props.params
     const session = await getSession()
     if (!session) {
         redirect('/login')
     }
 
     const appointment = await db.query.appointments.findFirst({
-        where: eq(appointments.id, params.id)
+        where: eq(appointments.id, id)
     })
 
     if (!appointment) {
@@ -25,7 +24,7 @@ export default async function ResourceSelectionPage({
     }
 
     // For now, redirect to date selection as we don't have multiple resources per appointment yet
-    redirect(`/book/${params.id}/date`)
+    redirect(`/book/${id}/date`)
 
     return (
         <div className="min-h-screen bg-mongodb-black py-12">

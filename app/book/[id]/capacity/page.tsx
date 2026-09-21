@@ -9,20 +9,19 @@ import { Users } from 'lucide-react'
 import Link from 'next/link'
 import { CapacitySelector } from '@/components/booking/CapacitySelector'
 
-export default async function CapacitySelectionPage({
-    params,
-    searchParams,
-}: {
-    params: { id: string }
-    searchParams: { resource?: string; date?: string; slot?: string }
+export default async function CapacitySelectionPage(props: {
+    params: Promise<{ id: string }>
+    searchParams?: Promise<{ resource?: string; date?: string; slot?: string }>
 }) {
+    const { id } = await props.params
+    const searchParams = props.searchParams ? await props.searchParams : {}
     const session = await getSession()
     if (!session) {
         redirect('/login')
     }
 
     const appointment = await db.query.appointments.findFirst({
-        where: eq(appointments.id, params.id)
+        where: eq(appointments.id, id)
     })
 
     if (!appointment) {
@@ -91,7 +90,7 @@ export default async function CapacitySelectionPage({
                             </div>
 
                             <CapacitySelector
-                                appointmentId={params.id}
+                                appointmentId={id}
                                 minCapacity={minCapacity}
                                 maxCapacity={maxCapacity}
                                 resourceId={searchParams.resource}
@@ -102,7 +101,7 @@ export default async function CapacitySelectionPage({
                     </CardContent>
                 </Card>
 
-                <Link href={`/book/${params.id}/time?${new URLSearchParams(searchParams as any).toString()}`}>
+                <Link href={`/book/${id}/time?${new URLSearchParams(searchParams as any).toString()}`}>
                     <Button variant="ghost" className="w-full text-neutral-400 hover:text-white">
                         ← Back to Time Selection
                     </Button>

@@ -6,15 +6,17 @@ export function generateOTP(): string {
 }
 
 export async function saveOTP(email: string, otp: string, purpose: string): Promise<void> {
-  const key = `otp:${purpose}:${email}`
+  const normalizedEmail = email.trim().toLowerCase()
+  const key = `otp:${purpose}:${normalizedEmail}`
   await redis.set(key, otp, { ex: 600 })
 }
 
 export async function verifyOTP(email: string, otp: string, purpose: string): Promise<boolean> {
-  const key = `otp:${purpose}:${email}`
+  const normalizedEmail = email.trim().toLowerCase()
+  const key = `otp:${purpose}:${normalizedEmail}`
   const storedOtp = await redis.get<string>(key)
 
-  if (storedOtp && storedOtp === otp) {
+  if (storedOtp && storedOtp.toString() === otp.trim()) {
     await redis.del(key)
     return true
   }

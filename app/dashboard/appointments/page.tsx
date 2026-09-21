@@ -9,11 +9,10 @@ import Link from 'next/link'
 import { formatDuration } from '@/lib/utils'
 import { TogglePublishButton, DeleteButton } from '@/components/appointments/AppointmentActions'
 
-export default async function AppointmentsPage({
-    searchParams,
-}: {
-    searchParams: { search?: string }
+export default async function AppointmentsPage(props: {
+    searchParams?: Promise<{ search?: string }>
 }) {
+    const searchParams = props.searchParams ? await props.searchParams : {}
     const session = await getSession()
     if (!session) {
         redirect('/login')

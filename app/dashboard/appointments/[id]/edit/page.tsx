@@ -12,18 +12,17 @@ import QuestionsTab from '@/components/organizer/tabs/QuestionsTab'
 import CapacityTab from '@/components/organizer/tabs/CapacityTab'
 import { TogglePublishButton } from '@/components/appointments/AppointmentActions'
 
-export default async function EditAppointmentPage({
-    params,
-}: {
-    params: { id: string }
+export default async function EditAppointmentPage(props: {
+    params: Promise<{ id: string }>
 }) {
+    const { id } = await props.params
     const session = await getSession()
 
     if (!session) {
         redirect('/login')
     }
 
-    const appointment: any = await getAppointmentForEdit(params.id)
+    const appointment: any = await getAppointmentForEdit(id)
 
     if (!appointment) {
         notFound()

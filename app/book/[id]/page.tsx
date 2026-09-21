@@ -150,7 +150,8 @@ async function AppointmentContent({ id }: { id: string }) {
     )
 }
 
-export default function AppointmentPage({ params }: { params: { id: string } }) {
+export default async function AppointmentPage(props: { params: Promise<{ id: string }> }) {
+    const { id } = await props.params
     return (
         <Suspense fallback={
             <div className="min-h-screen bg-mongodb-black flex items-center justify-center">
@@ -160,7 +161,7 @@ export default function AppointmentPage({ params }: { params: { id: string } }) 
                 </div>
             </div>
         }>
-            <AppointmentContent id={params.id} />
+            <AppointmentContent id={id} />
         </Suspense>
     )
 }

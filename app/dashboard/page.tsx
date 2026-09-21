@@ -7,6 +7,7 @@ import Link from 'next/link'
 import AppointmentCard from '@/components/organizer/AppointmentCard'
 import { formatDate } from '@/lib/utils'
 import { MOCK_APPOINTMENTS, MOCK_BOOKINGS, MOCK_STATS, MOCK_USER } from '@/lib/mock-data'
+import { getSession } from '@/lib/auth'
 
 async function OrganizerStats() {
     const stats = MOCK_STATS
@@ -94,12 +95,12 @@ function CustomerRecentBookings() {
     )
 }
 
-export default async function DashboardPage({
-    searchParams,
-}: {
-    searchParams: { role?: string; search?: string }
+export default async function DashboardPage(props: {
+    searchParams?: Promise<{ role?: string; search?: string }>
 }) {
-    const role = searchParams.role || 'organizer'
+    const searchParams = props.searchParams ? await props.searchParams : {}
+    const session = await getSession()
+    const role = searchParams.role || session?.user?.role || 'organizer'
 
     if (role === 'admin') {
         return (

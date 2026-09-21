@@ -8,12 +8,11 @@ import Link from 'next/link'
 import { formatDuration } from '@/lib/utils'
 import Image from 'next/image'
 
-export default async function AppointmentDetailPage({
-    params,
-}: {
-    params: { id: string }
+export default async function AppointmentDetailPage(props: {
+    params: Promise<{ id: string }>
 }) {
-    const appointment: any = await getAppointmentById(params.id)
+    const { id } = await props.params
+    const appointment: any = await getAppointmentById(id)
 
     if (!appointment) {
         notFound()

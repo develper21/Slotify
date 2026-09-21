@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/Button'
 import { Calendar, LayoutDashboard, Settings, User, LogOut, Menu, X } from 'lucide-react'
 import { useState } from 'react'
 import { cn } from '@/lib/utils'
+import { signOut } from '@/lib/actions/auth'
 
 export function Navbar() {
     const pathname = usePathname()
@@ -53,13 +54,19 @@ export function Navbar() {
                     </div>
 
                     <div className="hidden md:flex items-center gap-3">
-                        <Button variant="ghost" size="sm" className="text-neutral-400 hover:text-red-400">
+                        <Button
+                            variant="ghost"
+                            size="sm"
+                            className="text-neutral-400 hover:text-red-400"
+                            onClick={() => signOut()}>
                             <LogOut className="w-4 h-4 mr-2" />
                             Sign Out
                         </Button>
-                        <Button variant="primary" size="sm">
-                            New Slot
-                        </Button>
+                        <Link href="/dashboard/appointments/new">
+                            <Button variant="primary" size="sm">
+                                New Slot
+                            </Button>
+                        </Link>
                     </div>
 
                     <div className="md:hidden">
@@ -95,7 +102,9 @@ export function Navbar() {
                             )
                         })}
                         <div className="pt-4 pb-2 border-t border-neutral-700/50">
-                            <button className="flex items-center gap-3 px-4 py-3 w-full text-left text-red-400 hover:bg-red-500/10 rounded-mongodb">
+                            <button
+                                onClick={() => signOut()}
+                                className="flex items-center gap-3 px-4 py-3 w-full text-left text-red-400 hover:bg-red-500/10 rounded-mongodb">
                                 <LogOut className="w-5 h-5" />
                                 Sign Out
                             </button>

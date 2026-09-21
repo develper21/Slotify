@@ -13,11 +13,10 @@ import { eq } from 'drizzle-orm'
 
 export const dynamic = 'force-dynamic'
 
-export default async function BookingsPage({
-    searchParams,
-}: {
-    searchParams: { status?: string; appointment?: string }
+export default async function BookingsPage(props: {
+    searchParams?: Promise<{ status?: string; appointment?: string }>
 }) {
+    const searchParams = props.searchParams ? await props.searchParams : {}
     const session = await getSession()
     if (!session) {
         redirect('/login')

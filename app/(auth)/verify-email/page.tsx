@@ -1,22 +1,30 @@
 'use client'
 
-import { useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { useState, useEffect, Suspense } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { verifyOTP } from '@/lib/actions/auth'
 import { Button } from '@/components/ui/Button'
 import { toast } from 'sonner'
-import { Mail, CheckCircle, ArrowLeft, ArrowRight } from 'lucide-react'
+import { Mail, CheckCircle, ArrowLeft } from 'lucide-react'
 import Link from 'next/link'
 
-export default function VerifyEmailPage() {
+function VerifyEmailContent() {
     const router = useRouter()
+    const searchParams = useSearchParams()
     const [isLoading, setIsLoading] = useState(false)
     const [otp, setOtp] = useState(['', '', '', '', '', '', '', ''])
     const [email, setEmail] = useState('')
 
+    useEffect(() => {
+        const queryEmail = searchParams.get('email')
+        if (queryEmail) {
+            setEmail(queryEmail)
+        }
+    }, [searchParams])
+
     async function handleVerify() {
         if (otp.some(digit => !digit) || !email) {
-            toast.error('Please enter your email and complete OTP')
+            toast.error('Please enter your email and complete the 8-digit OTP')
             return
         }
 
@@ -30,9 +38,14 @@ export default function VerifyEmailPage() {
             } else {
                 toast.success('Email verified successfully!')
                 const role = (result as any).role
-                if (role === 'admin') router.push('/dashboard/admin')
-                else if (role === 'organizer') router.push('/dashboard/organizer')
-                else router.push('/dashboard/customer')
+                if (role === 'admin') {
+                    router.push('/dashboard/admin')
+                } else if (role === 'organizer') {
+                    router.push('/dashboard')
+                } else {
+                    router.push('/home')
+                }
+                router.refresh()
             }
         } catch (error) {
             toast.error('Verification failed. Please try again.')
@@ -108,13 +121,6 @@ export default function VerifyEmailPage() {
                         <CheckCircle className="w-5 h-5 ml-2 transition-transform group-hover:scale-110" />
                     </Button>
                 </div>
-
-                <p className="text-center text-neutral-500 font-medium">
-                    Didn't receive it?{' '}
-                    <button className="text-mongodb-spring font-bold hover:underline">
-                        Resend code
-                    </button>
-                </p>
             </div>
 
             <Link href="/login" className="flex items-center justify-center gap-2 text-neutral-600 hover:text-white transition-colors text-sm font-bold uppercase tracking-widest">
@@ -122,5 +128,13 @@ export default function VerifyEmailPage() {
                 Back to login
             </Link>
         </div>
+    )
+}
+
+export default function VerifyEmailPage() {
+    return (
+        <Suspense fallback={<div className="text-white text-center py-12">Loading verification...</div>}>
+            <VerifyEmailContent />
+        </Suspense>
     )
 }

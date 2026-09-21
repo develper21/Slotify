@@ -117,11 +117,10 @@ function AppointmentsLoading() {
     )
 }
 
-export default async function HomePage({
-    searchParams,
-}: {
-    searchParams: { search?: string }
+export default async function HomePage(props: {
+    searchParams?: Promise<{ search?: string }>
 }) {
+    const searchParams = props.searchParams ? await props.searchParams : {}
     return (
         <div className="min-h-screen bg-mongodb-black">
             <Navbar />
