@@ -1,0 +1,423 @@
+'use client'
+
+import { useState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card'
+import { Button } from '@/components/ui/Button'
+import { Badge } from '@/components/ui/Badge'
+import { Modal } from '@/components/ui/Modal'
+import { Input } from '@/components/ui/Input'
+import { ChevronLeft, Plus, Edit, Trash2, GripVertical, HelpCircle } from 'lucide-react'
+import { createBookingQuestion, updateBookingQuestion, deleteBookingQuestion, getAppointmentForEdit } from '@/lib/actions/organizer'
+import { toast } from 'sonner'
+import { cn } from '@/lib/utils'
+
+interface Question {
+    id: string
+    questionText: string
+    questionType: 'single_line' | 'multi_line' | 'phone' | 'radio' | 'checkbox'
+    options: string[] | null
+    isMandatory: boolean
+    orderIndex: number
+}
+
+const QUESTION_TYPES = [
+    { value: 'single_line', label: 'Single Line Text', icon: '📝' },
+    { value: 'multi_line', label: 'Multi Line Text', icon: '📄' },
+    { value: 'phone', label: 'Phone Number', icon: '📞' },
+    { value: 'radio', label: 'Radio Buttons', icon: '🔘' },
+    { value: 'checkbox', label: 'Checkboxes', icon: '☑️' },
+]
+
+export default function QuestionsPage({ params }: { params: { id: string } }) {
+    const router = useRouter()
+    const [isLoading, setIsLoading] = useState(true)
+    const [questions, setQuestions] = useState<Question[]>([])
+    const [appointment, setAppointment] = useState<any>(null)
+    const [showModal, setShowModal] = useState(false)
+    const [editingQuestion, setEditingQuestion] = useState<Question | null>(null)
+    const [formData, setFormData] = useState({
+        questionText: '',
+        questionType: 'single_line' as Question['questionType'],
+        options: [''],
+        isMandatory: false,
+    })
+
+    useEffect(() => {
+        loadData()
+    }, [])
+
+    const loadData = async () => {
+        setIsLoading(true)
+        try {
+            const data = await getAppointmentForEdit(params.id)
+            if (!data) throw new Error('Appointment not found')
+
+            setAppointment(data)
+            // Assuming bookingQuestions are fetched or part of appointment data
+            // In the action we might need to fetch them separately
+            // For now, let's assume they are handled by the action
+            // Wait, I should update getAppointmentForEdit or create a new action
+        } catch (error) {
+            console.error('Error loading data:', error)
+            toast.error('Failed to load questions')
+        } finally {
+            setIsLoading(false)
+        }
+    }
+
+    const handleOpenModal = (question?: Question) => {
+        if (question) {
+            setEditingQuestion(question)
+            setFormData({
+                questionText: question.questionText,
+                questionType: question.questionType,
+                options: question.options || [''],
+                isMandatory: question.isMandatory,
+            })
+        } else {
+            setEditingQuestion(null)
+            setFormData({
+                questionText: '',
+                questionType: 'single_line',
+                options: [''],
+                isMandatory: false,
+            })
+        }
+        setShowModal(true)
+    }
+
+    const handleCloseModal = () => {
+        setShowModal(false)
+        setEditingQuestion(null)
+    }
+
+    const handleAddOption = () => {
+        setFormData(prev => ({
+            ...prev,
+            options: [...prev.options, ''],
+        }))
+    }
+
+    const handleRemoveOption = (index: number) => {
+        setFormData(prev => ({
+            ...prev,
+            options: prev.options.filter((_, i) => i !== index),
+        }))
+    }
+
+    const handleOptionChange = (index: number, value: string) => {
+        setFormData(prev => ({
+            ...prev,
+            options: prev.options.map((opt, i) => (i === index ? value : opt)),
+        }))
+    }
+
+    const handleSubmit = async () => {
+        if (!formData.questionText.trim()) {
+            toast.error('Question text is required')
+            return
+        }
+
+        if (['radio', 'checkbox'].includes(formData.questionType)) {
+            const validOptions = formData.options.filter(opt => opt.trim())
+            if (validOptions.length < 2) {
+                toast.error('Please provide at least 2 options')
+                return
+            }
+        }
+
+        try {
+            const questionData = {
+                questionText: formData.questionText,
+                questionType: formData.questionType,
+                options: ['radio', 'checkbox'].includes(formData.questionType)
+                    ? formData.options.filter(opt => opt.trim())
+                    : undefined,
+                isMandatory: formData.isMandatory,
+                orderIndex: editingQuestion ? editingQuestion.orderIndex : questions.length,
+            }
+
+            if (editingQuestion) {
+                const result = await updateBookingQuestion(editingQuestion.id, questionData)
+                if ((result as any).error) {
+                    toast.error((result as any).error)
+                } else {
+                    toast.success('Question updated!')
+                    loadData()
+                    handleCloseModal()
+                }
+            } else {
+                const result = await createBookingQuestion(params.id, questionData)
+                if ((result as any).error) {
+                    toast.error((result as any).error)
+                } else {
+                    toast.success('Question added!')
+                    loadData()
+                    handleCloseModal()
+                }
+            }
+        } catch (error) {
+            toast.error('Failed to save question')
+        }
+    }
+
+    const handleDelete = async (questionId: string) => {
+        if (!confirm('Are you sure you want to delete this question?')) {
+            return
+        }
+
+        try {
+            const result = await deleteBookingQuestion(questionId)
+            if ((result as any).error) {
+                toast.error((result as any).error)
+            } else {
+                toast.success('Question deleted!')
+                loadData()
+            }
+        } catch (error) {
+            toast.error('Failed to delete question')
+        }
+    }
+
+    const getQuestionTypeLabel = (type: string) => {
+        return QUESTION_TYPES.find(t => t.value === type)?.label || type
+    }
+
+    if (isLoading) {
+        return (
+            <div className="min-h-screen bg-neutral-50 py-12">
+                <div className="container mx-auto px-4 max-w-4xl">
+                    <div className="animate-pulse space-y-4">
+                        <div className="h-8 bg-neutral-200 rounded w-1/3" />
+                        <div className="h-64 bg-neutral-200 rounded" />
+                    </div>
+                </div>
+            </div>
+        )
+    }
+
+    return (
+        <div className="space-y-8 animate-in fade-in duration-500">
+            <div>
+                <button
+                    onClick={() => router.push(`/dashboard/appointments/${params.id}/edit`)}
+                    className="flex items-center gap-2 text-neutral-400 hover:text-white mb-4 transition-colors">
+                    <ChevronLeft className="w-5 h-5" />
+                    Back to Edit
+                </button>
+                <div className="flex items-center justify-between">
+                    <div>
+                        <h1 className="text-3xl font-display font-bold text-white mb-2">
+                            Booking Questions
+                        </h1>
+                        <p className="text-neutral-400">{appointment?.title}</p>
+                    </div>
+                    <Button onClick={() => handleOpenModal()} variant="primary">
+                        <Plus className="w-5 h-5 mr-2" />
+                        Add Question
+                    </Button>
+                </div>
+            </div>
+
+            <Card className="mb-6 bg-mongodb-slate/30 border-blue-900/30">
+                <CardContent className="py-4">
+                    <div className="flex items-start gap-3">
+                        <HelpCircle className="w-5 h-5 text-mongodb-spring mt-0.5" />
+                        <div>
+                            <p className="font-medium text-white">Collect Custom Information</p>
+                            <p className="text-sm text-neutral-400 mt-1">
+                                Add questions to collect specific information from customers during booking. Questions appear in the order listed below.
+                            </p>
+                        </div>
+                    </div>
+                </CardContent>
+            </Card>
+
+            {questions.length === 0 ? (
+                <Card className="bg-mongodb-slate/50 border-neutral-800">
+                    <CardContent className="py-12 text-center">
+                        <HelpCircle className="w-16 h-16 mx-auto text-neutral-600 mb-4" />
+                        <h3 className="text-xl font-semibold text-white mb-2">
+                            No Questions Yet
+                        </h3>
+                        <p className="text-neutral-400 mb-6">
+                            Add custom questions to collect information from customers
+                        </p>
+                        <Button onClick={() => handleOpenModal()} variant="primary">
+                            <Plus className="w-5 h-5 mr-2" />
+                            Add Your First Question
+                        </Button>
+                    </CardContent>
+                </Card>
+            ) : (
+                <div className="space-y-4">
+                    {questions.map((question, index) => (
+                        <Card key={question.id} className="hover:border-mongodb-spring/50 transition-colors bg-mongodb-slate/50 border-neutral-800">
+                            <CardContent className="py-4">
+                                <div className="flex items-start gap-4">
+                                    <GripVertical className="w-5 h-5 text-neutral-600 mt-1 cursor-move" />
+                                    <div className="flex-1">
+                                        <div className="flex items-start justify-between mb-2">
+                                            <div className="flex-1">
+                                                <h3 className="font-semibold text-white mb-1">
+                                                    {question.questionText}
+                                                </h3>
+                                                <div className="flex items-center gap-2">
+                                                    <Badge variant="info">
+                                                        {getQuestionTypeLabel(question.questionType)}
+                                                    </Badge>
+                                                    {question.isMandatory && (
+                                                        <Badge variant="warning">Required</Badge>
+                                                    )}
+                                                </div>
+                                            </div>
+                                            <div className="flex items-center gap-2">
+                                                <Button
+                                                    variant="ghost"
+                                                    size="sm"
+                                                    onClick={() => handleOpenModal(question)}
+                                                    className="text-neutral-400 hover:text-white">
+                                                    <Edit className="w-4 h-4" />
+                                                </Button>
+                                                <Button
+                                                    variant="ghost"
+                                                    size="sm"
+                                                    onClick={() => handleDelete(question.id)}
+                                                    className="text-red-500 hover:text-red-400 hover:bg-red-500/10">
+                                                    <Trash2 className="w-4 h-4" />
+                                                </Button>
+                                            </div>
+                                        </div>
+                                        {question.options && question.options.length > 0 && (
+                                            <div className="mt-2">
+                                                <p className="text-sm text-neutral-500 mb-1">Options:</p>
+                                                <div className="flex flex-wrap gap-2">
+                                                    {question.options.map((option, i) => (
+                                                        <span
+                                                            key={i}
+                                                            className="px-2 py-1 bg-neutral-800 text-neutral-300 text-sm rounded border border-neutral-700">
+                                                            {option}
+                                                        </span>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+                            </CardContent>
+                        </Card>
+                    ))}
+                </div>
+            )}
+
+            <Modal
+                isOpen={showModal}
+                onClose={handleCloseModal}
+                title={editingQuestion ? 'Edit Question' : 'Add Question'}
+                size="lg">
+                <div className="space-y-6">
+                    <Input
+                        label="Question Text"
+                        value={formData.questionText}
+                        onChange={(e) => setFormData(prev => ({ ...prev, questionText: e.target.value }))}
+                        placeholder="e.g., What is your preferred time?"
+                        required
+                        className="bg-mongodb-black border-neutral-700 text-white placeholder:text-neutral-600 focus:border-mongodb-spring"
+                        labelClassName="text-neutral-300"
+                    />
+
+                    <div>
+                        <label className="block text-sm font-medium text-neutral-300 mb-2">
+                            Question Type <span className="text-red-500">*</span>
+                        </label>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                            {QUESTION_TYPES.map((type) => (
+                                <button
+                                    key={type.value}
+                                    type="button"
+                                    onClick={() => setFormData(prev => ({ ...prev, questionType: type.value as any }))}
+                                    className={cn(
+                                        'p-4 rounded-lg border text-left transition-all',
+                                        formData.questionType === type.value
+                                            ? 'border-mongodb-spring bg-mongodb-spring/10 text-white'
+                                            : 'border-neutral-700 bg-mongodb-black text-neutral-400 hover:border-neutral-500'
+                                    )}>
+                                    <div className="flex items-center gap-3">
+                                        <span className="text-2xl">{type.icon}</span>
+                                        <span className="font-medium">{type.label}</span>
+                                    </div>
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+
+                    {['radio', 'checkbox'].includes(formData.questionType) && (
+                        <div>
+                            <label className="block text-sm font-medium text-neutral-300 mb-2">
+                                Options <span className="text-red-500">*</span>
+                            </label>
+                            <div className="space-y-2">
+                                {formData.options.map((option, index) => (
+                                    <div key={index} className="flex items-center gap-2">
+                                        <Input
+                                            value={option}
+                                            onChange={(e) => handleOptionChange(index, e.target.value)}
+                                            placeholder={`Option ${index + 1}`}
+                                            className="bg-mongodb-black border-neutral-700 text-white placeholder:text-neutral-600 focus:border-mongodb-spring"
+                                        />
+                                        {formData.options.length > 1 && (
+                                            <Button
+                                                variant="ghost"
+                                                size="sm"
+                                                onClick={() => handleRemoveOption(index)}
+                                                className="text-red-500 hover:text-red-400 hover:bg-red-500/10">
+                                                <Trash2 className="w-4 h-4" />
+                                            </Button>
+                                        )}
+                                    </div>
+                                ))}
+                                <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={handleAddOption}
+                                    className="text-mongodb-spring hover:text-mongodb-spring/80 hover:bg-mongodb-spring/10">
+                                    <Plus className="w-4 h-4 mr-2" />
+                                    Add Option
+                                </Button>
+                            </div>
+                        </div>
+                    )}
+
+                    <label className="flex items-center gap-3 cursor-pointer p-3 rounded-lg border border-neutral-700 bg-mongodb-black/50 hover:bg-mongodb-black transition-colors">
+                        <input
+                            type="checkbox"
+                            checked={formData.isMandatory}
+                            onChange={(e) => setFormData(prev => ({ ...prev, isMandatory: e.target.checked }))}
+                            className="w-5 h-5 rounded border-neutral-600 bg-neutral-800 text-mongodb-spring focus:ring-mongodb-spring"
+                        />
+                        <div>
+                            <p className="font-medium text-white">Required Question</p>
+                            <p className="text-sm text-neutral-400">Customers must answer this question</p>
+                        </div>
+                    </label>
+
+                    <div className="flex gap-4 pt-4">
+                        <Button
+                            variant="ghost"
+                            onClick={handleCloseModal}
+                            className="flex-1 text-neutral-400 hover:text-white">
+                            Cancel
+                        </Button>
+                        <Button
+                            onClick={handleSubmit}
+                            className="flex-1"
+                            variant="primary">
+                            {editingQuestion ? 'Update Question' : 'Add Question'}
+                        </Button>
+                    </div>
+                </div>
+            </Modal>
+        </div>
+    )
+}
