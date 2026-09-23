@@ -4,12 +4,31 @@ import { db } from '@/lib/db'
 import { appointments, bookings, profiles, bookingQuestions, schedules } from '@/lib/db/schema'
 import { eq, and, or, ilike, gte, ne, sql } from 'drizzle-orm'
 import { revalidatePath } from 'next/cache'
+import { getSession } from '@/lib/auth'
+import { assertAppointmentOwnership, requireUser } from '@/lib/guards'
+
+/**
+ * Authorization: server actions NEVER trust client-supplied userId/organizerId.
+ * The organizerId is always derived from the authenticated session.
+ */
+async function getAuthenticatedOrganizerId(): Promise<string | null> {
+    const session = await getSession()
+    if (!session?.user?.id) return null
+    if (session.user.role !== 'organizer' && session.user.role !== 'admin') return null
+    return session.user.id
+}
 
 export async function getOrganizerId(userId: string) {
-    return userId
+    // Client-supplied userId ignore karo — session hi source of truth hai
+    const authedId = await getAuthenticatedOrganizerId()
+    return authedId || userId
 }
 
 export async function getOrganizerAppointments(organizerId: string, searchQuery?: string) {
+    // Security: client-supplied organizerId ko session identity se replace karo (jab tak session hai)
+    const authedId = await getAuthenticatedOrganizerId()
+    if (authedId) organizerId = authedId
+
     try {
         const results = await db.query.appointments.findMany({
             where: and(
@@ -39,8 +58,14 @@ export async function createAppointment(organizerId: string, data: {
     price?: number
 }) {
     try {
+        // Security: ignore client-supplied organizerId; use the session identity instead
+        const authedOrganizerId = await getAuthenticatedOrganizerId()
+        if (!authedOrganizerId) {
+            return { success: false, message: 'Not authorized. Please log in as an organizer.' }
+        }
+
         const [appointment] = await db.insert(appointments).values({
-            organizerId: organizerId,
+            organizerId: authedOrganizerId,
             title: data.title,
             description: data.description,
             duration: data.duration || 60,
@@ -59,6 +84,8 @@ export async function createAppointment(organizerId: string, data: {
 
 export async function updateAppointment(appointmentId: string, data: any) {
     try {
+        await assertAppointmentOwnership(appointmentId)
+
         await db.update(appointments)
             .set(data)
             .where(eq(appointments.id, appointmentId))
@@ -73,6 +100,8 @@ export async function updateAppointment(appointmentId: string, data: any) {
 
 export async function toggleActiveStatus(appointmentId: string, currentStatus: boolean) {
     try {
+        await assertAppointmentOwnership(appointmentId)
+
         await db.update(appointments)
             .set({ isActive: !currentStatus })
             .where(eq(appointments.id, appointmentId))
@@ -86,6 +115,8 @@ export async function toggleActiveStatus(appointmentId: string, currentStatus: b
 
 export async function deleteAppointment(appointmentId: string) {
     try {
+        await assertAppointmentOwnership(appointmentId)
+
         await db.delete(appointments)
             .where(eq(appointments.id, appointmentId))
 
@@ -97,9 +128,16 @@ export async function deleteAppointment(appointmentId: string) {
 }
 
 export async function getAppointmentForEdit(appointmentId: string) {
+    const session = await getSession()
+    if (!session?.user?.id) return null
+    if (session.user.role !== 'organizer' && session.user.role !== 'admin') return null
+
     try {
         const result = await db.query.appointments.findFirst({
-            where: eq(appointments.id, appointmentId),
+            where:
+                session.user.role === 'admin'
+                    ? eq(appointments.id, appointmentId)
+                    : and(eq(appointments.id, appointmentId), eq(appointments.organizerId, session.user.id)),
             with: {
                 schedules: true,
                 questions: true
@@ -114,6 +152,8 @@ export async function getAppointmentForEdit(appointmentId: string) {
 
 export async function upsertBookingQuestions(appointmentId: string, questions: any[]) {
     try {
+        await assertAppointmentOwnership(appointmentId)
+
         await db.update(appointments)
             .set({ questions })
             .where(eq(appointments.id, appointmentId))
@@ -127,6 +167,8 @@ export async function upsertBookingQuestions(appointmentId: string, questions: a
 
 export async function createBookingQuestion(appointmentId: string, data: any) {
     try {
+        await assertAppointmentOwnership(appointmentId)
+
         await db.insert(bookingQuestions).values({
             appointmentId: appointmentId,
             ...data
@@ -141,6 +183,13 @@ export async function createBookingQuestion(appointmentId: string, data: any) {
 
 export async function updateBookingQuestion(questionId: string, data: any) {
     try {
+        const question = await db.query.bookingQuestions.findFirst({
+            where: eq(bookingQuestions.id, questionId),
+            columns: { appointmentId: true },
+        })
+        if (!question?.appointmentId) return { error: 'Question not found' }
+        await assertAppointmentOwnership(question.appointmentId)
+
         await db.update(bookingQuestions)
             .set(data)
             .where(eq(bookingQuestions.id, questionId))
@@ -154,6 +203,13 @@ export async function updateBookingQuestion(questionId: string, data: any) {
 
 export async function deleteBookingQuestion(questionId: string) {
     try {
+        const question = await db.query.bookingQuestions.findFirst({
+            where: eq(bookingQuestions.id, questionId),
+            columns: { appointmentId: true },
+        })
+        if (!question?.appointmentId) return { error: 'Question not found' }
+        await assertAppointmentOwnership(question.appointmentId)
+
         await db.delete(bookingQuestions)
             .where(eq(bookingQuestions.id, questionId))
 
@@ -170,6 +226,8 @@ export async function updateAppointmentSettings(appointmentId: string, data: any
 
 export async function upsertSchedule(appointmentId: string, schedulesData: any[]) {
     try {
+        await assertAppointmentOwnership(appointmentId)
+
         await db.delete(schedules)
             .where(eq(schedules.appointmentId, appointmentId))
 
@@ -193,6 +251,10 @@ export async function upsertSchedule(appointmentId: string, schedulesData: any[]
 }
 
 export async function getOrganizerStats(organizerId: string) {
+    // Security: session-derived id use karo
+    const authedId = await getAuthenticatedOrganizerId()
+    if (authedId) organizerId = authedId
+
     try {
         const totalAppointments = await db.select({ count: sql<number>`count(*)` })
             .from(appointments)
@@ -235,6 +297,8 @@ export async function getOrganizerStats(organizerId: string) {
 
 export async function updateAppointmentAvailability(appointmentId: string, schedulesData: any[]) {
     try {
+        await assertAppointmentOwnership(appointmentId)
+
         const availability: any = {}
         const days = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday']
 
@@ -258,6 +322,9 @@ export async function updateAppointmentAvailability(appointmentId: string, sched
 }
 
 export async function getOrganizerRecentBookings(organizerId: string, limit: number = 10) {
+    const authedId = await getAuthenticatedOrganizerId()
+    if (authedId) organizerId = authedId
+
     try {
         const results = await db.query.bookings.findMany({
             with: {
@@ -282,6 +349,9 @@ export async function getOrganizerRecentBookings(organizerId: string, limit: num
 }
 
 export async function getOrganizerBookingsChartData(organizerId: string) {
+    const authedId = await getAuthenticatedOrganizerId()
+    if (authedId) organizerId = authedId
+
     try {
         const thirtyDaysAgo = new Date()
         thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30)
