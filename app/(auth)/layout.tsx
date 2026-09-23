@@ -96,10 +96,10 @@ export default function AuthLayout({
                 </div>
             </div>
 
-            <div className="flex-1 flex flex-col justify-center relative overflow-hidden bg-mongodb-black">
+            <div className="flex-1 flex flex-col relative overflow-hidden bg-mongodb-black">
                 <div className="md:hidden absolute -top-48 -right-48 w-96 h-96 bg-mongodb-spring/5 blur-[120px] rounded-full" />
 
-                <div className="w-full max-w-md mx-auto p-8 md:p-12 relative z-10">
+                <div className="flex-1 w-full max-w-md mx-auto p-8 md:p-12 relative z-10 flex flex-col justify-center">
                     <div className="md:hidden flex flex-col items-center mb-12">
                         <div className="w-12 h-12 bg-mongodb-spring rounded-xl flex items-center justify-center shadow-mongodb mb-4">
                             <Calendar className="w-7 h-7 text-mongodb-black" />
@@ -112,8 +112,10 @@ export default function AuthLayout({
                     </div>
                 </div>
 
-                <div className="absolute bottom-8 left-0 w-full text-center text-neutral-600 text-[10px] uppercase tracking-[0.2em] font-bold">
-                    © 2025 Slotify Professional • Secured by Supabase
+                {/* Footer ab normal document flow me hai — mobile (375px) par content ke
+                    upar overlap nahi hoga (pehle absolutely positioned tha) */}
+                <div className="relative z-10 w-full text-center text-neutral-600 text-[10px] uppercase tracking-[0.2em] font-bold px-4 pb-6 pt-2">
+                    © 2025 Slotify Professional • Secure Scheduling Cloud
                 </div>
             </div>
         </div>
