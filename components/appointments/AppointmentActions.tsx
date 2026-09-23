@@ -2,9 +2,11 @@
 
 import { useState } from 'react'
 import { Button } from '@/components/ui/Button'
-import { Eye, EyeOff, Trash2 } from 'lucide-react'
+import { useConfirmDialog } from '@/components/ui/ConfirmDialog'
+import { Eye, EyeOff, Trash2, Globe, Lock } from 'lucide-react'
 import { toggleActiveStatus, deleteAppointment } from '@/lib/actions/organizer'
 import { toast } from 'sonner'
+import { useRouter } from 'next/navigation'
 
 export function TogglePublishButton({
     appointmentId,
@@ -14,67 +16,92 @@ export function TogglePublishButton({
     currentStatus: boolean
 }) {
     const [loading, setLoading] = useState(false)
+    const router = useRouter()
 
-    const handleToggle = async () => {
+    const handleToggle = async (e: React.MouseEvent) => {
+        e.preventDefault()
+        e.stopPropagation()
         setLoading(true)
-        const result = await toggleActiveStatus(appointmentId, currentStatus)
+        try {
+            const result = await toggleActiveStatus(appointmentId, currentStatus)
 
-        if (!result.success) {
-            toast.error(result.message || 'Failed to update status')
-        } else {
-            toast.success(currentStatus ? 'Appointment hidden' : 'Appointment set to active')
-            window.location.reload()
+            if (!result.success) {
+                toast.error(result.message || 'Failed to update status')
+            } else {
+                toast.success(currentStatus ? 'Plan hidden from public marketplace' : 'Plan published live to marketplace!')
+                router.refresh()
+            }
+        } catch {
+            toast.error('Network error updating status')
+        } finally {
+            setLoading(false)
         }
-
-        setLoading(false)
     }
 
     return (
-        <Button
-            variant="ghost"
-            size="sm"
+        <button
+            type="button"
             onClick={handleToggle}
-            isLoading={loading}
-            className="w-10 h-10 p-0 rounded-full hover:bg-neutral-800 transition-colors"
-            title={currentStatus ? "Hide Appointment" : "Show Appointment"}>
-            {currentStatus ? (
-                <EyeOff className="w-5 h-5 text-mongodb-spring" />
-            ) : (
-                <Eye className="w-5 h-5 text-neutral-500" />
-            )}
-        </Button>
+            disabled={loading}
+            className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-mono font-bold transition-all border ${
+                currentStatus
+                    ? 'bg-mongodb-spring/10 text-mongodb-spring border-mongodb-spring/30 hover:bg-mongodb-spring/20'
+                    : 'bg-[#001E2B] text-neutral-400 border-white/10 hover:border-white/25'
+            }`}
+            title={currentStatus ? "Published: Click to hide" : "Draft: Click to publish"}>
+            <span className={`w-1.5 h-1.5 rounded-full ${currentStatus ? 'bg-mongodb-spring animate-pulse' : 'bg-neutral-500'}`} />
+            <span>{currentStatus ? 'Live' : 'Draft'}</span>
+        </button>
     )
 }
 
 export function DeleteButton({ appointmentId }: { appointmentId: string }) {
     const [loading, setLoading] = useState(false)
+    const router = useRouter()
+    const { confirm, confirmDialog } = useConfirmDialog()
 
-    const handleDelete = async () => {
-        if (!confirm('Are you sure you want to delete this appointment? All associated bookings will remain in history but this appointment plan will be deleted forever.')) {
+    const handleDelete = async (e: React.MouseEvent) => {
+        e.preventDefault()
+        e.stopPropagation()
+        const confirmed = await confirm({
+            title: 'Delete Appointment',
+            description: 'Are you sure you want to permanently delete this appointment? All its schedules and questions will also be removed.',
+            confirmLabel: 'Delete',
+        })
+        if (!confirmed) {
             return
         }
 
         setLoading(true)
-        const result = await deleteAppointment(appointmentId)
+        try {
+            const result = await deleteAppointment(appointmentId)
 
-        if (!result.success) {
-            toast.error(result.message || 'Failed to delete appointment')
+            if (!result.success) {
+                toast.error(result.message || 'Failed to delete appointment')
+            } else {
+                toast.success('Appointment deleted successfully')
+                router.refresh()
+            }
+        } catch {
+            toast.error('Error deleting appointment')
+        } finally {
             setLoading(false)
-        } else {
-            toast.success('Appointment deleted successfully')
-            window.location.reload()
         }
     }
 
     return (
-        <Button
-            variant="ghost"
-            size="sm"
-            onClick={handleDelete}
-            isLoading={loading}
-            className="w-10 h-10 p-0 rounded-full text-neutral-600 hover:text-red-500 hover:bg-red-500/10 transition-colors"
-            title="Delete Appointment">
-            <Trash2 className="w-4 h-4" />
-        </Button>
+        <>
+            <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={handleDelete}
+                isLoading={loading}
+                className="w-9 h-9 p-0 rounded-lg text-neutral-400 hover:text-red-400 hover:bg-red-500/10 transition-colors"
+                title="Delete Appointment">
+                <Trash2 className="w-4 h-4" />
+            </Button>
+            {confirmDialog}
+        </>
     )
 }
