@@ -4,9 +4,12 @@ import { db } from '@/lib/db'
 import { profiles, appointments, bookings } from '@/lib/db/schema'
 import { eq, sql } from 'drizzle-orm'
 import { revalidatePath } from 'next/cache'
+import { requireAdmin } from '@/lib/guards'
 
 export async function getAllUsers() {
     try {
+        await requireAdmin()
+
         const results = await db.query.profiles.findMany({
             orderBy: (profiles, { desc }) => [desc(profiles.createdAt)]
         })
@@ -19,19 +22,29 @@ export async function getAllUsers() {
 
 export async function updateUserRole(userId: string, role: 'customer' | 'organizer' | 'admin') {
     try {
+        const session = await requireAdmin()
+
+        // Admin khud ko demote/suspend nahi kar sakta — lock-out se bachne ke liye
+        if (userId === session.user.id) {
+            return { success: false, error: 'You cannot change your own role.' }
+        }
+
         await db.update(profiles)
             .set({ role })
             .where(eq(profiles.id, userId))
 
+        revalidatePath('/dashboard/admin')
         revalidatePath('/admin')
         return { success: true }
     } catch (error: any) {
-        return { success: false, error: error.message }
+        return { success: false, error: error.message || 'Not authorized' }
     }
 }
 
 export async function getAllOrganizers() {
     try {
+        await requireAdmin()
+
         const results = await db.query.profiles.findMany({
             where: eq(profiles.role, 'organizer'),
             orderBy: (profiles, { desc }) => [desc(profiles.createdAt)]
@@ -45,6 +58,12 @@ export async function getAllOrganizers() {
 
 export async function updateUserStatus(userId: string, status: 'active' | 'suspended') {
     try {
+        const session = await requireAdmin()
+
+        if (userId === session.user.id) {
+            return { success: false, error: 'You cannot suspend your own account.' }
+        }
+
         await db.update(profiles)
             .set({ status })
             .where(eq(profiles.id, userId))
@@ -52,12 +71,14 @@ export async function updateUserStatus(userId: string, status: 'active' | 'suspe
         revalidatePath('/dashboard/admin')
         return { success: true }
     } catch (error: any) {
-        return { success: false, error: error.message }
+        return { success: false, error: error.message || 'Not authorized' }
     }
 }
 
 export async function approveOrganizer(userId: string) {
     try {
+        await requireAdmin()
+
         await db.update(profiles)
             .set({
                 role: 'organizer',
@@ -68,12 +89,18 @@ export async function approveOrganizer(userId: string) {
         revalidatePath('/dashboard/admin')
         return { success: true }
     } catch (error: any) {
-        return { success: false, error: error.message }
+        return { success: false, error: error.message || 'Not authorized' }
     }
 }
 
 export async function disableOrganizer(userId: string) {
     try {
+        const session = await requireAdmin()
+
+        if (userId === session.user.id) {
+            return { success: false, error: 'You cannot disable your own account.' }
+        }
+
         await db.update(profiles)
             .set({ status: 'suspended' })
             .where(eq(profiles.id, userId))
@@ -81,7 +108,7 @@ export async function disableOrganizer(userId: string) {
         revalidatePath('/dashboard/admin')
         return { success: true }
     } catch (error: any) {
-        return { success: false, error: error.message }
+        return { success: false, error: error.message || 'Not authorized' }
     }
 }
 
