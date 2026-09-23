@@ -8,6 +8,7 @@ import { Badge } from '@/components/ui/Badge'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/Tabs'
 import { Skeleton } from '@/components/ui/Skeleton'
 import { Calendar, Clock, MapPin, X } from 'lucide-react'
+import { useConfirmDialog } from '@/components/ui/ConfirmDialog'
 import { getUserBookings, cancelBooking } from '@/lib/actions/appointments'
 import { getCurrentUser } from '@/lib/actions/auth'
 import { toast } from 'sonner'
@@ -31,6 +32,7 @@ export default function ProfilePage() {
     const [user, setUser] = useState<any>(null)
     const [bookings, setBookings] = useState<Booking[]>([])
     const [isLoading, setIsLoading] = useState(true)
+    const { confirm, confirmDialog } = useConfirmDialog()
 
     useEffect(() => {
         loadUserAndBookings()
@@ -58,7 +60,12 @@ export default function ProfilePage() {
     }
 
     const handleCancelBooking = async (bookingId: string) => {
-        if (!confirm('Are you sure you want to cancel this booking?')) {
+        const confirmed = await confirm({
+            title: 'Cancel Booking',
+            description: 'Are you sure you want to cancel this booking? The time slot will be released for others.',
+            confirmLabel: 'Cancel Booking',
+        })
+        if (!confirmed) {
             return
         }
 
@@ -223,6 +230,7 @@ export default function ProfilePage() {
                     )}
                 </TabsContent>
             </Tabs>
+            {confirmDialog}
         </div>
     )
 }
