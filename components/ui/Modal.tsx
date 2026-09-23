@@ -11,9 +11,10 @@ export interface ModalProps {
     description?: string
     children: React.ReactNode
     size?: 'sm' | 'md' | 'lg' | 'xl'
+    className?: string
 }
 
-export function Modal({ isOpen, onClose, title, description, children, size = 'md' }: ModalProps) {
+export function Modal({ isOpen, onClose, title, description, children, size = 'md', className }: ModalProps) {
     React.useEffect(() => {
         if (isOpen) {
             document.body.style.overflow = 'hidden'
@@ -37,34 +38,35 @@ export function Modal({ isOpen, onClose, title, description, children, size = 'm
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 animate-fade-in">
             <div
-                className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+                className="absolute inset-0 bg-black/75 backdrop-blur-md"
                 onClick={onClose}
             />
             <div
                 className={cn(
-                    'relative w-full bg-white rounded-2xl shadow-xl animate-scale-in',
-                    sizes[size]
+                    'relative w-full bg-[#0C2331] border border-white/15 rounded-2xl shadow-[0_25px_60px_-15px_rgba(0,0,0,0.8)] animate-scale-in text-white overflow-hidden',
+                    sizes[size],
+                    className
                 )}>
                 {(title || description) && (
-                    <div className="px-6 py-4 border-b border-neutral-200">
+                    <div className="px-6 py-5 border-b border-white/10 bg-[#001E2B]/50">
                         <div className="flex items-start justify-between">
                             <div>
                                 {title && (
-                                    <h2 className="text-2xl font-display font-semibold">{title}</h2>
+                                    <h2 className="text-xl font-display font-bold text-white tracking-tight">{title}</h2>
                                 )}
                                 {description && (
-                                    <p className="mt-1 text-sm text-neutral-600">{description}</p>
+                                    <p className="mt-1 text-sm text-neutral-400">{description}</p>
                                 )}
                             </div>
                             <button
                                 onClick={onClose}
-                                className="ml-4 p-2 rounded-lg hover:bg-neutral-100 transition-colors">
+                                className="ml-4 p-2 text-neutral-400 hover:text-white rounded-lg hover:bg-white/5 transition-colors">
                                 <X className="w-5 h-5" />
                             </button>
                         </div>
                     </div>
                 )}
-                <div className="px-6 py-4 max-h-[calc(100vh-200px)] overflow-y-auto scrollbar-thin">
+                <div className="p-6 max-h-[calc(100vh-200px)] overflow-y-auto scrollbar-thin">
                     {children}
                 </div>
             </div>
