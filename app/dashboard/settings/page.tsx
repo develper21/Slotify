@@ -156,7 +156,9 @@ export default function SettingsPage() {
                     Settings
                 </h1>
                 <p className="text-neutral-400">
-                    Manage your account and business settings
+                    {isOrganizer
+                        ? 'Manage your account, business, and booking preferences'
+                        : 'Manage your account and notification preferences'}
                 </p>
             </div>
 
@@ -167,17 +169,15 @@ export default function SettingsPage() {
                         Profile
                     </TabsTrigger>
                     {isOrganizer && (
-                        <>
-                            <TabsTrigger value="business" className="data-[state=active]:bg-mongodb-black data-[state=active]:text-mongodb-spring">
-                                <Building2 className="w-4 h-4 mr-2" />
-                                Business
-                            </TabsTrigger>
-                            <TabsTrigger value="preferences" className="data-[state=active]:bg-mongodb-black data-[state=active]:text-mongodb-spring">
-                                <SettingsIcon className="w-4 h-4 mr-2" />
-                                Preferences
-                            </TabsTrigger>
-                        </>
+                        <TabsTrigger value="business" className="data-[state=active]:bg-mongodb-black data-[state=active]:text-mongodb-spring">
+                            <Building2 className="w-4 h-4 mr-2" />
+                            Business
+                        </TabsTrigger>
                     )}
+                    <TabsTrigger value="preferences" className="data-[state=active]:bg-mongodb-black data-[state=active]:text-mongodb-spring">
+                        <SettingsIcon className="w-4 h-4 mr-2" />
+                        Preferences
+                    </TabsTrigger>
                 </TabsList>
 
                 <TabsContent value="profile">
@@ -224,8 +224,7 @@ export default function SettingsPage() {
                 </TabsContent>
 
                 {isOrganizer && (
-                    <>
-                        <TabsContent value="business">
+                    <TabsContent value="business">
                             <Card className="bg-mongodb-slate/30 border-neutral-800">
                                 <CardHeader>
                                     <div className="flex items-center gap-3">
@@ -269,9 +268,10 @@ export default function SettingsPage() {
                                     </Button>
                                 </CardContent>
                             </Card>
-                        </TabsContent>
+                    </TabsContent>
+                )}
 
-                        <TabsContent value="preferences">
+                <TabsContent value="preferences">
                             <Card className="bg-mongodb-slate/30 border-neutral-800">
                                 <CardHeader>
                                     <div className="flex items-center gap-3">
@@ -295,22 +295,25 @@ export default function SettingsPage() {
                                         </select>
                                     </div>
 
-                                    <div>
-                                        <label className="block text-sm font-medium text-neutral-400 mb-2">
-                                            Default Appointment Duration
-                                        </label>
-                                        <select
-                                            value={preferencesForm.defaultDuration}
-                                            onChange={(e) => setPreferencesForm({ ...preferencesForm, defaultDuration: e.target.value })}
-                                            className="w-full px-4 py-3 rounded-lg border border-neutral-700 bg-mongodb-black text-white focus:outline-none focus:border-mongodb-spring">
-                                            <option value="15">15 minutes</option>
-                                            <option value="30">30 minutes</option>
-                                            <option value="45">45 minutes</option>
-                                            <option value="60">1 hour</option>
-                                            <option value="90">1.5 hours</option>
-                                            <option value="120">2 hours</option>
-                                        </select>
-                                    </div>
+                                    {/* Default Duration sirf organizers ke liye relevant hai */}
+                                    {isOrganizer && (
+                                        <div>
+                                            <label className="block text-sm font-medium text-neutral-400 mb-2">
+                                                Default Appointment Duration
+                                            </label>
+                                            <select
+                                                value={preferencesForm.defaultDuration}
+                                                onChange={(e) => setPreferencesForm({ ...preferencesForm, defaultDuration: e.target.value })}
+                                                className="w-full px-4 py-3 rounded-lg border border-neutral-700 bg-mongodb-black text-white focus:outline-none focus:border-mongodb-spring">
+                                                <option value="15">15 minutes</option>
+                                                <option value="30">30 minutes</option>
+                                                <option value="45">45 minutes</option>
+                                                <option value="60">1 hour</option>
+                                                <option value="90">1.5 hours</option>
+                                                <option value="120">2 hours</option>
+                                            </select>
+                                        </div>
+                                    )}
 
                                     <div className="space-y-3">
                                         <label className="flex items-center gap-3 cursor-pointer group">
@@ -348,9 +351,7 @@ export default function SettingsPage() {
                                     </Button>
                                 </CardContent>
                             </Card>
-                        </TabsContent>
-                    </>
-                )}
+                </TabsContent>
             </Tabs>
         </div>
     )
