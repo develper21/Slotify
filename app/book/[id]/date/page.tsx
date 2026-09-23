@@ -1,21 +1,19 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, useParams } from 'next/navigation'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { ChevronLeft, ChevronRight, Calendar as CalendarIcon } from 'lucide-react'
 import { cn, formatDate, isPastDate } from '@/lib/utils'
 
-interface DatePickerPageProps {
-    params: { id: string }
-}
-
 const DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
 const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December']
 
-export default function DatePickerPage({ params }: DatePickerPageProps) {
+export default function DatePickerPage() {
     const router = useRouter()
+    const routeParams = useParams()
+    const appointmentId = routeParams?.id as string
     const [currentDate, setCurrentDate] = useState(new Date())
     const [selectedDate, setSelectedDate] = useState<Date | null>(null)
     const [availableDates, setAvailableDates] = useState<string[]>([])
@@ -71,7 +69,7 @@ export default function DatePickerPage({ params }: DatePickerPageProps) {
     const handleContinue = () => {
         if (selectedDate) {
             const dateStr = selectedDate.toISOString().split('T')[0]
-            router.push(`/book/${params.id}/time?date=${dateStr}`)
+            router.push(`/book/${appointmentId}/time?date=${dateStr}`)
         }
     }
 
