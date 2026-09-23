@@ -18,6 +18,11 @@ export default async function AppointmentsPage(props: {
         redirect('/login')
     }
 
+    // Organizer-only area (customers ko dashboard par bhejo)
+    if (session.user.role !== 'organizer' && session.user.role !== 'admin') {
+        redirect('/dashboard')
+    }
+
     const { user } = session
     const appointments = await getOrganizerAppointments(user.id, searchParams.search)
 
