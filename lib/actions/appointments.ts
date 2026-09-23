@@ -5,6 +5,7 @@ import { appointments, bookings, profiles } from '@/lib/db/schema'
 import { eq, and, or, ilike, gte, lte, ne, sql } from 'drizzle-orm'
 import { revalidatePath } from 'next/cache'
 import { redis } from '@/lib/redis'
+import { assertBookingAccess } from '@/lib/guards'
 
 export async function getPublishedAppointments(searchQuery?: string) {
     try {
@@ -273,6 +274,9 @@ export async function getUserBookings(userId: string) {
 
 export async function cancelBooking(bookingId: string) {
     try {
+        // Security: only the booking's customer, appointment's organizer, ya admin cancel kar sakta hai
+        await assertBookingAccess(bookingId)
+
         await db.update(bookings)
             .set({ status: 'cancelled' })
             .where(eq(bookings.id, bookingId))
