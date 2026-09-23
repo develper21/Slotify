@@ -1,15 +1,17 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { useRouter, useSearchParams } from 'next/navigation'
+import { useRouter, useSearchParams, useParams } from 'next/navigation'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { Badge } from '@/components/ui/Badge'
 import { CreditCard, Lock, CheckCircle, AlertCircle } from 'lucide-react'
 import { toast } from 'sonner'
 
-export default function PaymentPage({ params }: { params: { id: string } }) {
+export default function PaymentPage() {
     const router = useRouter()
+    const routeParams = useParams()
+    const appointmentId = routeParams?.id as string
     const searchParams = useSearchParams()
     const bookingId = searchParams.get('booking')
 
@@ -30,7 +32,7 @@ export default function PaymentPage({ params }: { params: { id: string } }) {
             await new Promise(resolve => setTimeout(resolve, 2000))
 
             toast.success('Payment successful!')
-            router.push(`/book/${params.id}/confirmation?booking=${bookingId}`)
+            router.push(`/book/${appointmentId}/confirmation?booking=${bookingId}`)
         } catch (error) {
             toast.error('Payment failed. Please try again.')
         } finally {
