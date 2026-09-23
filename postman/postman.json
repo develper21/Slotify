@@ -1,0 +1,507 @@
+{
+  "info": {
+    "_postman_id": "9f3c2a10-5b7e-4c1f-9a2b-slotifyapi001",
+    "name": "Slotify API — Full Route Collection",
+    "description": "Complete Postman collection for **Slotify** (Next.js 16 App Router). Covers every route: public pages, auth pages, booking flow, customer dashboard, organizer console, admin console, API endpoints and server actions.\n\n## RBAC Matrix (enforced by `proxy.ts` + `lib/guards.ts`)\n| Route group | Guest | Customer | Organizer | Admin |\n|---|---|---|---|---|\n| `/`, `/home`, `/book/**`, `/appointments/**`, `/misc` | ✅ | ✅ | ✅ | ✅ |\n| `/login`, `/signup`, `/verify-email`, `/forgot-password`, `/reset-password` | ✅ (logged-in users are redirected away) | ➡ redirect | ➡ redirect | ➡ redirect |\n| `/dashboard`, `/dashboard/bookings`, `/dashboard/settings`, `/dashboard/profile`, `/dashboard/notifications`, `/schedule`, `/reports` | ➡ login | ✅ | ✅ | ✅ |\n| `/dashboard/appointments/**`, `/dashboard/questions` | ➡ login | ➡ `/dashboard` | ✅ | ✅ |\n| `/dashboard/admin/**` | ➡ login | ➡ `/dashboard` | ➡ `/dashboard` | ✅ |\n| `/api/auth/session` | 401 | 200 | 200 | 200 |\n| `/api/webhooks/stripe` | signature required | — | — | — |\n\n## Auth Model\nSlotify uses **cookie-session auth** (JWT in the `session` httpOnly cookie), not bearer tokens.\n1. Run **Auth ▸ Sign In (JS extract `session` cookie)** — its test script saves the cookie into the `sessionCookie` collection variable.\n2. Every subsequent folder sends the header `Cookie: session={{sessionCookie}}`.\n\n## Server Actions (`/dashboard/**` +1 POST)\nPage-level server actions (`lib/actions/*.ts`) are React Server Action RPC calls, not plain REST. For automation, either drive them through the UI (Playwright) or POST Next-Action protocol requests (requires the action id from the page's RSC payload + `Next-Action` header). The **Organizer ▸ Create Appointment (server action)** request shows the protocol shape; swap `{{nextActionId_createAppointment}}` per build.\n\n## Seed Data\nRun `npm run db:reset && npm run db:seed`, then use:\n- Admin: `admin@slotify.test` / Organizer: `organizer@slotify.test` / Customer: `aarav@example.com` — password `Password123!`\n- Fixed IDs: `appointmentId` `aaaaaaaa-0000-4000-8000-000000000001` (paid, has questions), `aaaaaaaa-0000-4000-8000-000000000005` (group capacity 10), `aaaaaaaa-0000-4000-8000-000000000002` (free), `bookingId` `bbbbbbbb-0000-4000-8000-000000000001`.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:3000" },
+    { "key": "sessionCookie", "value": "" },
+    { "key": "email", "value": "organizer@slotify.test" },
+    { "key": "password", "value": "Password123!" },
+    { "key": "emailAdmin", "value": "admin@slotify.test" },
+    { "key": "emailCustomer", "value": "aarav@example.com" },
+    { "key": "nextActionId_createAppointment", "value": "REPLACE_WITH_BUILD_SPECIFIC_ACTION_ID" },
+    { "key": "nextActionId_signIn", "value": "REPLACE_WITH_BUILD_SPECIFIC_ACTION_ID" },
+    { "key": "nextActionId_signUp", "value": "REPLACE_WITH_BUILD_SPECIFIC_ACTION_ID" },
+    { "key": "nextActionId_verifyOTP", "value": "REPLACE_WITH_BUILD_SPECIFIC_ACTION_ID" },
+    { "key": "nextActionId_resetPassword", "value": "REPLACE_WITH_BUILD_SPECIFIC_ACTION_ID" },
+    { "key": "nextActionId_completePasswordReset", "value": "REPLACE_WITH_BUILD_SPECIFIC_ACTION_ID" },
+    { "key": "sessionCustomerCookie", "value": "" },
+    { "key": "appointmentId", "value": "aaaaaaaa-0000-4000-8000-000000000001" },
+    { "key": "bookingId", "value": "bbbbbbbb-0000-4000-8000-000000000001" }
+  ],
+  "auth": { "type": "noauth" },
+  "item": [
+    {
+      "name": "0 · Health & Session",
+      "item": [
+        {
+          "name": "Get Session (current user)",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "header": [{ "key": "Cookie", "value": "session={{sessionCookie}}" }],
+            "url": { "raw": "{{baseUrl}}/api/auth/session", "host": ["{{baseUrl}}"], "path": ["api", "auth", "session"] },
+            "description": "Reads the JWT session cookie. `401 {user:null}` when missing/expired; otherwise `{ user: { id, email, role } }`."
+          }
+        },
+        {
+          "name": "Health (root page reachable)",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/", "host": ["{{baseUrl}}"], "path": [] },
+            "description": "Landing page. `200` HTML means the server and edge proxy are up (check the `x-middleware-rewrite`/redirect behaviour here)."
+          }
+        }
+      ]
+    },
+    {
+      "name": "1 · Auth (server actions)",
+      "item": [
+        {
+          "name": "Sign In (JS extract `session` cookie)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const jar = pm.request.headers ? pm.cookies : null;",
+                  "// Postman captures Set-Cookie automatically; mirror it into the collection var for Cookie headers.",
+                  "const setCookie = pm.response.headers.get('set-cookie') || '';",
+                  "const m = setCookie.match(/session=([^;]+)/);",
+                  "if (m) pm.collectionVariables.set('sessionCookie', m[1]);",
+                  "pm.test('sign-in returned a page or action result', () => pm.expect([200, 302, 303]).to.include(pm.response.code));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/x-www-form-urlencoded" }
+            ],
+            "body": {
+              "mode": "urlencoded",
+              "urlencoded": [
+                { "key": "email", "value": "{{email}}" },
+                { "key": "password", "value": "{{password}}" }
+              ]
+            },
+            "url": { "raw": "{{baseUrl}}/login", "host": ["{{baseUrl}}"], "path": ["login"] },
+            "description": "Form-POST fallback for sign-in. In the real app `signIn` runs as a server action from `app/(auth)/login/page.tsx` and sets the httpOnly `session` cookie (JWT, 7 days). For the cookie to be captured here, run this once via the Postman *Interceptor* or use the Next-Action protocol variant below."
+          }
+        },
+        {
+          "name": "Sign In (Next-Action protocol)",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [
+              { "key": "Next-Action", "value": "{{nextActionId_signIn}}" },
+              { "key": "Content-Type", "value": "text/plain;charset=UTF-8" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "[{\"email\":\"{{email}}\",\"password\":\"{{password}}\"}]"
+            },
+            "url": { "raw": "{{baseUrl}}/login", "host": ["{{baseUrl}}"], "path": ["login"] },
+            "description": "Server-Action RPC for `lib/actions/auth.ts ▸ signIn`. Grab the action id from the login page's RSC payload (`self.__next_f` chunks) and store it as `{{nextActionId_signIn}}`. Response is an RSC stream; on success it sets the `session` cookie."
+          }
+        },
+        {
+          "name": "Sign Up (create account)",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [{ "key": "Next-Action", "value": "{{nextActionId_signUp}}" }, { "key": "Content-Type", "value": "text/plain;charset=UTF-8" }],
+            "body": { "mode": "raw", "raw": "[{\"email\":\"newuser@example.com\",\"password\":\"Password123!\",\"full_name\":\"New User\",\"role\":\"customer\"}]" },
+            "url": { "raw": "{{baseUrl}}/signup", "host": ["{{baseUrl}}"], "path": ["signup"] },
+            "description": "`signUp` creates the profile (status `pending`), then generates + emails an 8-digit OTP (Resend). Returns `{ success, message, email }`."
+          }
+        },
+        {
+          "name": "Verify Email (OTP)",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [{ "key": "Next-Action", "value": "{{nextActionId_verifyOTP}}" }, { "key": "Content-Type", "value": "text/plain;charset=UTF-8" }],
+            "body": { "mode": "raw", "raw": "[\"newuser@example.com\",\"12345678\"]" },
+            "url": { "raw": "{{baseUrl}}/verify-email", "host": ["{{baseUrl}}"], "path": ["verify-email"] },
+            "description": "`verifyOTP(email, token)` — verifies the signup OTP and logs the user in (sets `session` cookie)."
+          }
+        },
+        {
+          "name": "Request Password Reset (OTP email)",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [{ "key": "Next-Action", "value": "{{nextActionId_resetPassword}}" }, { "key": "Content-Type", "value": "text/plain;charset=UTF-8" }],
+            "body": { "mode": "raw", "raw": "[\"{{emailCustomer}}\"]" },
+            "url": { "raw": "{{baseUrl}}/forgot-password", "host": ["{{baseUrl}}"], "path": ["forgot-password"] },
+            "description": "`resetPassword(email)` sends an 8-digit recovery code via `password_reset` OTP."
+          }
+        },
+        {
+          "name": "Complete Password Reset",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [{ "key": "Next-Action", "value": "{{nextActionId_completePasswordReset}}" }, { "key": "Content-Type", "value": "text/plain;charset=UTF-8" }],
+            "body": { "mode": "raw", "raw": "[\"{{emailCustomer}}\",\"12345678\",\"NewPassword123!\"]" },
+            "url": { "raw": "{{baseUrl}}/reset-password", "host": ["{{baseUrl}}"], "path": ["reset-password"] },
+            "description": "`completePasswordReset(email, otp, newPassword)` — verifies the OTP and bcrypt-updates the password."
+          }
+        },
+        {
+          "name": "Sign Out",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [{ "key": "Cookie", "value": "session={{sessionCookie}}" }],
+            "url": { "raw": "{{baseUrl}}/dashboard", "host": ["{{baseUrl}}"], "path": ["dashboard"] },
+            "description": "`signOut()` clears the cookie (expired Set-Cookie) and redirects to `/login`. Triggered from Navbar/Sidebar."
+          }
+        }
+      ]
+    },
+    {
+      "name": "2 · Public Marketplace",
+      "item": [
+        {
+          "name": "Landing page",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/", "host": ["{{baseUrl}}"], "path": [] },
+            "description": "Marketing landing page with hero, features, architecture sections. Server component; fetches a few published appointments for social proof."
+          }
+        },
+        {
+          "name": "Marketplace home (published services)",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/home", "host": ["{{baseUrl}}"], "path": ["home"] },
+            "description": "Marketplace grid. Calls `getPublishedAppointments()` → all active appointments with organizer info. Seed shows 7 services (1 unpublished UX Audit Workshop is hidden)."
+          }
+        },
+        {
+          "name": "Appointment details (overview)",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/book/{{appointmentId}}", "host": ["{{baseUrl}}"], "path": ["book", "{{appointmentId}}"] },
+            "description": "`getAppointmentById(id)` — service overview with organizer card. Stepper is intentionally hidden here (overview page).\nSeed: `aaaaaaaa-0000-4000-8000-000000000001` = Brand Strategy Consultation (paid $150, 3 questions)."
+          }
+        },
+        {
+          "name": "Booking step: pick date",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/book/{{appointmentId}}/date", "host": ["{{baseUrl}}"], "path": ["book", "{{appointmentId}}", "date"] },
+            "description": "Calendar step. Availability comes from the appointment's jsonb `availability` (e.g. Mon–Fri 10:00–18:00, Sunday off)."
+          }
+        },
+        {
+          "name": "Booking step: pick time (slot engine)",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/book/{{appointmentId}}/time?date=2026-09-24", "host": ["{{baseUrl}}"], "path": ["book", "{{appointmentId}}", "time"], "query": [{ "key": "date", "value": "2026-09-24", "description": "YYYY-MM-DD — slots are generated from availability + duration and decremented by existing bookings (capacity-aware)" }] },
+            "description": "Renders slots from `getAvailableSlots(appointmentId, date)`. Capacity example: Group Bootcamp (capacity 10) keeps a slot open until 10 overlapping bookings exist."
+          }
+        },
+        {
+          "name": "Booking step: intake form",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/book/{{appointmentId}}/form?slot=2026-09-24T10%3A00%3A00.000Z", "host": ["{{baseUrl}}"], "path": ["book", "{{appointmentId}}", "form"], "query": [{ "key": "slot", "value": "2026-09-24T10:00:00.000Z" }] },
+            "description": "Intake form: core fields (name/email/phone) + dynamic questions from the appointment's jsonb `questions` (types: `text`, `textarea`, `phone`, `checkbox` with `options`, `isMandatory` flag)."
+          }
+        },
+        {
+          "name": "Booking step: payment",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/book/{{appointmentId}}/payment?booking={{bookingId}}", "host": ["{{baseUrl}}"], "path": ["book", "{{appointmentId}}", "payment"], "query": [{ "key": "booking", "value": "{{bookingId}}" }] },
+            "description": "Paid bookings land here with status `pending_payment` and a Stripe Checkout button (`createCheckoutSession`). Free bookings skip straight to confirmation."
+          }
+        },
+        {
+          "name": "Booking confirmation",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/book/{{appointmentId}}/confirmation?booking={{bookingId}}", "host": ["{{baseUrl}}"], "path": ["book", "{{appointmentId}}", "confirmation"], "query": [{ "key": "booking", "value": "{{bookingId}}" }] },
+            "description": "Reads `getBookingDetails(bookingId)` — appointment + customer summary after a successful booking/payment."
+          }
+        },
+        {
+          "name": "Misc static page",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/misc", "host": ["{{baseUrl}}"], "path": ["misc"] },
+            "description": "Standalone informational page (public route group)."
+          }
+        }
+      ]
+    },
+    {
+      "name": "3 · Customer Dashboard",
+      "item": [
+        {
+          "name": "Dashboard (role-aware home)",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Cookie", "value": "session={{sessionCookie}}" }],
+            "url": { "raw": "{{baseUrl}}/dashboard", "host": ["{{baseUrl}}"], "path": ["dashboard"] },
+            "description": "Role is derived **only from the session** (query-param role override was removed). Customers see My Bookings + upcoming sessions; organizers see stats + chart; admins see system overview."
+          }
+        },
+        {
+          "name": "My Bookings (customer view)",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Cookie", "value": "session={{sessionCookie}}" }],
+            "url": { "raw": "{{baseUrl}}/dashboard/bookings", "host": ["{{baseUrl}}"], "path": ["dashboard", "bookings"] },
+            "description": "As a customer: `getUserBookings(userId)` — upcoming/past tabs, cancel & delete actions (`cancelBooking`, `deleteBooking` — both assert booking access)."
+          }
+        },
+        {
+          "name": "Profile (history + reviews)",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Cookie", "value": "session={{sessionCookie}}" }],
+            "url": { "raw": "{{baseUrl}}/dashboard/profile", "host": ["{{baseUrl}}"], "path": ["dashboard", "profile"] },
+            "description": "Booking history timeline via `getUserBookings`. Cancel uses the styled ConfirmDialog."
+          }
+        },
+        {
+          "name": "Settings (role-aware tabs)",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Cookie", "value": "session={{sessionCookie}}" }],
+            "url": { "raw": "{{baseUrl}}/dashboard/settings", "host": ["{{baseUrl}}"], "path": ["dashboard", "settings"] },
+            "description": "Profile + Preferences tabs for everyone; Business tab (businessName, websiteUrl, description, timezone, default duration) renders only for organizers/admins. Saves via `updateProfile` / `updateOrganizerSettings`."
+          }
+        },
+        {
+          "name": "Notifications page",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Cookie", "value": "session={{sessionCookie}}" }],
+            "url": { "raw": "{{baseUrl}}/dashboard/notifications", "host": ["{{baseUrl}}"], "path": ["dashboard", "notifications"] },
+            "description": "`getNotifications(userId)` — last 20, newest first. Mark-as-read actions: `markAsRead(id)`, `markAllAsRead(userId)`."
+          }
+        },
+        {
+          "name": "Schedule (calendar view)",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Cookie", "value": "session={{sessionCookie}}" }],
+            "url": { "raw": "{{baseUrl}}/schedule", "host": ["{{baseUrl}}"], "path": ["schedule"] },
+            "description": "Agenda/calendar across the signed-in user's bookings (organizer services + customer reservations)."
+          }
+        },
+        {
+          "name": "Reports",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Cookie", "value": "session={{sessionCookie}}" }],
+            "url": { "raw": "{{baseUrl}}/reports", "host": ["{{baseUrl}}"], "path": ["reports"] },
+            "description": "Reporting workspace for organizers/admins (revenue + booking analytics)."
+          }
+        }
+      ]
+    },
+    {
+      "name": "4 · Organizer Console (organizer | admin)",
+      "item": [
+        {
+          "name": "Appointments list + search",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Cookie", "value": "session={{sessionCookie}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/dashboard/appointments?q=brand",
+              "host": ["{{baseUrl}}"],
+              "path": ["dashboard", "appointments"],
+              "query": [{ "key": "q", "value": "brand", "description": " wired to Topbar search — ilike title/description" }]
+            },
+            "description": "`getOrganizerAppointments(organizerId, searchQuery)` — organizerId is forced from the session (client value ignored). Customers are redirected to `/dashboard` by the edge proxy."
+          }
+        },
+        {
+          "name": "Create Appointment (server action)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Cookie", "value": "session={{sessionCookie}}" },
+              { "key": "Next-Action", "value": "{{nextActionId_createAppointment}}" },
+              { "key": "Content-Type", "value": "text/plain;charset=UTF-8" }
+            ],
+            "body": { "mode": "raw", "raw": "[\"22222222-2222-4222-8222-222222222221\", {\"title\":\"Design Sprint Day\",\"description\":\"Full-day sprint\",\"duration\":480,\"locationDetails\":\"On-site\",\"price\":900}]" },
+            "url": { "raw": "{{baseUrl}}/dashboard/appointments/new", "host": ["{{baseUrl}}"], "path": ["dashboard", "appointments", "new"] },
+            "description": "`createAppointment(organizerId, data)` — SECURITY: the supplied organizerId is ignored; the row is always created for the session's user. Returns `{ success, appointmentId }`. Requires the build-specific Next-Action id."
+          }
+        },
+        {
+          "name": "Appointment overview",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Cookie", "value": "session={{sessionCookie}}" }],
+            "url": { "raw": "{{baseUrl}}/dashboard/appointments/{{appointmentId}}", "host": ["{{baseUrl}}"], "path": ["dashboard", "appointments", "{{appointmentId}}"] },
+            "description": "Public-style detail inside the console (`getAppointmentById`)."
+          }
+        },
+        {
+          "name": "Edit appointment (basic info / availability / capacity / questions tabs)",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Cookie", "value": "session={{sessionCookie}}" }],
+            "url": { "raw": "{{baseUrl}}/dashboard/appointments/{{appointmentId}}/edit", "host": ["{{baseUrl}}"], "path": ["dashboard", "appointments", "{{appointmentId}}", "edit"] },
+            "description": "Loads `getAppointmentForEdit` (ownership-scoped). Tabs persist through `updateAppointment` (title, description, price, availability jsonb, maxCapacity, isActive…)."
+          }
+        },
+        {
+          "name": "Questions manager",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Cookie", "value": "session={{sessionCookie}}" }],
+            "url": { "raw": "{{baseUrl}}/dashboard/appointments/{{appointmentId}}/questions", "host": ["{{baseUrl}}"], "path": ["dashboard", "appointments", "{{appointmentId}}", "questions"] },
+            "description": "Add / Edit / Delete / toggle-mandatory. Table rows live in `booking_questions`; the form flow reads the jsonb copy. Writes via `createBookingQuestion`, `updateBookingQuestion`, `deleteBookingQuestion`, `upsertBookingQuestions` — all ownership-checked."
+          }
+        },
+        {
+          "name": "Weekly schedule editor",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Cookie", "value": "session={{sessionCookie}}" }],
+            "url": { "raw": "{{baseUrl}}/dashboard/appointments/{{appointmentId}}/schedule", "host": ["{{baseUrl}}"], "path": ["dashboard", "appointments", "{{appointmentId}}", "schedule"] },
+            "description": "Per-day working hours (`schedules` table) + `updateAppointmentAvailability` mirrors it into the jsonb availability used by the slot engine."
+          }
+        },
+        {
+          "name": "Questions workspace (all appointments)",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Cookie", "value": "session={{sessionCookie}}" }],
+            "url": { "raw": "{{baseUrl}}/dashboard/questions", "host": ["{{baseUrl}}"], "path": ["dashboard", "questions"] },
+            "description": "Cross-appointment question builder. Organizer/admin only at the edge."
+          }
+        },
+        {
+          "name": "Bookings (organizer view)",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Cookie", "value": "session={{sessionCookie}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/dashboard/bookings?status=pending",
+              "host": ["{{baseUrl}}"],
+              "path": ["dashboard", "bookings"],
+              "query": [{ "key": "status", "value": "pending", "description": "pending | confirmed | cancelled | pending_payment" }]
+            },
+            "description": "`getOrganizerBookings(organizerId, filters)` — confirm/decline pending requests (`updateBookingStatus` — organizer or admin only), export CSV (`exportBookingsToCSV` — exports only the caller's own data)."
+          }
+        }
+      ]
+    },
+    {
+      "name": "5 · Admin Console (admin only)",
+      "item": [
+        {
+          "name": "System overview",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Cookie", "value": "session={{sessionCookie}}" }],
+            "url": { "raw": "{{baseUrl}}/dashboard/admin", "host": ["{{baseUrl}}"], "path": ["dashboard", "admin"] },
+            "description": "`getSystemStats()` — totals for users, organizers, appointments, bookings. Guarded twice: edge redirect + in-page `getSession()` role check. Seed shows 9 users / 4 organizers / 8 appointments / 16 bookings."
+          }
+        },
+        {
+          "name": "Users management",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Cookie", "value": "session={{sessionCookie}}" }],
+            "url": { "raw": "{{baseUrl}}/dashboard/admin/users", "host": ["{{baseUrl}}"], "path": ["dashboard", "admin", "users"] },
+            "description": "`getAllUsers()` with role/status actions: `updateUserRole(userId, role)`, `updateUserStatus(userId, status)` — both reject self-demotion/self-suspension."
+          }
+        },
+        {
+          "name": "Organizers management",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Cookie", "value": "session={{sessionCookie}}" }],
+            "url": { "raw": "{{baseUrl}}/dashboard/admin/organizers", "host": ["{{baseUrl}}"], "path": ["dashboard", "admin", "organizers"] },
+            "description": "`getAllOrganizers()`. Seed includes Rohit Verma (status `pending`) to exercise `approveOrganizer` → role=organizer+active and `disableOrganizer` → suspended."
+          }
+        }
+      ]
+    },
+    {
+      "name": "6 · API & Webhooks",
+      "item": [
+        {
+          "name": "GET /api/auth/session",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "header": [{ "key": "Cookie", "value": "session={{sessionCookie}}", "disabled": false }],
+            "url": { "raw": "{{baseUrl}}/api/auth/session", "host": ["{{baseUrl}}"], "path": ["api", "auth", "session"] },
+            "description": "Responses:\n- `200` `{ \"user\": { \"id\": \"…\", \"email\": \"…\", \"role\": \"organizer\" } }`\n- `401` `{ \"user\": null }` (no/expired cookie)\n- `500` `{ \"user\": null }` (malformed token)"
+          }
+        },
+        {
+          "name": "POST /api/webhooks/stripe",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "stripe-signature", "value": "t=1727090000,v1=5257a869e7e…" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"id\": \"evt_test_webhook\",\n  \"object\": \"event\",\n  \"api_version\": \"2024-06-20\",\n  \"created\": 1727090000,\n  \"data\": {\n    \"object\": {\n      \"id\": \"cs_test_123\",\n      \"object\": \"checkout.session\",\n      \"payment_intent\": \"pi_3TestIntent\",\n      \"metadata\": {\n        \"booking_id\": \"{{bookingId}}\",\n        \"appointment_id\": \"{{appointmentId}}\"\n      }\n    }\n  },\n  \"livemode\": false,\n  \"pending_webhooks\": 1,\n  \"request\": { \"id\": null, \"idempotency_key\": null },\n  \"type\": \"checkout.session.completed\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/api/webhooks/stripe", "host": ["{{baseUrl}}"], "path": ["api", "webhooks", "stripe"] },
+            "description": "On `checkout.session.completed`: flips the booking to `confirmed` and stores `paymentId`. Signature is mandatory (`stripe.webhooks.constructEvent`) — without a valid `stripe-signature` header you get `400 { \"error\": \"Webhook Error: …\" }`. Test locally with `stripe listen --forward-to localhost:3000/api/webhooks/stripe`."
+          }
+        }
+      ]
+    },
+    {
+      "name": "7 · RBAC Smoke Tests",
+      "item": [
+        {
+          "name": "Guest → /dashboard redirects to /login?next=",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/dashboard", "host": ["{{baseUrl}}"], "path": ["dashboard"] }
+          },
+          "event": [{ "listen": "test", "script": { "exec": ["pm.test('redirected to login with next param', () => { pm.expect([302, 307]).to.include(pm.response.code); pm.expect(pm.response.headers.get('location') || '').to.include('/login?next=%2Fdashboard'); });"], "type": "text/javascript" } }]
+        },
+        {
+          "name": "Customer → /dashboard/admin redirects to /dashboard",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Cookie", "value": "session={{sessionCustomerCookie}}" }],
+            "url": { "raw": "{{baseUrl}}/dashboard/admin", "host": ["{{baseUrl}}"], "path": ["dashboard", "admin"] }
+          },
+          "event": [{ "listen": "test", "script": { "exec": ["pm.test('customer blocked from admin console', () => { pm.expect([302, 307]).to.include(pm.response.code); pm.expect(pm.response.headers.get('location') || '').to.include('/dashboard'); });"], "type": "text/javascript" } }],
+          "description": "Sign in as `{{emailCustomer}}` first and store its cookie as `sessionCustomerCookie`."
+        },
+        {
+          "name": "Logged-in user → /login redirects away",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Cookie", "value": "session={{sessionCookie}}" }],
+            "url": { "raw": "{{baseUrl}}/login", "host": ["{{baseUrl}}"], "path": ["login"] }
+          },
+          "event": [{ "listen": "test", "script": { "exec": ["pm.test('signed-in users bounce off auth pages', () => { pm.expect([302, 307]).to.include(pm.response.code); const loc = pm.response.headers.get('location') || ''; pm.expect(loc).to.satisfy(l => l.includes('/dashboard') || l.includes('/home')); });"], "type": "text/javascript" } }]
+        }
+      ]
+    }
+  ]
+}
