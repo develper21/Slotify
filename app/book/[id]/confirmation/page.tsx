@@ -65,7 +65,7 @@ export default function ConfirmationPage({ params }: { params: { id: string } })
                                 <div>
                                     <p className="text-sm font-medium text-neutral-400">Date</p>
                                     <p className="text-lg font-semibold text-white">
-                                        {formatDate(bookingDetails.start_time)}
+                                        {(bookingDetails.startTime || bookingDetails.start_time) ? formatDate(bookingDetails.startTime || bookingDetails.start_time) : 'N/A'}
                                     </p>
                                 </div>
                             </div>
@@ -75,7 +75,7 @@ export default function ConfirmationPage({ params }: { params: { id: string } })
                                 <div>
                                     <p className="text-sm font-medium text-neutral-400">Time</p>
                                     <p className="text-lg font-semibold text-white">
-                                        {format(new Date(bookingDetails.start_time), 'hh:mm a')} - {format(new Date(bookingDetails.end_time), 'hh:mm a')}
+                                        {(bookingDetails.startTime || bookingDetails.start_time) ? format(new Date(bookingDetails.startTime || bookingDetails.start_time), 'hh:mm a') : ''} - {(bookingDetails.endTime || bookingDetails.end_time) ? format(new Date(bookingDetails.endTime || bookingDetails.end_time), 'hh:mm a') : ''}
                                     </p>
                                 </div>
                             </div>
@@ -85,7 +85,7 @@ export default function ConfirmationPage({ params }: { params: { id: string } })
                                 <div>
                                     <p className="text-sm font-medium text-neutral-400">Location</p>
                                     <p className="text-lg font-semibold text-white">
-                                        {bookingDetails.appointment?.location_details || 'Online / Online Details Provided'}
+                                        {bookingDetails.appointment?.locationDetails || bookingDetails.appointment?.location_details || 'Online / Online Details Provided'}
                                     </p>
                                 </div>
                             </div>
