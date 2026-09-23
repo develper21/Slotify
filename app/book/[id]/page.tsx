@@ -7,7 +7,6 @@ import { Skeleton } from '@/components/ui/Skeleton'
 import { Calendar, Clock, MapPin, Users, ArrowLeft, ShieldCheck, Zap } from 'lucide-react'
 import Link from 'next/link'
 import { formatDuration } from '@/lib/utils'
-import { Navbar } from '@/components/Navbar'
 
 async function AppointmentContent({ id }: { id: string }) {
     const appointment = await getAppointmentById(id)
@@ -33,8 +32,8 @@ async function AppointmentContent({ id }: { id: string }) {
     const organizerName = appointment.organizer?.businessName || appointment.organizer?.fullName || 'Expert Organizer'
 
     return (
-        <div className="relative min-h-screen bg-mongodb-black pb-24">
-            <Navbar />
+        <div className="relative bg-mongodb-black pb-24">
+            {/* Navbar BookingLayout se render hota hai — duplicate yahan hataya gaya hai */}
 
             <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-7xl h-[500px] bg-mongodb-spring/5 blur-[120px] rounded-full -mt-24 pointer-events-none" />
 
