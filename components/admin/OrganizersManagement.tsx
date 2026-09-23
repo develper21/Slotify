@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { Badge } from '@/components/ui/Badge'
+import { useConfirmDialog } from '@/components/ui/ConfirmDialog'
 import { getAllOrganizers, approveOrganizer, disableOrganizer } from '@/lib/actions/admin'
 import { toast } from 'sonner'
 import { formatDate } from '@/lib/utils'
@@ -21,6 +22,7 @@ interface Organizer {
 export default function OrganizersManagement() {
     const [organizers, setOrganizers] = useState<Organizer[]>([])
     const [isLoading, setIsLoading] = useState(true)
+    const { confirm, confirmDialog } = useConfirmDialog()
 
     useEffect(() => {
         loadOrganizers()
@@ -53,9 +55,12 @@ export default function OrganizersManagement() {
     }
 
     const handleDisable = async (organizerId: string) => {
-        if (!confirm('Are you sure you want to disable this organizer?')) {
-            return
-        }
+        const confirmed = await confirm({
+            title: 'Disable Organizer',
+            description: 'Are you sure you want to disable this organizer? Their published slots will no longer accept bookings.',
+            confirmLabel: 'Disable',
+        })
+        if (!confirmed) return
 
         try {
             const result = await disableOrganizer(organizerId)
@@ -142,6 +147,7 @@ export default function OrganizersManagement() {
                     </table>
                 </div>
             </CardContent>
+            {confirmDialog}
         </Card>
     )
 }
