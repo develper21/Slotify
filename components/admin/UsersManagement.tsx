@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { Badge } from '@/components/ui/Badge'
+import { useConfirmDialog } from '@/components/ui/ConfirmDialog'
 import { getAllUsers, updateUserStatus, updateUserRole } from '@/lib/actions/admin'
 import { toast } from 'sonner'
 import { formatDate } from '@/lib/utils'
@@ -20,6 +21,7 @@ interface User {
 export default function UsersManagement() {
     const [users, setUsers] = useState<User[]>([])
     const [isLoading, setIsLoading] = useState(true)
+    const { confirm, confirmDialog } = useConfirmDialog()
 
     useEffect(() => {
         loadUsers()
@@ -52,9 +54,12 @@ export default function UsersManagement() {
     }
 
     const handleRoleChange = async (userId: string, newRole: 'customer' | 'organizer' | 'admin') => {
-        if (!confirm(`Are you sure you want to change this user's role to ${newRole}?`)) {
-            return
-        }
+        const confirmed = await confirm({
+            title: 'Change User Role',
+            description: `Are you sure you want to change this user's role to ${newRole}? This takes effect immediately.`,
+            confirmLabel: 'Change Role',
+        })
+        if (!confirmed) return
 
         try {
             const result = await updateUserRole(userId, newRole)
@@ -141,6 +146,7 @@ export default function UsersManagement() {
                     </table>
                 </div>
             </CardContent>
+            {confirmDialog}
         </Card>
     )
 }
