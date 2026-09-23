@@ -48,7 +48,7 @@ export function TabsList({ children, className }: TabsListProps) {
     return (
         <div
             className={cn(
-                'inline-flex items-center gap-1 p-1 bg-mongodb-black/50 border border-neutral-700/50 rounded-mongodb',
+                'inline-flex items-center gap-1.5 p-1.5 bg-[#001E2B] border border-white/10 rounded-xl',
                 className
             )}>
             {children}
@@ -62,11 +62,12 @@ export function TabsTrigger({ value, children, className }: TabsTriggerProps) {
 
     return (
         <button
+            type="button"
             onClick={() => setActiveTab(value)}
             className={cn(
-                'px-4 py-1.5 rounded-mongodb text-sm font-semibold transition-all duration-200',
+                'px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-200 select-none inline-flex items-center gap-2',
                 isActive
-                    ? 'bg-mongodb-forest text-white shadow-mongodb'
+                    ? 'bg-mongodb-spring text-mongodb-black shadow-[0_2px_12px_rgba(0,237,100,0.3)]'
                     : 'text-neutral-400 hover:text-white hover:bg-white/5',
                 className
             )}>
