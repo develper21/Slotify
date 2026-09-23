@@ -8,6 +8,7 @@ import { Badge } from '@/components/ui/Badge'
 import { Modal } from '@/components/ui/Modal'
 import { Input } from '@/components/ui/Input'
 import { ChevronLeft, Plus, Edit, Trash2, GripVertical, HelpCircle } from 'lucide-react'
+import { useConfirmDialog } from '@/components/ui/ConfirmDialog'
 import { createBookingQuestion, updateBookingQuestion, deleteBookingQuestion, getAppointmentForEdit } from '@/lib/actions/organizer'
 import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
@@ -36,6 +37,7 @@ export default function QuestionsPage({ params }: { params: { id: string } }) {
     const [appointment, setAppointment] = useState<any>(null)
     const [showModal, setShowModal] = useState(false)
     const [editingQuestion, setEditingQuestion] = useState<Question | null>(null)
+    const { confirm, confirmDialog } = useConfirmDialog()
     const [formData, setFormData] = useState({
         questionText: '',
         questionType: 'single_line' as Question['questionType'],
@@ -163,7 +165,12 @@ export default function QuestionsPage({ params }: { params: { id: string } }) {
     }
 
     const handleDelete = async (questionId: string) => {
-        if (!confirm('Are you sure you want to delete this question?')) {
+        const confirmed = await confirm({
+            title: 'Delete Question',
+            description: 'Are you sure you want to delete this question? Customers will no longer be asked for this information.',
+            confirmLabel: 'Delete',
+        })
+        if (!confirmed) {
             return
         }
 
@@ -418,6 +425,7 @@ export default function QuestionsPage({ params }: { params: { id: string } }) {
                     </div>
                 </div>
             </Modal>
+            {confirmDialog}
         </div>
     )
 }
