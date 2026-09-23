@@ -2,7 +2,7 @@
 
 import { DataTable } from '@/components/ui/DataTable'
 import { Badge } from '@/components/ui/Badge'
-import { StatusUpdateButton } from '@/components/bookings/BookingActions'
+import { BookingRowActions } from '@/components/bookings/BookingActions'
 import { format } from 'date-fns'
 
 interface BookingsListProps {
@@ -78,7 +78,7 @@ export function BookingsList({ bookings }: BookingsListProps) {
             columns={columns}
             keyExtractor={(booking: any) => booking.id}
             actions={(booking: any) => (
-                <StatusUpdateButton bookingId={booking.id} currentStatus={booking.status} />
+                <BookingRowActions booking={booking} />
             )}
             emptyMessage="No bookings found"
             pageSize={15}
