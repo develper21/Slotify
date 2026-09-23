@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { useRouter, useSearchParams } from 'next/navigation'
+import { useRouter, useSearchParams, useParams } from 'next/navigation'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { Skeleton } from '@/components/ui/Skeleton'
@@ -9,10 +9,6 @@ import { ChevronLeft, ChevronRight, Clock, Users, Sun, Sunset, Moon } from 'luci
 import { cn, formatTime, formatDate } from '@/lib/utils'
 import { getAvailableSlots } from '@/lib/actions/appointments'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/Tabs'
-
-interface TimeSlotPageProps {
-    params: { id: string }
-}
 
 interface TimeSlot {
     id: string
@@ -22,8 +18,10 @@ interface TimeSlot {
     maxCapacity: number
 }
 
-export default function TimeSlotPage({ params }: TimeSlotPageProps) {
+export default function TimeSlotPage() {
     const router = useRouter()
+    const routeParams = useParams()
+    const appointmentId = routeParams?.id as string
     const searchParams = useSearchParams()
     const date = searchParams.get('date')
 
@@ -32,15 +30,15 @@ export default function TimeSlotPage({ params }: TimeSlotPageProps) {
     const [isLoading, setIsLoading] = useState(true)
 
     useEffect(() => {
-        if (date) {
+        if (date && appointmentId) {
             loadSlots()
         }
-    }, [date])
+    }, [date, appointmentId])
 
     const loadSlots = async () => {
         setIsLoading(true)
         try {
-            const data = await getAvailableSlots(params.id, date!)
+            const data = await getAvailableSlots(appointmentId, date!)
             setSlots(data as TimeSlot[])
         } catch (error) {
             console.error('Error loading slots:', error)
@@ -55,7 +53,7 @@ export default function TimeSlotPage({ params }: TimeSlotPageProps) {
 
     const handleContinue = () => {
         if (selectedSlot) {
-            router.push(`/book/${params.id}/form?date=${date}&slot=${selectedSlot.id}`)
+            router.push(`/book/${appointmentId}/form?date=${date}&slot=${selectedSlot.id}`)
         }
     }
 
