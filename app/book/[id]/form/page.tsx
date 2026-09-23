@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { useRouter, useSearchParams } from 'next/navigation'
+import { useRouter, useSearchParams, useParams } from 'next/navigation'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { ChevronLeft } from 'lucide-react'
@@ -9,10 +9,6 @@ import { getBookingQuestions, createBooking } from '@/lib/actions/appointments'
 import { createCheckoutSession } from '@/lib/actions/payments'
 import { getCurrentUser } from '@/lib/actions/auth'
 import { toast } from 'sonner'
-
-interface BookingFormPageProps {
-    params: { id: string }
-}
 
 interface Question {
     id: string
@@ -22,8 +18,10 @@ interface Question {
     isMandatory: boolean
 }
 
-export default function BookingFormPage({ params }: BookingFormPageProps) {
+export default function BookingFormPage() {
     const router = useRouter()
+    const routeParams = useParams()
+    const appointmentId = routeParams?.id as string
     const searchParams = useSearchParams()
     const date = searchParams.get('date')
     const slotId = searchParams.get('slot')
@@ -36,9 +34,11 @@ export default function BookingFormPage({ params }: BookingFormPageProps) {
     const [userId, setUserId] = useState<string | null>(null)
 
     useEffect(() => {
-        loadQuestions()
+        if (appointmentId) {
+            loadQuestions()
+        }
         loadUser()
-    }, [])
+    }, [appointmentId])
 
     const loadUser = async () => {
         try {
@@ -60,7 +60,7 @@ export default function BookingFormPage({ params }: BookingFormPageProps) {
     const loadQuestions = async () => {
         setIsLoading(true)
         try {
-            const data = await getBookingQuestions(params.id)
+            const data = await getBookingQuestions(appointmentId)
             setQuestions(data as any[])
         } catch (error) {
             console.error('Error loading questions:', error)
@@ -126,7 +126,7 @@ export default function BookingFormPage({ params }: BookingFormPageProps) {
             }))
 
             const result = await createBooking({
-                appointmentId: params.id,
+                appointmentId: appointmentId,
                 userId,
                 slotId,
                 answers: questionAnswers,
@@ -137,7 +137,7 @@ export default function BookingFormPage({ params }: BookingFormPageProps) {
             } else if (result.requiresPayment && result.price) {
                 toast.info('Redirecting to secure payment...')
                 const checkout = await createCheckoutSession({
-                    appointmentId: params.id,
+                    appointmentId: appointmentId,
                     bookingId: result.bookingId!,
                     price: Number(result.price),
                     title: result.title || 'Professional Appointment'
@@ -150,7 +150,7 @@ export default function BookingFormPage({ params }: BookingFormPageProps) {
                 }
             } else {
                 toast.success('Booking created successfully!')
-                router.push(`/book/${params.id}/confirmation?booking=${result.bookingId}`)
+                router.push(`/book/${appointmentId}/confirmation?booking=${result.bookingId}`)
             }
         } catch (error) {
             console.error('Booking error:', error)
