@@ -4,6 +4,7 @@ import { db } from '@/lib/db'
 import { bookings, appointments, profiles } from '@/lib/db/schema'
 import { eq, and, gte, lte, desc } from 'drizzle-orm'
 import { revalidatePath } from 'next/cache'
+import { requireUser, assertBookingAccess, isSelfOrAdmin } from '@/lib/guards'
 
 export async function getOrganizerBookings(organizerId: string, filters?: {
     status?: string
@@ -66,6 +67,20 @@ export async function getCustomerBookings(userId: string) {
 
 export async function updateBookingStatus(bookingId: string, status: string) {
     try {
+        // Security: only the appointment's organizer (or an admin) may change booking status
+        const session = await requireUser()
+        const booking = await db.query.bookings.findFirst({
+            where: eq(bookings.id, bookingId),
+            columns: { customerId: true },
+            with: { appointment: { columns: { organizerId: true } } },
+        })
+        if (!booking) return { success: false, message: 'Booking not found' }
+
+        const isOrganizer = booking.appointment?.organizerId === session.user.id
+        if (!isOrganizer && session.user.role !== 'admin') {
+            return { success: false, message: 'Not authorized to update this booking' }
+        }
+
         await db.update(bookings)
             .set({ status: status as any })
             .where(eq(bookings.id, bookingId))
@@ -107,7 +122,9 @@ export async function getBookingDetails(bookingId: string) {
 }
 
 export async function exportBookingsToCSV(organizerId: string) {
-    const bookingsData = await getOrganizerBookings(organizerId)
+    // Security: ignore the client-supplied organizerId; export only the caller's own data
+    const session = await requireUser()
+    const bookingsData = await getOrganizerBookings(session.user.id)
 
     const headers = ['Booking ID', 'Customer Name', 'Email', 'Appointment', 'Start Time', 'Status', 'Created At']
     const rows = bookingsData.map((booking: any) => [
@@ -122,4 +139,18 @@ export async function exportBookingsToCSV(organizerId: string) {
 
     const csv = [headers, ...rows].map(row => row.join(',')).join('\n')
     return csv
+}
+
+export async function deleteBooking(bookingId: string) {
+    try {
+        // Security: customer, appointment's organizer, ya admin hi delete kar sakta hai
+        await assertBookingAccess(bookingId)
+
+        await db.delete(bookings).where(eq(bookings.id, bookingId))
+        revalidatePath('/dashboard/bookings')
+        revalidatePath('/dashboard')
+        return { success: true }
+    } catch (error: any) {
+        return { success: false, message: error.message }
+    }
 }
