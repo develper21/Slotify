@@ -13,6 +13,12 @@ import OrganizersManagement from '@/components/admin/OrganizersManagement'
 export const dynamic = 'force-dynamic'
 
 export default async function AdminDashboard() {
+    // Layer 2 (Page guard): admin role check — proxy.ts pehle hi block karta hai, yeh defense-in-depth hai
+    const session = await getSession()
+    if (!session || session.user.role !== 'admin') {
+        redirect('/dashboard')
+    }
+
     return (
         <div className="space-y-8">
             <div className="flex items-center justify-between">
