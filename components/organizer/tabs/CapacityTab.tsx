@@ -10,14 +10,14 @@ import { Users, Info } from 'lucide-react'
 
 export default function CapacityTab({ appointment }: { appointment: any }) {
     const [isSubmitting, setIsSubmitting] = useState(false)
-    const [maxCapacity, setMaxCapacity] = useState(appointment.max_capacity || 1)
+    const [maxCapacity, setMaxCapacity] = useState(appointment.maxCapacity ?? appointment.max_capacity ?? 1)
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
         setIsSubmitting(true)
 
         try {
-            const result = await updateAppointment(appointment.id, { max_capacity: maxCapacity })
+            const result = await updateAppointment(appointment.id, { maxCapacity: maxCapacity })
             if (!result.success) {
                 toast.error(result.message || 'Update failed')
             } else {
