@@ -16,6 +16,10 @@ export function BookingProgress() {
 
     const currentStepIndex = steps.findIndex(step => pathname.includes(step.path))
 
+    // Overview page (/book/[id]) par workflow start nahi hua — sab steps -1 (inactive) dikhana
+    // ek bug tha. Stepper sirf actual booking workflow me render ho.
+    if (currentStepIndex === -1) return null
+
     return (
         <div className="flex items-center justify-center w-full max-w-2xl mx-auto mb-12">
             {steps.map((step, index) => {
