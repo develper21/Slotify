@@ -14,6 +14,8 @@
     "test:e2e:ui": "playwright test --ui",
     "test:e2e:headed": "playwright test --headed",
     "db:generate": "drizzle-kit generate",
+    "db:reset": "node scripts/db-reset.mjs",
+    "db:seed": "node scripts/db-seed.mjs",
     "db:migrate": "drizzle-kit migrate",
     "db:push": "drizzle-kit push",
     "db:studio": "drizzle-kit studio"
