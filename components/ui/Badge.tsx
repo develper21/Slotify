@@ -2,30 +2,46 @@ import * as React from 'react'
 import { cn } from '@/lib/utils'
 
 export interface BadgeProps extends React.HTMLAttributes<HTMLDivElement> {
-    variant?: 'success' | 'warning' | 'danger' | 'info' | 'primary' | 'default'
+    variant?: 'success' | 'warning' | 'danger' | 'info' | 'primary' | 'default' | 'outline'
+    dot?: boolean
 }
 
 const Badge = React.forwardRef<HTMLDivElement, BadgeProps>(
-    ({ className, variant = 'default', ...props }, ref) => {
+    ({ className, variant = 'default', dot = false, children, ...props }, ref) => {
         const variants = {
-            success: 'bg-green-500/10 text-green-400 border-green-500/20',
-            warning: 'bg-yellow-500/10 text-yellow-400 border-yellow-500/20',
-            danger: 'bg-red-500/10 text-red-400 border-red-500/20',
-            info: 'bg-blue-500/10 text-blue-400 border-blue-500/20',
-            primary: 'badge-primary',
-            default: 'bg-neutral-700/50 text-neutral-300 border-neutral-700',
+            success: 'bg-mongodb-spring/10 text-mongodb-spring border-mongodb-spring/30',
+            primary: 'bg-mongodb-spring/15 text-mongodb-spring border-mongodb-spring/40 font-bold',
+            warning: 'bg-amber-500/10 text-amber-400 border-amber-500/30',
+            danger: 'bg-red-500/10 text-red-400 border-red-500/30',
+            info: 'bg-cyan-500/10 text-cyan-400 border-cyan-500/30',
+            outline: 'bg-transparent text-neutral-300 border-white/20',
+            default: 'bg-[#16384C] text-neutral-300 border-white/10',
+        }
+
+        const dotColors = {
+            success: 'bg-mongodb-spring animate-pulse',
+            primary: 'bg-mongodb-spring',
+            warning: 'bg-amber-400',
+            danger: 'bg-red-400',
+            info: 'bg-cyan-400',
+            outline: 'bg-neutral-400',
+            default: 'bg-neutral-400',
         }
 
         return (
             <div
                 ref={ref}
                 className={cn(
-                    'badge border',
+                    'inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold uppercase tracking-wider border select-none',
                     variants[variant],
                     className
                 )}
-                {...props}
-            />
+                {...props}>
+                {dot && (
+                    <span className={cn('w-1.5 h-1.5 rounded-full', dotColors[variant])} />
+                )}
+                {children}
+            </div>
         )
     }
 )
