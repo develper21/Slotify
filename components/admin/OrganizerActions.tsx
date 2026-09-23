@@ -2,12 +2,14 @@
 
 import { useState } from 'react'
 import { Button } from '@/components/ui/Button'
+import { useConfirmDialog } from '@/components/ui/ConfirmDialog'
 import { CheckCircle, XCircle } from 'lucide-react'
 import { approveOrganizer, disableOrganizer } from '@/lib/actions/admin'
 import { toast } from 'sonner'
 
 export function ApprovalActions({ organizerId }: { organizerId: string }) {
     const [loading, setLoading] = useState(false)
+    const { confirm, confirmDialog } = useConfirmDialog()
 
     const handleApprove = async () => {
         setLoading(true)
@@ -24,9 +26,12 @@ export function ApprovalActions({ organizerId }: { organizerId: string }) {
     }
 
     const handleReject = async () => {
-        if (!confirm('Are you sure you want to reject this organizer application?')) {
-            return
-        }
+        const confirmed = await confirm({
+            title: 'Reject Application',
+            description: 'Are you sure you want to reject this organizer application? They will not be able to host slots.',
+            confirmLabel: 'Reject',
+        })
+        if (!confirmed) return
 
         setLoading(true)
         const result = await disableOrganizer(organizerId)
@@ -42,34 +47,41 @@ export function ApprovalActions({ organizerId }: { organizerId: string }) {
     }
 
     return (
-        <div className="flex items-center gap-2">
-            <Button
-                variant="secondary"
-                size="sm"
-                onClick={handleApprove}
-                isLoading={loading}>
-                <CheckCircle className="w-4 h-4 mr-1" />
-                Approve
-            </Button>
-            <Button
-                variant="danger"
-                size="sm"
-                onClick={handleReject}
-                isLoading={loading}>
-                <XCircle className="w-4 h-4 mr-1" />
-                Reject
-            </Button>
-        </div>
+        <>
+            <div className="flex items-center gap-2">
+                <Button
+                    variant="secondary"
+                    size="sm"
+                    onClick={handleApprove}
+                    isLoading={loading}>
+                    <CheckCircle className="w-4 h-4 mr-1" />
+                    Approve
+                </Button>
+                <Button
+                    variant="danger"
+                    size="sm"
+                    onClick={handleReject}
+                    isLoading={loading}>
+                    <XCircle className="w-4 h-4 mr-1" />
+                    Reject
+                </Button>
+            </div>
+            {confirmDialog}
+        </>
     )
 }
 
 export function DisableButton({ organizerId }: { organizerId: string }) {
     const [loading, setLoading] = useState(false)
+    const { confirm, confirmDialog } = useConfirmDialog()
 
     const handleDisable = async () => {
-        if (!confirm('Are you sure you want to disable this organizer?')) {
-            return
-        }
+        const confirmed = await confirm({
+            title: 'Disable Organizer',
+            description: 'Are you sure you want to disable this organizer? Their published slots will no longer accept bookings.',
+            confirmLabel: 'Disable',
+        })
+        if (!confirmed) return
 
         setLoading(true)
         const result = await disableOrganizer(organizerId)
@@ -85,12 +97,15 @@ export function DisableButton({ organizerId }: { organizerId: string }) {
     }
 
     return (
-        <Button
-            variant="danger"
-            size="sm"
-            onClick={handleDisable}
-            isLoading={loading}>
-            Disable
-        </Button>
+        <>
+            <Button
+                variant="danger"
+                size="sm"
+                onClick={handleDisable}
+                isLoading={loading}>
+                Disable
+            </Button>
+            {confirmDialog}
+        </>
     )
 }
