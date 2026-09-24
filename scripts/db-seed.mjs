@@ -20,21 +20,27 @@ import bcrypt from 'bcryptjs';
 const fs = await import('node:fs');
 const path = await import('node:path');
 
-function readEnvUrl() {
+// Usage: npm run db:seed [-- --env production]  (or: node scripts/db-seed.mjs --env production)
+const envFlagIndex = process.argv.indexOf('--env');
+const envName = envFlagIndex !== -1 ? process.argv[envFlagIndex + 1] : 'local';
+const envFile = envName === 'production' ? '.env.production' : '.env.local';
+
+function readEnvUrl(file) {
     try {
-        const envFile = fs.readFileSync(path.resolve(process.cwd(), '.env.local'), 'utf8');
-        const match = envFile.match(/^DATABASE_URL=(.*)$/m);
+        const envFileContent = fs.readFileSync(path.resolve(process.cwd(), file), 'utf8');
+        const match = envFileContent.match(/^DATABASE_URL=(.*)$/m);
         return match ? match[1].trim().replace(/^['"]|['"]$/g, '') : '';
     } catch {
         return '';
     }
 }
 
-const connectionString = process.env.DATABASE_URL || readEnvUrl();
+const connectionString = process.env.DATABASE_URL || readEnvUrl(envFile);
 if (!connectionString) {
-    console.error('❌ DATABASE_URL not found. Set it in .env.local');
+    console.error(`❌ DATABASE_URL not found. Set it in ${envFile}`);
     process.exit(1);
 }
+console.log(`🔗 Using environment: ${envName} (${envFile})`);
 
 const sql = postgres(connectionString, { max: 1 });
 

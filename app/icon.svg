@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <defs>
+    <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#00ED64"/>
+      <stop offset="1" stop-color="#00684A"/>
+    </linearGradient>
+  </defs>
+  <!-- rounded dark background -->
+  <rect width="64" height="64" rx="14" fill="#001E2B"/>
+  <!-- calendar body -->
+  <rect x="8" y="14" width="48" height="42" rx="8" fill="url(#g)"/>
+  <!-- calendar header strip -->
+  <path d="M8 22a8 8 0 0 1 8-8h32a8 8 0 0 1 8 8v6H8z" fill="#00D4B2"/>
+  <!-- binding rings -->
+  <rect x="17" y="8" width="5" height="12" rx="2.5" fill="#00ED64"/>
+  <rect x="42" y="8" width="5" height="12" rx="2.5" fill="#00ED64"/>
+  <!-- checkmark confirming a booked slot -->
+  <path d="M20 37.5l8.5 8.5L46 28.5" fill="none" stroke="#001E2B" stroke-width="6.5" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

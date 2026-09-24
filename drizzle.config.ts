@@ -2,11 +2,16 @@ import { defineConfig } from 'drizzle-kit';
 import fs from 'fs';
 import path from 'path';
 
+// Usage: npx drizzle-kit push --env production  (defaults to .env.local)
+const envFlagIndex = process.argv.indexOf('--env');
+const envName = envFlagIndex !== -1 ? process.argv[envFlagIndex + 1] : 'local';
+const envFile = envName === 'production' ? '.env.production' : '.env.local';
+
 let databaseUrl = process.env.DATABASE_URL;
 if (!databaseUrl) {
     try {
-        const envFile = fs.readFileSync(path.resolve(process.cwd(), '.env.local'), 'utf8');
-        const match = envFile.match(/^DATABASE_URL=(.*)$/m);
+        const envFileContent = fs.readFileSync(path.resolve(process.cwd(), envFile), 'utf8');
+        const match = envFileContent.match(/^DATABASE_URL=(.*)$/m);
         if (match) {
             databaseUrl = match[1].trim().replace(/^['"]|['"]$/g, '');
         }
