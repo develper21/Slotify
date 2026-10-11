@@ -31,6 +31,20 @@ Slotify is a complete booking system built with Next.js 14, TypeScript, Tailwind
    npm run dev
    ```
 
+## Quality checks
+
+Slotify is a single Next.js project: the UI is in `app/` and `components/`, while API routes, server actions, and shared server logic are in `app/api/`, `lib/actions/`, and `lib/`. Install the root dependencies once with `npm ci`.
+
+```bash
+npm run lint             # Lint the tested frontend and server code
+npm run lint:all         # Lint the full project
+npm test -- --ci --runInBand
+npm run typecheck
+npm run build
+```
+
+The unit suites are in `tests/frontend/` and `tests/server/`. GitHub Actions runs the focused lint, unit tests, type-check, and production build on pushes and pull requests.
+
 ## Tech Stack
 - **Framework**: Next.js 14
 - **Database**: Postgres
