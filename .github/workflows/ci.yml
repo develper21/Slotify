@@ -35,6 +35,8 @@ jobs:
           DATABASE_URL: postgres://postgres:postgres@localhost:5432/slotify
           JWT_SECRET: ci-only-placeholder-secret
           NEXT_PUBLIC_APP_URL: http://localhost:3000
+          STRIPE_SECRET_KEY: sk_test_ci_placeholder
+          STRIPE_WEBHOOK_SECRET: whsec_ci_placeholder
 
       - name: Type-check
         run: npm run typecheck
